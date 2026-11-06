@@ -149,3 +149,4 @@ npm test
 ## 📄 Licence
 
 Ce projet est sous licence MIT.
+
