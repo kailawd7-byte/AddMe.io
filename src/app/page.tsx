@@ -65,18 +65,6 @@ export default function HomePage() {
   const simTotalPoints = Number((simActionCost + simDurationFee).toFixed(1));
   const simDailyCap = Math.max(1, Math.ceil(simQuantity / simDays));
 
-  // Réseaux sociaux partenaires (style sponsors demandé)
-  const supportedNetworks = [
-    { name: "TikTok", status: "Actif", active: true, color: "from-pink-500 to-rose-600" },
-    { name: "Instagram", status: "Actif", active: true, color: "from-purple-600 via-pink-500 to-amber-500" },
-    { name: "YouTube", status: "Actif", active: true, color: "from-rose-600 to-red-600" },
-    { name: "Facebook", status: "Bientôt", active: false, color: "from-blue-600 to-indigo-700" },
-    { name: "Snapchat", status: "Bientôt", active: false, color: "from-amber-400 to-yellow-500" },
-    { name: "LinkedIn", status: "Bientôt", active: false, color: "from-sky-600 to-blue-700" },
-    { name: "X (Twitter)", status: "Bientôt", active: false, color: "from-slate-700 to-slate-900" },
-    { name: "Threads", status: "Bientôt", active: false, color: "from-zinc-800 to-zinc-950" },
-  ];
-
   const faqs = [
     {
       q: "Pourquoi mes points sont-ils crédités immédiatement sans attendre 24h ?",
@@ -341,64 +329,138 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          BANDEAU TICKER DÉFILANT CONTINU (De Droite à Gauche Sans Fin)
-          Aucune mention de SaaSPay
+          BANDEAU TICKER DÉFILANT CONTINU (De Droite à Gauche - Annonce Perpétuelle)
+          Hardware-accelerated CSS translate3d, boucle infinie sans saccade
          ===================================================================== */}
-      <div className="marquee-container bg-[#5B3DF5] text-white py-3.5 font-extrabold tracking-[0.14em] text-xs sm:text-sm shadow-md">
-        <div className="marquee-content">
-          <span className="px-6">
+      <style>{`
+        @keyframes perpetualMarqueeScroll {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(-100%, 0, 0);
+          }
+        }
+        .perpetual-marquee-track {
+          display: flex !important;
+          flex-shrink: 0 !important;
+          white-space: nowrap !important;
+          animation: perpetualMarqueeScroll 28s linear infinite !important;
+          min-width: 100% !important;
+          will-change: transform !important;
+        }
+      `}</style>
+      <div className="relative w-full overflow-hidden bg-[#5B3DF5] text-white py-3.5 shadow-md flex select-none pointer-events-none">
+        <div className="perpetual-marquee-track">
+          <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
             TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
-          <span className="px-6">
+          <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
             TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
         </div>
-        <div className="marquee-content" aria-hidden="true">
-          <span className="px-6">
+        <div className="perpetual-marquee-track" aria-hidden="true">
+          <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
             TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
-          <span className="px-6">
+          <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
             TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
         </div>
       </div>
 
       {/* =====================================================================
-          NOUVEAU BANDEAU PARTENAIRES RÉSEAUX SOCIAUX (Style Sponsors)
+          SECTION PARTENAIRES RÉSEAUX SOCIAUX (Style Sponsors Monochrome façon Notion)
+          Inspiré directement de Notion / Linear : logos gris épurés, élégants, sans fioritures
          ===================================================================== */}
-      <section id="ecosystem" className="bg-[#12122A] text-white py-10 border-b border-[#2E2C40]">
+      <section id="ecosystem" className="bg-[#0E0D14] text-white py-14 sm:py-16 border-b border-[#2E2C40]">
         <div className="max-w-[1140px] mx-auto px-6 text-center">
-          <p className="text-xs uppercase tracking-widest text-[#C9C6DB] font-extrabold mb-6">
-            Écosystème de Réseaux Compatibles · Actifs & Déploiements Futurs
+          <p className="text-xs sm:text-[13px] uppercase tracking-[0.2em] text-[#8E8CA0] font-semibold mb-10">
+            Compatible avec l&apos;écosystème des créateurs de contenu
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            {supportedNetworks.map((net) => (
-              <div
-                key={net.name}
-                className={`px-4 py-2.5 rounded-2xl border transition-all flex items-center gap-2.5 ${
-                  net.active
-                    ? "bg-[#1B1A26] border-[#5B3DF5]/60 text-white shadow-md hover:border-[#FFB84D]"
-                    : "bg-[#1B1A26]/40 border-[#2E2C40] text-[#7A7A90]"
-                }`}
-              >
-                <div
-                  className={`w-2.5 h-2.5 rounded-full bg-gradient-to-tr ${net.color}`}
-                />
-                <span className="font-extrabold text-xs sm:text-sm">
-                  {net.name}
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    net.active
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      : "bg-slate-800 text-slate-400"
-                  }`}
-                >
-                  {net.status}
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 lg:gap-20">
+            {/* TikTok */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.49 6.3 6.3 0 0 0 1.87-4.49V8.58a8.28 8.28 0 0 0 4.84 1.56V6.69h-.94z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                TikTok
+              </span>
+            </div>
+
+            {/* Instagram */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-none stroke-current stroke-2 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                Instagram
+              </span>
+            </div>
+
+            {/* YouTube */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                YouTube
+              </span>
+            </div>
+
+            {/* Facebook */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                Facebook
+              </span>
+            </div>
+
+            {/* Snapchat */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M12.003 2c-3.528 0-6.046 2.37-6.046 5.86 0 .864.218 2.052.553 2.87.145.353-.027.604-.306.777-.52.32-.98.665-1.282 1.085-.308.43-.223.957.253 1.25.753.465 1.713.435 2.502.435.297 0 .548.163.548.45 0 .23-.133.565-.39.845-.58.632-1.353 1.144-2.186 1.492-.533.223-.746.68-.487 1.173.342.648 1.468.99 2.54 1.135 1.037.14 2.148.06 3.125.438.385.15.776.386 1.176.386.4 0 .791-.236 1.176-.386.977-.378 2.088-.298 3.125-.438 1.072-.145 2.198-.487 2.54-1.135.259-.493.046-.95-.487-1.173-.833-.348-1.606-.86-2.186-1.492-.257-.28-.39-.615-.39-.845 0-.287.251-.45.548-.45.789 0 1.749.03 2.502-.435.476-.293.561-.82.253-1.25-.302-.42-.762-.765-1.282-1.085-.279-.173-.451-.424-.306-.777.335-.818.553-2.006.553-2.87C18.05 4.37 15.532 2 12.003 2z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                Snapchat
+              </span>
+            </div>
+
+            {/* LinkedIn */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                LinkedIn
+              </span>
+            </div>
+
+            {/* X (Twitter) */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-5 w-5 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                X
+              </span>
+            </div>
+
+            {/* Threads */}
+            <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                <path d="M12.186 24C5.466 24 0 18.634 0 12.018 0 5.402 5.466.035 12.186.035c6.643 0 11.894 5.21 11.894 11.983 0 7.375-6.079 11.66-11.894 11.66v-2.322c4.716 0 9.572-3.475 9.572-9.338 0-5.568-4.23-9.66-9.572-9.66-5.419 0-9.864 4.168-9.864 9.697 0 5.452 4.445 9.62 9.864 9.62 3.12 0 5.922-1.348 7.333-3.664l1.83 1.455C19.782 22.062 16.275 24 12.186 24zm2.846-13.43c.063.81.08 1.638-.052 2.457-.457 2.827-2.39 4.368-4.873 4.368-2.317 0-4.053-1.614-4.053-3.792 0-2.322 1.836-3.87 4.542-3.87.892 0 1.756.168 2.502.484-.047-.79-.247-1.464-.694-1.927-.674-.698-1.664-.993-2.65-.993-1.272 0-2.223.42-2.736 1.258l-1.897-1.332C6.113 7.82 7.747 7.03 9.906 7.03c1.782 0 3.393.58 4.417 1.642.71.737.95 1.706.709 2.898zm-2.48 2.052c-.628-.273-1.343-.41-2.073-.41-1.456 0-2.43.824-2.43 1.95 0 1.05.77 1.85 2.115 1.85 1.464 0 2.55-.953 2.766-2.585.034-.27.017-.542-.378-.805z"/>
+              </svg>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                Threads
+              </span>
+            </div>
           </div>
         </div>
       </section>

@@ -75,16 +75,26 @@ body {
   }
 }
 
-@keyframes marqueeContinuous {
+/* Bandeau d'annonce perpétuelle défilant de droite à gauche */
+@keyframes perpetualMarqueeScroll {
   0% {
-    transform: translateX(0%);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-100%, 0, 0);
   }
 }
 
-/* Marquee / Ticker défilant continu de droite à gauche */
+.perpetual-marquee-track {
+  display: flex !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  animation: perpetualMarqueeScroll 28s linear infinite !important;
+  min-width: 100% !important;
+  will-change: transform !important;
+}
+
+/* Ancienne classe de compatibilité */
 .marquee-container {
   overflow: hidden;
   display: flex;
@@ -96,13 +106,9 @@ body {
   display: flex;
   flex-shrink: 0;
   white-space: nowrap;
-  animation: marqueeContinuous 28s linear infinite;
+  animation: perpetualMarqueeScroll 28s linear infinite;
   min-width: 100%;
-  align-items: center;
-}
-
-.marquee-container:hover .marquee-content {
-  animation-play-state: paused;
+  will-change: transform;
 }
 
 /* Animations */

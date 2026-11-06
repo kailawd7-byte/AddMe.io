@@ -156,7 +156,7 @@ function ShopContent() {
   };
 
   return (
-    <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-6">
+    <div suppressHydrationWarning className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-6">
       {/* En-tête */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
