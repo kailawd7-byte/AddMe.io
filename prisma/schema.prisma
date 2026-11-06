@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                         String            @id @default(uuid())
+  email                      String            @unique
+  passwordHash               String
+  role                       String            @default("USER") // USER, ADMIN
+  isEmailVerified            Boolean           @default(false)
+  emailVerificationToken     String?
+  emailVerificationExpiresAt DateTime?
+  passwordResetToken         String?
+  passwordResetExpiresAt     DateTime?
+  status                     String            @default("ACTIVE") // ACTIVE, SUSPENDED, BANNED
+  reputationScore            Float             @default(100.0)
+  registrationIp             String?
+  lastLoginIp                String?
+  deviceFingerprint          String?
+  dailyTasksCompleted        Int               @default(0)
+  lastTaskDate               DateTime?
+
+  socialAccounts             SocialAccount[]
+  campaigns                  Campaign[]
+  taskCompletions            TaskCompletion[]
+  ledgerEntries              LedgerEntry[]
+  payments                   Payment[]
+  reportsFiled               Report[]          @relation("ReporterUser")
+  reportsReceived            Report[]          @relation("ReportedUser")
+  auditLogsActed             AuditLog[]        @relation("AuditActor")
+  auditLogsTargeted          AuditLog[]        @relation("AuditTarget")
+
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+}
+
+model SocialAccount {
+  id               String            @id @default(uuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform         String            // TIKTOK, YOUTUBE
+  identifier       String            // @pseudo TikTok ou Channel ID YouTube
+  verificationCode String            // Code unique ex: "ADDME-9A82F"
+  status           String            @default("PENDING_VERIFICATION") // PENDING_VERIFICATION, VERIFIED, REJECTED
+  verifiedAt       DateTime?
+  rejectionReason  String?
+
+  campaigns        Campaign[]
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([platform, identifier])
+}
+
+model Campaign {
+  id                  String           @id @default(uuid())
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socialAccountId     String
+  socialAccount       SocialAccount    @relation(fields: [socialAccountId], references: [id])
+  platform            String           // TIKTOK, YOUTUBE
+  actionType          String           // LIKE, COMMENT, SUBSCRIBE
+  videoUrl            String
+  commentTemplate     String?
+  totalQuantity       Int
+  completedQuantity   Int              @default(0)
+  dailyCap            Int              @default(10)
+  deliveredToday      Int              @default(0)
+  lastResetDailyCapAt DateTime         @default(now())
+  costPerUnit         Float
+  rewardPerUnit       Float
+  totalCost           Float
+  refundedPoints      Float            @default(0.0)
+  status              String           @default("ACTIVE") // ACTIVE, PAUSED, COMPLETED, CANCELLED
+
+  tasks               Task[]
+  reports             Report[]
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model Task {
+  id          String           @id @default(uuid())
+  campaignId  String
+  campaign    Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  status      String           @default("AVAILABLE") // AVAILABLE, IN_PROGRESS, COMPLETED, CANCELLED
+
+  completions TaskCompletion[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model TaskCompletion {
+  id                 String          @id @default(uuid())
+  taskId             String
+  task               Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workerUserId       String
+  workerUser         User            @relation(fields: [workerUserId], references: [id], onDelete: Cascade)
+  startedAt          DateTime        @default(now())
+  submittedAt        DateTime?
+  status             String          @default("IN_PROGRESS") // IN_PROGRESS, PENDING_RETENTION, APPROVED, FLAGGED, REJECTED
+  requiresScreenshot Boolean         @default(false)
+  screenshotUrl      String?
+  retentionEndsAt    DateTime?
+  rewardPoints       Float
+  ipAddress          String?
+  userAgent          String?
+
+  reports            Report[]
+
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@unique([taskId, workerUserId])
+}
+
+model LedgerEntry {
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount         Float
+  type           String          // WELCOME_BONUS, CAMPAIGN_DEBIT, CAMPAIGN_REFUND, TASK_REWARD, PACK_PURCHASE, ADMIN_ADJUSTMENT
+  referenceType  String          // CAMPAIGN, TASK_COMPLETION, PAYMENT, AUDIT, SYSTEM
+  referenceId    String?
+  idempotencyKey String          @unique
+  description    String
+  createdAt      DateTime        @default(now())
+
+  payment        Payment?
+}
+
+model Payment {
+  id                    String       @id @default(uuid())
+  userId                String
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packId                String       // PACK_50, PACK_150, PACK_500
+  pointsAmount          Int
+  amountInCents         Int
+  currency              String       @default("EUR")
+  provider              String       @default("STRIPE")
+  stripeSessionId       String?      @unique
+  stripePaymentIntentId String?
+  status                String       @default("PENDING") // PENDING, COMPLETED, FAILED
+  ledgerEntryId         String?      @unique
+  ledgerEntry           LedgerEntry? @relation(fields: [ledgerEntryId], references: [id])
+
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+model Report {
+  id               String          @id @default(uuid())
+  campaignId       String
+  campaign         Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  taskCompletionId String
+  taskCompletion   TaskCompletion  @relation(fields: [taskCompletionId], references: [id], onDelete: Cascade)
+  reporterUserId   String
+  reporterUser     User            @relation("ReporterUser", fields: [reporterUserId], references: [id])
+  reportedUserId   String
+  reportedUser     User            @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reason           String
+  status           String          @default("PENDING") // PENDING, UPHELD, DISMISSED
+  adminNotes       String?
+  resolvedAt       DateTime?
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model AuditLog {
+  id        String    @id @default(uuid())
+  actorId   String?
+  actor     User?     @relation("AuditActor", fields: [actorId], references: [id])
+  targetId  String?
+  target    User?     @relation("AuditTarget", fields: [targetId], references: [id])
+  action    String    // POINTS_ADJUSTMENT, USER_SUSPENDED, CAMPAIGN_MODERATED, SETTING_CHANGED
+  details   String
+  ipAddress String?
+  createdAt DateTime  @default(now())
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model RateLimit {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  attempts  Int      @default(1)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+}
+
