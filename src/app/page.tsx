@@ -9,65 +9,33 @@ import {
   Sparkles,
   Smartphone,
   CreditCard,
-  Clock,
   ChevronDown,
   Zap,
   Users,
   Heart,
   MessageCircle,
   UserPlus,
-  Activity,
+  Link2,
+  Play,
+  TrendingUp,
+  Share2,
 } from "lucide-react";
 import { POINT_PACKS } from "@/lib/constants";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [userBalance, setUserBalance] = useState<number>(0);
 
-  // Simulateur de campagne sur-mesure
+  // Interaction sur les 3 panels de notification flottants du Hero
+  const [clickedPanels, setClickedPanels] = useState<Record<string, boolean>>({});
+
+  // Simulateur de campagne
   const [simPlatform, setSimPlatform] = useState<"TIKTOK" | "INSTAGRAM" | "YOUTUBE">("TIKTOK");
   const [simAction, setSimAction] = useState<"LIKE" | "COMMENT" | "SUBSCRIBE">("LIKE");
   const [simQuantity, setSimQuantity] = useState<number>(30);
   const [simReward, setSimReward] = useState<number>(1);
   const [simDays, setSimDays] = useState<number>(4);
-
-  // Artefact 1 : Mélangeur Diagnostique (Cycling cards)
-  const [shuffleItems, setShuffleItems] = useState([
-    {
-      id: "rule-1",
-      tag: "ANTI-SPAM STRICT",
-      title: "1 seule action par utilisateur",
-      desc: "Impossible de liker ou s'abonner 2 fois. Chaque interaction provient d'un membre unique.",
-      badge: "Vérifié",
-    },
-    {
-      id: "rule-2",
-      tag: "CRÉDIT DIRECT",
-      title: "Points crédités immédiatement",
-      desc: "Dès les 10s de visionnage validées, vos points s'ajoutent instantanément à votre solde.",
-      badge: "0h d'attente",
-    },
-    {
-      id: "rule-3",
-      tag: "PROPRIÉTÉ BIO",
-      title: "Code unique ADDME-XXXXX",
-      desc: "Vérification sans mot de passe via code en biographie TikTok, Instagram ou YouTube.",
-      badge: "100% Sûr",
-    },
-  ]);
-
-  // Artefact 2 : Machine à écrire Télémétrie Ledger
-  const telemetryLines = [
-    "[LEDGER] +2.0 pts crédités à @kofi_crea (Abonnement Instagram vérifié · 11.4s)",
-    "[CAMPAGNE] Publication TikTok de @sarah_vlogs : 18/25 likes uniques livrés",
-    "[SAASPAY] Pack Créateur (+300 pts) activé via Wave Mobile Money (8 500 FCFA)",
-    "[ANTI-FRAUDE] Tâche retirée du flux de @alex_yt après exécution (Règle 1x)",
-  ];
-  const [lineIndex, setLineIndex] = useState(0);
-  const [typedText, setTypedText] = useState("");
-
-  // Artefact 3 : Planificateur Protocole Semaine
-  const [activeDayIndex, setActiveDayIndex] = useState(2);
 
   // FAQ
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -78,97 +46,75 @@ export default function HomePage() {
       .then((data) => {
         if (data?.authenticated && data?.user) {
           setIsAuthenticated(true);
+          setUserEmail(data.user.email || "");
           setUserBalance(data.user.balance ?? 0);
         }
       })
       .catch(() => {});
   }, []);
 
-  // Cycle Artefact 1 toutes les 3 secondes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShuffleItems((prev) => {
-        const copy = [...prev];
-        const last = copy.pop();
-        if (last) copy.unshift(last);
-        return copy;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Cycle Artefact 2 (Typewriter)
-  useEffect(() => {
-    const currentFullLine = telemetryLines[lineIndex];
-    let charIdx = 0;
-    setTypedText("");
-
-    const typeTimer = setInterval(() => {
-      charIdx++;
-      setTypedText(currentFullLine.slice(0, charIdx));
-      if (charIdx >= currentFullLine.length) {
-        clearInterval(typeTimer);
-        setTimeout(() => {
-          setLineIndex((prev) => (prev + 1) % telemetryLines.length);
-        }, 1800);
-      }
-    }, 28);
-
-    return () => clearInterval(typeTimer);
-  }, [lineIndex]);
-
-  // Cycle Artefact 3 (Jours de diffusion)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveDayIndex((prev) => (prev + 1) % 7);
-    }, 1400);
-    return () => clearInterval(timer);
-  }, []);
+  const handlePanelClick = (id: string) => {
+    setClickedPanels((prev) => ({ ...prev, [id]: true }));
+    setTimeout(() => {
+      setClickedPanels((prev) => ({ ...prev, [id]: false }));
+    }, 2200);
+  };
 
   const simActionCost = simQuantity * simReward;
   const simDurationFee = Number((simDays * 0.5).toFixed(1));
   const simTotalPoints = Number((simActionCost + simDurationFee).toFixed(1));
   const simDailyCap = Math.max(1, Math.ceil(simQuantity / simDays));
 
+  // Réseaux sociaux partenaires (style sponsors demandé)
+  const supportedNetworks = [
+    { name: "TikTok", status: "Actif", active: true, color: "from-pink-500 to-rose-600" },
+    { name: "Instagram", status: "Actif", active: true, color: "from-purple-600 via-pink-500 to-amber-500" },
+    { name: "YouTube", status: "Actif", active: true, color: "from-rose-600 to-red-600" },
+    { name: "Facebook", status: "Bientôt", active: false, color: "from-blue-600 to-indigo-700" },
+    { name: "Snapchat", status: "Bientôt", active: false, color: "from-amber-400 to-yellow-500" },
+    { name: "LinkedIn", status: "Bientôt", active: false, color: "from-sky-600 to-blue-700" },
+    { name: "X (Twitter)", status: "Bientôt", active: false, color: "from-slate-700 to-slate-900" },
+    { name: "Threads", status: "Bientôt", active: false, color: "from-zinc-800 to-zinc-950" },
+  ];
+
   const faqs = [
     {
       q: "Pourquoi mes points sont-ils crédités immédiatement sans attendre 24h ?",
-      a: "Nous avons supprimé la rétention de 24 heures pour fluidifier vos échanges. Dès que vous visionnez une publication pendant au moins 10 secondes et validez votre action, vos points sont crédités directement sur votre solde disponible et la tâche disparaît de votre liste.",
+      a: "Nous avons supprimé la rétention de 24 heures pour fluidifier vos échanges. Dès que vous visionnez une publication pendant au moins 10 secondes et validez votre action, vos points sont crédités directement sur votre solde disponible et la tâche disparaît définitivement de votre flux.",
     },
     {
       q: "Un même utilisateur peut-il liker ou s'abonner plusieurs fois à ma publication ?",
-      a: "Non, jamais. Sur TikTok, Instagram comme YouTube, on ne peut liker ou s'abonner qu'une seule fois. Notre moteur affiche une seule carte par publication : dès qu'un membre effectue la tâche, elle disparaît définitivement de son écran. Si vous lancez plus tard une autre campagne avec une action différente (ex: Commentaire après Like), elle redeviendra visible.",
+      a: "Non, jamais. Sur TikTok, Instagram comme YouTube, il est impossible d'effectuer la même interaction deux fois avec un seul compte. Notre algorithme affiche une seule carte par publication : dès qu'un membre effectue la tâche, elle disparaît définitivement de son écran. Si vous lancez plus tard une autre campagne avec une action différente (ex: Commentaire après Like), elle redeviendra éligible.",
     },
     {
       q: "Comment fonctionne la tarification libre d'une campagne ?",
-      a: "C'est 100% transparent : vous choisissez vous-même le nombre de personnes souhaitées, le nombre de points que vous offrez par action (1 pt, 2 pts, 3 pts... plus vous offrez, plus votre publication passe en priorité), et le nombre de jours de diffusion (0,5 point par jour).",
+      a: "C'est 100% transparent : vous choisissez vous-même le nombre de personnes souhaitées, les points que vous offrez par action (1 pt, 2 pts, 3 pts... plus vous offrez, plus votre publication passe en priorité), et le nombre de jours de diffusion (0,5 point par jour).",
     },
     {
-      q: "Puis-je payer mes packs de points par Mobile Money en Afrique ?",
-      a: "Oui ! Grâce à l'intégration SaaSPay, vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire via Stripe. Les points des packs ont été doublés (100, 300 et 1 000 points) au même tarif.",
+      q: "Puis-je recharger mes points par Mobile Money en Afrique ?",
+      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs ont été doublés (100, 300 et 1 000 points) au même prix.",
     },
     {
       q: "Dois-je donner le mot de passe de mon compte TikTok, Instagram ou YouTube ?",
-      a: "Jamais. AddMe.io ne vous demandera jamais vos identifiants. Pour prouver qu'un profil vous appartient, vous collez simplement un code unique (ex: ADDME-8F92A) dans votre biographie le temps de la validation.",
+      a: "Jamais. AddMe.io ne vous demandera jamais vos identifiants ou mots de passe. Pour prouver qu'un profil vous appartient, vous collez simplement un code temporaire unique (ex: ADDME-8F92A) dans votre biographie.",
     },
   ];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
       {/* =====================================================================
-          SECTION 1 : HERO CINÉMATOGRAPHIQUE SOMBRE (Style Main.dc.html + Skill 01)
+          SECTION 1 : HERO CINÉMATOGRAPHIQUE
          ===================================================================== */}
-      <section className="bg-[#0E0D14] text-white overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28 relative">
-        {/* Glow subtil d'arrière-plan */}
-        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px] bg-[#5B3DF5]/20 blur-[130px] rounded-full" />
+      <section className="bg-[#0E0D14] text-white overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24 relative">
+        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-[#5B3DF5]/20 blur-[130px] rounded-full" />
 
         <div className="max-w-[1140px] mx-auto px-6 relative z-10">
           <div className="flex flex-wrap items-center gap-12 lg:gap-14">
-            {/* Colonne Gauche : Message & CTA */}
+            {/* Colonne Gauche */}
             <div className="flex-[1_1_500px] animate-up">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1B1A26] border border-[#2E2C40] text-xs font-semibold text-[#C9C6DB] mb-6">
                 <Sparkles className="h-3.5 w-3.5 text-[#FFB84D]" />
-                <span>TikTok · Instagram · YouTube — Échange P2P 100% Réel</span>
+                <span>Plateforme P2P Éthique · Engagement 100% Réel & Vérifié</span>
               </div>
 
               <h1 className="text-[44px] sm:text-[60px] lg:text-[68px] font-extrabold leading-[1.02] tracking-[-0.03em] m-0 mb-5">
@@ -180,11 +126,12 @@ export default function HomePage() {
 
               <p className="text-lg sm:text-[19px] leading-[1.6] text-[#C9C6DB] max-w-xl m-0">
                 Propulsez vos contenus sur vos réseaux en échange d’engagement.
-                Interagissez avec les publications d’autres créateurs, gagnez des
-                points immédiatement, puis dépensez-les pour faire grandir les vôtres.
+                Interagissez manuellement avec les publications d’autres
+                créateurs, gagnez des points immédiatement, puis réinvestissez-les
+                pour faire décoller votre visibilité.
               </p>
 
-              {/* Boutons d'action adaptés à l'état de connexion */}
+              {/* Actions selon le statut de connexion */}
               <div className="flex flex-wrap items-center gap-4 mt-8">
                 {isAuthenticated ? (
                   <>
@@ -192,14 +139,20 @@ export default function HomePage() {
                       href="/dashboard"
                       className="addme-btn addme-btn-primary text-base px-7 py-4"
                     >
-                      <span>Accéder à mon Tableau de bord ({userBalance.toFixed(0)} pts)</span>
+                      <span>
+                        Accéder à mon Dashboard (
+                        <strong className="text-[#FFB84D]">
+                          {userBalance.toFixed(0)} pts
+                        </strong>
+                        )
+                      </span>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
                       href="/tasks"
                       className="addme-btn text-white border border-[#4A4760] hover:border-white px-6 py-4"
                     >
-                      Gagner des points maintenant
+                      Gagner des points
                     </Link>
                   </>
                 ) : (
@@ -221,11 +174,11 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Piliers de réassurance */}
+              {/* 3 Piliers */}
               <div className="mt-9 pt-7 border-t border-[#2E2C40]/80 grid grid-cols-3 gap-4 max-w-lg text-xs text-[#C9C6DB]">
                 <div>
                   <div className="font-extrabold text-white text-base">0 Bot</div>
-                  <div className="opacity-75">100% d'humains vérifiés</div>
+                  <div className="opacity-75">100% interactions réelles</div>
                 </div>
                 <div>
                   <div className="font-extrabold text-[#FFB84D] text-base">Immédiat</div>
@@ -238,131 +191,147 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Colonne Droite : Scène 3D de Cartes Flottantes + Pièce d'Or Rotative (Main.dc.html) */}
+            {/* Colonne Droite : 3 Panels Interactifs au survol/clic */}
             <div
-              className="flex-[1_1_400px] relative h-[430px] sm:h-[450px] w-full max-w-[480px] mx-auto"
+              className="flex-[1_1_400px] relative h-[440px] sm:h-[460px] w-full max-w-[480px] mx-auto"
               style={{ perspective: "1200px" }}
             >
               <div
                 className="relative h-full w-full"
                 style={{ transformStyle: "preserve-3d" }}
               >
-                {/* Carte 3D #1 : TikTok · Like */}
+                {/* Panel 1 : TikTok · Like */}
                 <div
-                  className="floating-3d-card bg-[#1B1A26] border border-[#2E2C40]"
+                  onClick={() => handlePanelClick("tiktok")}
+                  className={`floating-3d-card group bg-[#1B1A26] border border-[#2E2C40] ${
+                    clickedPanels["tiktok"] ? "!border-[#FFB84D] !scale-105" : ""
+                  }`}
                   style={
                     {
                       top: "20px",
                       left: "0px",
                       right: "56px",
-                      "--rx": "8deg",
-                      "--ry": "-16deg",
+                      "--rx": "6deg",
+                      "--ry": "-12deg",
                       animationDelay: "0s",
                     } as React.CSSProperties
                   }
+                  title="Cliquez pour tester l'interaction !"
                 >
                   <div className="flex items-center justify-between text-[13px] text-[#C9C6DB]">
-                    <span>TikTok · Like</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-semibold">
-                      1x unique
+                    <span className="group-hover:text-white transition-colors">
+                      TikTok · Like
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-semibold group-hover:bg-pink-500 group-hover:text-white transition-all">
+                      {clickedPanels["tiktok"] ? "✓ Action simulée !" : "1x unique"}
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5 mt-2.5 flex-nowrap">
-                    <div className="w-12 h-12 rounded-[10px] bg-gradient-to-tr from-pink-600 to-rose-400 flex items-center justify-center font-extrabold text-sm text-white shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-pink-600 to-rose-400 flex items-center justify-center font-extrabold text-sm text-white shrink-0 group-hover:scale-110 transition-transform">
                       TT
                     </div>
                     <div className="flex-1 min-w-0">
-                      <b className="block text-white text-sm truncate">
+                      <b className="block text-white text-sm truncate group-hover:text-[#FFB84D] transition-colors">
                         Vidéo de @créateur_tiktok
                       </b>
                       <span className="text-xs text-[#C9C6DB]">
-                        Chrono 10s validé · Crédit direct
+                        Visionnage 10s • Crédit direct
                       </span>
                     </div>
-                    <b className="text-[#FFB84D] text-lg font-extrabold shrink-0">
+                    <b className="text-[#FFB84D] text-lg font-extrabold shrink-0 group-hover:scale-110 transition-transform">
                       +1 pt
                     </b>
                   </div>
                 </div>
 
-                {/* Carte 3D #2 : Instagram · Abonnement (Mise en avant #5B3DF5) */}
+                {/* Panel 2 : Instagram · Abonnement */}
                 <div
-                  className="floating-3d-card bg-[#5B3DF5] border border-[#7C63F8]"
+                  onClick={() => handlePanelClick("instagram")}
+                  className={`floating-3d-card group bg-[#5B3DF5] border border-[#7C63F8] ${
+                    clickedPanels["instagram"] ? "!border-[#FFB84D] !scale-105" : ""
+                  }`}
                   style={
                     {
                       top: "152px",
                       left: "48px",
                       right: "0px",
-                      "--rx": "8deg",
-                      "--ry": "-16deg",
+                      "--rx": "6deg",
+                      "--ry": "-12deg",
                       animationDelay: "-2s",
                     } as React.CSSProperties
                   }
+                  title="Cliquez pour tester l'interaction !"
                 >
-                  <div className="flex items-center justify-between text-[13px] text-white/85">
+                  <div className="flex items-center justify-between text-[13px] text-white/90">
                     <span>Instagram · Abonnement</span>
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/20 text-white font-semibold">
-                      Prioritaire
+                      {clickedPanels["instagram"] ? "✓ Action simulée !" : "Prioritaire"}
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5 mt-2.5 flex-nowrap">
-                    <div className="w-12 h-12 rounded-[10px] bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 flex items-center justify-center font-extrabold text-sm text-white shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 flex items-center justify-center font-extrabold text-sm text-white shrink-0 group-hover:scale-110 transition-transform">
                       IG
                     </div>
                     <div className="flex-1 min-w-0">
-                      <b className="block text-white text-sm truncate">
-                        Reel de @studio.creatif
+                      <b className="block text-white text-sm truncate group-hover:text-[#FFB84D] transition-colors">
+                        Reel de @studio_art
                       </b>
                       <span className="text-xs text-white/80">
-                        Récompense choisie par le créateur
+                        Récompense libre choisie par le créateur
                       </span>
                     </div>
-                    <b className="text-[#FFB84D] text-lg font-extrabold shrink-0">
+                    <b className="text-[#FFB84D] text-lg font-extrabold shrink-0 group-hover:scale-110 transition-transform">
                       +3 pts
                     </b>
                   </div>
                 </div>
 
-                {/* Carte 3D #3 : YouTube · Commentaire */}
+                {/* Panel 3 : YouTube · Commentaire */}
                 <div
-                  className="floating-3d-card bg-[#1B1A26] border border-[#2E2C40]"
+                  onClick={() => handlePanelClick("youtube")}
+                  className={`floating-3d-card group bg-[#1B1A26] border border-[#2E2C40] ${
+                    clickedPanels["youtube"] ? "!border-[#FFB84D] !scale-105" : ""
+                  }`}
                   style={
                     {
                       top: "284px",
                       left: "12px",
                       right: "40px",
-                      "--rx": "8deg",
-                      "--ry": "-16deg",
+                      "--rx": "6deg",
+                      "--ry": "-12deg",
                       animationDelay: "-4s",
                     } as React.CSSProperties
                   }
+                  title="Cliquez pour tester l'interaction !"
                 >
                   <div className="flex items-center justify-between text-[13px] text-[#C9C6DB]">
-                    <span>YouTube · Commentaire</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-semibold">
-                      Vérifié
+                    <span className="group-hover:text-white transition-colors">
+                      YouTube · Commentaire
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-semibold group-hover:bg-rose-500 group-hover:text-white transition-all">
+                      {clickedPanels["youtube"] ? "✓ Action simulée !" : "Vérifié"}
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5 mt-2.5 flex-nowrap">
-                    <div className="w-12 h-12 rounded-[10px] bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center font-extrabold text-sm text-white shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center font-extrabold text-sm text-white shrink-0 group-hover:scale-110 transition-transform">
                       YT
                     </div>
                     <div className="flex-1 min-w-0">
-                      <b className="block text-white text-sm truncate">
-                        Short de @tech_afrique
+                      <b className="block text-white text-sm truncate group-hover:text-[#FFB84D] transition-colors">
+                        Short de @crea_media
                       </b>
                       <span className="text-xs text-[#C9C6DB]">
                         Engagement organique authentique
                       </span>
                     </div>
-                    <b className="text-[#FFB84D] text-lg font-extrabold shrink-0">
+                    <b className="text-[#FFB84D] text-lg font-extrabold shrink-0 group-hover:scale-110 transition-transform">
                       +2 pts
                     </b>
                   </div>
                 </div>
 
-                {/* Pièce d'or rotative "pt" (Style exact Main.dc.html) */}
-                <div className="coin-spin-3d absolute -top-2 right-2 w-[76px] h-[76px] rounded-full bg-[#FFB84D] text-[#0E0D14] font-extrabold flex items-center justify-center text-[22px] shadow-2xl border-4 border-[#FFE0A3]">
+                {/* Pièce d'or rotative */}
+                <div className="coin-spin-3d absolute -top-2 right-2 w-[76px] h-[76px] rounded-full bg-[#FFB84D] text-[#0E0D14] font-extrabold flex items-center justify-center text-[22px] shadow-2xl border-4 border-[#FFE0A3] select-none">
                   pt
                 </div>
               </div>
@@ -372,27 +341,70 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          BANDEAU TICKER CONTINU (#5B3DF5 - Main.dc.html)
+          BANDEAU TICKER DÉFILANT CONTINU (De Droite à Gauche Sans Fin)
+          Aucune mention de SaaSPay
          ===================================================================== */}
-      <div className="bg-[#5B3DF5] text-white overflow-hidden whitespace-nowrap py-4 font-extrabold tracking-[0.12em] text-sm">
-        <div className="marquee-track">
-          <span className="px-7">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT · PAIEMENT MOBILE MONEY SAASPAY ·
+      <div className="marquee-container bg-[#5B3DF5] text-white py-3.5 font-extrabold tracking-[0.14em] text-xs sm:text-sm shadow-md">
+        <div className="marquee-content">
+          <span className="px-6">
+            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
-          <span className="px-7">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT · PAIEMENT MOBILE MONEY SAASPAY ·
+          <span className="px-6">
+            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
-          <span className="px-7">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT · PAIEMENT MOBILE MONEY SAASPAY ·
+        </div>
+        <div className="marquee-content" aria-hidden="true">
+          <span className="px-6">
+            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
-          <span className="px-7">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT · PAIEMENT MOBILE MONEY SAASPAY ·
+          <span className="px-6">
+            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
           </span>
         </div>
       </div>
 
       {/* =====================================================================
-          SECTION 2 : COMMENT ÇA MARCHE (Chiffres Stroke 01, 02, 03 - Main.dc.html)
+          NOUVEAU BANDEAU PARTENAIRES RÉSEAUX SOCIAUX (Style Sponsors)
+         ===================================================================== */}
+      <section id="ecosystem" className="bg-[#12122A] text-white py-10 border-b border-[#2E2C40]">
+        <div className="max-w-[1140px] mx-auto px-6 text-center">
+          <p className="text-xs uppercase tracking-widest text-[#C9C6DB] font-extrabold mb-6">
+            Écosystème de Réseaux Compatibles · Actifs & Déploiements Futurs
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            {supportedNetworks.map((net) => (
+              <div
+                key={net.name}
+                className={`px-4 py-2.5 rounded-2xl border transition-all flex items-center gap-2.5 ${
+                  net.active
+                    ? "bg-[#1B1A26] border-[#5B3DF5]/60 text-white shadow-md hover:border-[#FFB84D]"
+                    : "bg-[#1B1A26]/40 border-[#2E2C40] text-[#7A7A90]"
+                }`}
+              >
+                <div
+                  className={`w-2.5 h-2.5 rounded-full bg-gradient-to-tr ${net.color}`}
+                />
+                <span className="font-extrabold text-xs sm:text-sm">
+                  {net.name}
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    net.active
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-slate-800 text-slate-400"
+                  }`}
+                >
+                  {net.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 2 : COMMENT ÇA MARCHE (Icônes & Badges Modernisés)
          ===================================================================== */}
       <section id="how" className="max-w-[1140px] mx-auto px-6 py-20 md:py-24">
         <div className="max-w-2xl">
@@ -403,211 +415,96 @@ export default function HomePage() {
             Comment ça marche
           </h2>
           <p className="text-[#5A5A70] text-base leading-relaxed">
-            Un système pair-à-pair limpide où chaque interaction provient d'un
-            vrai créateur et où vous maîtrisez 100% de vos récompenses.
+            Un système d'interaction transparent où chaque action provient d'un
+            vrai créateur et où vous maîtrisez l'ensemble de vos paramètres.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
-          <div className="addme-card animate-up">
-            <div className="stroke-number-big">01</div>
-            <h3 className="text-[22px] font-extrabold text-[#12122A] mt-4 mb-2">
-              Ajoutez une publication
-            </h3>
-            <p className="text-[#5A5A70] text-sm leading-relaxed">
-              Collez le lien d’une de vos vidéos TikTok, Reels Instagram ou
-              Shorts YouTube. Fixez librement les points offerts par action (1,
-              2, 3 pts...) et le nombre de jours de diffusion (0,5 pt/jour).
-            </p>
-          </div>
-
-          <div className="addme-card animate-up-1">
-            <div className="stroke-number-big">02</div>
-            <h3 className="text-[22px] font-extrabold text-[#12122A] mt-4 mb-2">
-              Gagnez des points sans attente
-            </h3>
-            <p className="text-[#5A5A70] text-sm leading-relaxed">
-              Likez, commentez ou abonnez-vous depuis les publications des
-              autres. Après 10 secondes de visionnage, vos points sont crédités{" "}
-              <strong className="text-[#12122A]">immédiatement</strong> sur votre
-              solde et la tâche disparaît.
-            </p>
-          </div>
-
-          <div className="addme-card animate-up-2">
-            <div className="stroke-number-big">03</div>
-            <h3 className="text-[22px] font-extrabold text-[#12122A] mt-4 mb-2">
-              Recevez de l’engagement unique
-            </h3>
-            <p className="text-[#5A5A70] text-sm leading-relaxed">
-              Chaque utilisateur ne peut effectuer votre tâche qu’
-              <strong className="text-[#12122A]">une seule fois</strong>. Vos
-              likes, commentaires et abonnements sont livrés par de vrais comptes
-              différents au rythme choisi.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* =====================================================================
-          SECTION 3 : ARTEFACTS FONCTIONNELS INTERACTIFS (Skill 01)
-         ===================================================================== */}
-      <section id="artefacts" className="max-w-[1140px] mx-auto px-6 pb-20 md:pb-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-          <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
-              Architecture Anti-Fraude & Temps Réel
-            </span>
-            <h2 className="text-[32px] sm:text-[40px] font-extrabold tracking-tight text-[#12122A] mt-1">
-              Conçu comme un instrument de précision
-            </h2>
-          </div>
-          <p className="text-sm text-[#5A5A70] max-w-md">
-            Contrairement aux plateformes opaques, chaque point et chaque tâche
-            sont régis par des garde-fous algorithmiques vérifiables.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
-          {/* Artefact 1 : Mélangeur Diagnostique */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+          {/* Étape 1 */}
           <div className="addme-card flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between text-xs font-bold text-[#5B3DF5] mb-3">
-                <span>01 · GARANTIE D'UNICITÉ</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#EEEAFF] text-[#3A22C8]">
-                  Actif
+              <div className="flex items-center justify-between mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] flex items-center justify-center font-extrabold text-xl shadow-xs">
+                  <Link2 className="h-7 w-7" />
+                </div>
+                <span className="px-3 py-1 rounded-full bg-[#12122A] text-white text-xs font-extrabold">
+                  Étape 01
                 </span>
               </div>
-              <h3 className="text-lg font-extrabold text-[#12122A]">
-                Moteur Anti-Spam & Preuve Bio
+
+              <h3 className="text-xl font-extrabold text-[#12122A] mb-2">
+                Ajoutez une publication
               </h3>
-              <p className="text-xs text-[#5A5A70] mt-1 mb-5">
-                Une seule carte par publication : impossible pour un membre de
-                répéter la même action.
+              <p className="text-[#5A5A70] text-sm leading-relaxed">
+                Collez le lien de votre vidéo TikTok, Reel Instagram ou Short
+                YouTube. Fixez vous-même les points offerts par interaction (1,
+                2, 3 pts...) et la durée de diffusion (0,5 pt/j).
               </p>
             </div>
-
-            <div className="space-y-2.5 bg-[#F7F7FB] p-3.5 rounded-2xl border border-[#E3E3EE]">
-              {shuffleItems.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className={`p-3.5 rounded-xl border transition-all duration-500 ${
-                    idx === 0
-                      ? "bg-white border-[#5B3DF5] shadow-md scale-[1.01]"
-                      : "bg-white/70 border-[#E3E3EE] opacity-75"
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-[#5B3DF5]">
-                    <span>{item.tag}</span>
-                    <span className="text-emerald-600">{item.badge}</span>
-                  </div>
-                  <div className="font-bold text-xs text-[#12122A] mt-1">
-                    {item.title}
-                  </div>
-                  <div className="text-[11px] text-[#5A5A70] mt-0.5 leading-snug">
-                    {item.desc}
-                  </div>
-                </div>
-              ))}
+            <div className="pt-4 border-t border-[#E3E3EE] text-xs font-bold text-[#5B3DF5] flex items-center gap-1.5">
+              <span>✓ Paramètres 100% libres</span>
             </div>
           </div>
 
-          {/* Artefact 2 : Machine à écrire Télémétrie Ledger */}
+          {/* Étape 2 */}
           <div className="addme-card flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between text-xs font-bold text-[#5B3DF5] mb-3">
-                <span>02 · LEDGER COMPTABLE</span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                  Flux en direct
+              <div className="flex items-center justify-between mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] flex items-center justify-center font-extrabold text-xl shadow-xs">
+                  <Play className="h-7 w-7" />
+                </div>
+                <span className="px-3 py-1 rounded-full bg-[#5B3DF5] text-white text-xs font-extrabold">
+                  Étape 02
                 </span>
               </div>
-              <h3 className="text-lg font-extrabold text-[#12122A]">
-                Crédit Immédiat sans Rétention 24h
+
+              <h3 className="text-xl font-extrabold text-[#12122A] mb-2">
+                Gagnez des points sans délai
               </h3>
-              <p className="text-xs text-[#5A5A70] mt-1 mb-5">
-                Chaque tâche validée déclenche une écriture atomique directe sur
-                votre solde de points.
+              <p className="text-[#5A5A70] text-sm leading-relaxed">
+                Likez, commentez ou abonnez-vous depuis les publications des
+                autres. Après 10 secondes de visionnage effectif, vos points sont
+                crédités <strong className="text-[#12122A]">immédiatement</strong>{" "}
+                sur votre solde et la tâche disparaît.
               </p>
             </div>
-
-            <div className="bg-[#0E0D14] text-white p-5 rounded-2xl border border-[#2E2C40] font-mono-code text-xs min-h-[175px] flex flex-col justify-between">
-              <div className="flex items-center justify-between text-[11px] text-[#C9C6DB] border-b border-[#2E2C40] pb-2.5">
-                <span>addme-ledger://stream</span>
-                <span className="text-[#FFB84D]">STATUS: DIRECT_CREDIT</span>
-              </div>
-              <div className="my-4 text-emerald-400 leading-relaxed min-h-[54px]">
-                {typedText}
-                <span className="inline-block w-2 h-4 bg-[#FFB84D] ml-1 animate-pulse align-middle" />
-              </div>
-              <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-[#2E2C40] text-[11px]">
-                <div>
-                  <span className="text-[#C9C6DB]">Délai de crédit :</span>{" "}
-                  <strong className="text-white">0 seconde</strong>
-                </div>
-                <div className="text-right">
-                  <span className="text-[#C9C6DB]">Chrono tâche :</span>{" "}
-                  <strong className="text-[#FFB84D]">10s min.</strong>
-                </div>
-              </div>
+            <div className="pt-4 border-t border-[#E3E3EE] text-xs font-bold text-emerald-600 flex items-center gap-1.5">
+              <span>✓ Zéro attente 24h</span>
             </div>
           </div>
 
-          {/* Artefact 3 : Planificateur de Diffusion */}
+          {/* Étape 3 */}
           <div className="addme-card flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between text-xs font-bold text-[#5B3DF5] mb-3">
-                <span>03 · CADENCE ORGANIQUE</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#EEEAFF] text-[#3A22C8]">
-                  0,5 pt / jour
+              <div className="flex items-center justify-between mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] flex items-center justify-center font-extrabold text-xl shadow-xs">
+                  <TrendingUp className="h-7 w-7" />
+                </div>
+                <span className="px-3 py-1 rounded-full bg-[#12122A] text-white text-xs font-extrabold">
+                  Étape 03
                 </span>
               </div>
-              <h3 className="text-lg font-extrabold text-[#12122A]">
-                Diffusion Progressive Maîtrisée
+
+              <h3 className="text-xl font-extrabold text-[#12122A] mb-2">
+                Recevez un engagement unique
               </h3>
-              <p className="text-xs text-[#5A5A70] mt-1 mb-5">
-                Choisissez le nombre de jours de votre campagne pour répartir
-                naturellement les interactions.
+              <p className="text-[#5A5A70] text-sm leading-relaxed">
+                Chaque membre ne peut interagir avec votre publication qu’
+                <strong className="text-[#12122A]">une seule fois</strong>. Vos
+                interactions proviennent toutes d'utilisateurs distincts pour
+                déclencher naturellement les algorithmes.
               </p>
             </div>
-
-            <div className="bg-[#F7F7FB] p-4 rounded-2xl border border-[#E3E3EE] space-y-4">
-              <div className="grid grid-cols-7 gap-1.5 text-center">
-                {["L", "M", "M", "J", "V", "S", "D"].map((day, idx) => {
-                  const isActive = idx <= activeDayIndex;
-                  return (
-                    <div
-                      key={idx}
-                      className={`py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                        isActive
-                          ? "bg-[#5B3DF5] text-white shadow-sm scale-105"
-                          : "bg-white border border-[#E3E3EE] text-[#5A5A70]"
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="p-3 rounded-xl bg-white border border-[#E3E3EE] flex items-center justify-between text-xs">
-                <span className="text-[#5A5A70] font-medium">
-                  Durée active sélectionnée :
-                </span>
-                <span className="font-extrabold text-[#5B3DF5]">
-                  {activeDayIndex + 1} jour(s) · +{((activeDayIndex + 1) * 0.5).toFixed(1)} pts
-                </span>
-              </div>
-              <div className="text-[11px] text-[#5A5A70] flex items-center justify-between px-1">
-                <span>Protection algorithme social</span>
-                <span className="text-emerald-600 font-bold">✓ Cadence lissée</span>
-              </div>
+            <div className="pt-4 border-t border-[#E3E3EE] text-xs font-bold text-[#5B3DF5] flex items-center gap-1.5">
+              <span>✓ Règle anti-spam 1x stricte</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* =====================================================================
-          SECTION 4 : SIMULATEUR INTERACTIF DE CAMPAGNE SUR-MESURE
+          SECTION 3 : SIMULATEUR INTERACTIF DE CAMPAGNE SUR-MESURE
          ===================================================================== */}
       <section id="simulateur" className="max-w-[1140px] mx-auto px-6 pb-20 md:pb-24">
         <div className="addme-card-static p-6 sm:p-10 bg-white border-2 border-[#E3E3EE] shadow-xl">
@@ -620,7 +517,7 @@ export default function HomePage() {
             </h2>
             <p className="text-sm text-[#5A5A70] mt-1">
               Sur AddMe.io, aucun tarif imposé : vous décidez combien de points
-              vous offrez par action et combien de jours dure votre mission.
+              vous offrez par action et combien de jours dure votre diffusion.
             </p>
           </div>
 
@@ -806,15 +703,15 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          SECTION 5 : LE MANIFESTE SOMBRE (Skill 01 - Contraste Bots vs Réel)
+          SECTION 4 : LE MANIFESTE SOMBRE (Contraste Bots vs Humain)
          ===================================================================== */}
       <section className="bg-[#0E0D14] text-white py-20 md:py-24">
         <div className="max-w-[1140px] mx-auto px-6">
           <div className="max-w-3xl space-y-4">
             <p className="text-lg sm:text-xl text-[#C9C6DB]">
-              La plupart des plateformes de boost se concentrent sur :{" "}
+              La plupart des services de boost se concentrent sur :{" "}
               <span className="line-through opacity-70">
-                des fermes de robots automatisés qui détruisent la portée de vos comptes.
+                des fermes de faux robots qui pénalisent vos comptes sociaux.
               </span>
             </p>
             <h2 className="text-[32px] sm:text-[48px] font-extrabold leading-[1.1] tracking-tight">
@@ -832,8 +729,8 @@ export default function HomePage() {
                 Zéro mot de passe requis
               </h3>
               <p className="text-sm text-[#C9C6DB] mt-1.5 leading-relaxed">
-                Vos comptes sociaux restent 100% sous votre contrôle. La liaison
-                se fait uniquement par un code temporaire placé dans votre bio.
+                Vos comptes sociaux restent strictement sous votre contrôle. La
+                vérification se fait uniquement via un code temporaire dans votre bio.
               </p>
             </div>
             <div className="p-6 rounded-2xl bg-[#1B1A26] border border-[#2E2C40]">
@@ -842,9 +739,8 @@ export default function HomePage() {
                 1 Membre = 1 Seule Action
               </h3>
               <p className="text-sm text-[#C9C6DB] mt-1.5 leading-relaxed">
-                Chaque tâche disparaît aussitôt effectuée. Vous recevez
-                uniquement des likes, commentaires et abonnements de personnes
-                distinctes.
+                Chaque publication ne peut être accomplie qu'une seule fois par
+                utilisateur. Vous ne recevez jamais de spams répétitifs.
               </p>
             </div>
             <div className="p-6 rounded-2xl bg-[#1B1A26] border border-[#2E2C40]">
@@ -853,9 +749,8 @@ export default function HomePage() {
                 Points doublés & Mobile Money
               </h3>
               <p className="text-sm text-[#C9C6DB] mt-1.5 leading-relaxed">
-                Pas le temps de faire des tâches ? Rechargez vos points en
-                quelques secondes via Orange Money, MTN, Wave, Moov (SaaSPay) ou
-                Carte Bancaire.
+                Rechargez vos points en toute simplicité en FCFA via Mobile Money
+                (Orange, MTN, Wave, Moov) ou Carte Bancaire.
               </p>
             </div>
           </div>
@@ -863,31 +758,31 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          SECTION 6 : TARIFS & PACKS DE POINTS DOUBLÉS (Style Main.dc.html + SaaSPay)
+          SECTION 5 : TARIFS & PACKS DE POINTS DOUBLÉS (Mobile Money en FCFA)
          ===================================================================== */}
       <section id="prix" className="max-w-[1140px] mx-auto px-6 py-20 md:py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
-              Boutique de Points · Volume ×2
+              Boutique de Points · Volume Doublé
             </span>
             <h2 className="text-[34px] sm:text-[42px] font-extrabold text-[#12122A] mt-1 mb-1">
               Tarifs
             </h2>
             <p className="text-[#5A5A70] text-base">
               Packs de points doublés, sans abonnement obligatoire. Paiement
-              Mobile Money (FCFA) & Carte (EUR).
+              Mobile Money (FCFA) & Carte Bancaire (EUR).
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30">
               <Smartphone className="h-3.5 w-3.5 text-amber-600" />
-              SaaSPay : Orange · MTN · Wave · Moov
+              Mobile Money : Orange · MTN · Wave · Moov
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E3E3EE] text-[#12122A]">
               <CreditCard className="h-3.5 w-3.5 text-[#5B3DF5]" />
-              Stripe : Visa · Mastercard
+              Carte : Visa · Mastercard
             </span>
           </div>
         </div>
@@ -936,15 +831,15 @@ export default function HomePage() {
                   <ul className="space-y-2.5 text-xs text-[#3A3A52] mb-6 pt-4 border-t border-[#E3E3EE]">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
-                      <span>Jusqu'à {pack.points} actions à 1 pt</span>
+                      <span>Jusqu'à {pack.points} actions uniques</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
-                      <span>Paiement Mobile Money (SaaSPay) ou Carte</span>
+                      <span>Paiement Mobile Money ou Carte Bancaire</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
-                      <span>Points sans date d'expiration</span>
+                      <span>Points permanents sans expiration</span>
                     </li>
                   </ul>
                 </div>
@@ -964,7 +859,7 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          SECTION 7 : FAQ ANTI-OBJECTIONS
+          SECTION 6 : FAQ ANTI-OBJECTIONS
          ===================================================================== */}
       <section id="faq" className="max-w-[900px] mx-auto px-6 pb-24">
         <div className="text-center mb-10">
@@ -1009,14 +904,17 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          PIED DE PAGE SOMBRE (Style Main.dc.html + Indicateur Système Opérationnel)
+          PIED DE PAGE SOMBRE
          ===================================================================== */}
       <footer className="bg-[#0E0D14] text-white py-10 mt-auto">
         <div className="max-w-[1140px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <b className="text-xl font-extrabold">
-              AddMe<span className="text-[#FFB84D]">.io</span>
-            </b>
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/icon.svg" alt="AddMe.io" className="h-6 w-6 rounded-md" />
+              <b className="text-xl font-extrabold">
+                AddMe<span className="text-[#FFB84D]">.io</span>
+              </b>
+            </Link>
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1B1A26] border border-[#2E2C40] text-[11px] font-mono-code text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               Système Opérationnel

@@ -165,7 +165,7 @@ function ShopContent() {
           </h1>
           <p className="text-sm text-[#5A5A70] mt-0.5">
             Packs de points doublés (100, 300 et 1 000 pts) • Paiement Mobile
-            Money (SaaSPay) & Carte Bancaire.
+            Money (FCFA) & Carte Bancaire.
           </p>
         </div>
 
@@ -200,7 +200,7 @@ function ShopContent() {
           >
             <Smartphone className="h-4 w-4 text-[#FFB84D]" />
             <div className="text-left">
-              <div>Mobile Money (SaaSPay)</div>
+              <div>Mobile Money</div>
               <div className="text-[10px] opacity-75 font-normal">
                 Orange • MTN • Wave • Moov (FCFA)
               </div>

@@ -86,7 +86,7 @@ function SaasPayCheckoutContent() {
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-[#12122A]">
-                SaaSPay Mobile Money
+                Paiement Mobile Money
               </h2>
               <span className="text-xs text-[#5A5A70]">
                 Paiement Mobile Money sécurisé (Afrique)

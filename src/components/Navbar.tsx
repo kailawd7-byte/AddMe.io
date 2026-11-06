@@ -17,6 +17,7 @@ import {
   PlusCircle,
   CheckCircle2,
   AlertTriangle,
+  User,
 } from "lucide-react";
 
 interface UserData {
@@ -61,7 +62,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
       const res = await fetch("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
-        if (data.authenticated) {
+        if (data.authenticated && data.user) {
           setUser(data.user);
         } else {
           setUser(null);
@@ -96,31 +97,40 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   };
 
   // =========================================================================
-  // 1. LANDING PAGE ("/") : Header public uniquement + contenu plein écran
+  // 1. LANDING PAGE ("/") : Header public
   // =========================================================================
   if (isLandingPage) {
+    const userDisplayName = user ? user.email.split("@")[0] : "";
+
     return (
       <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
         <header
           className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
             scrolled
-              ? "bg-[#0E0D14]/90 backdrop-blur-xl border-b border-[#2E2C40] py-3.5 shadow-2xl"
+              ? "bg-[#0E0D14]/95 backdrop-blur-xl border-b border-[#2E2C40] py-3.5 shadow-2xl"
               : "bg-transparent py-5"
           }`}
         >
           <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-between gap-4">
-            {/* Logo AddMe.io */}
-            <Link href="/" className="text-2xl font-extrabold tracking-tight text-white">
-              AddMe<span className="text-[#FFB84D]">.io</span>
+            {/* Logo officiel AddMe.io */}
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <img
+                src="/icon.svg"
+                alt="Logo AddMe.io"
+                className="h-8 w-8 rounded-xl shadow-md group-hover:scale-105 transition-transform"
+              />
+              <span className="text-2xl font-extrabold tracking-tight text-white">
+                AddMe<span className="text-[#FFB84D]">.io</span>
+              </span>
             </Link>
 
-            {/* Navigation publique uniquement (ZÉRO lien interne dashboard) */}
+            {/* Navigation publique (sans "Système P2P" retiré selon votre demande) */}
             <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-[#C9C6DB]">
               <a href="#how" className="hover:text-white transition-colors">
                 Fonctionnement
               </a>
-              <a href="#artefacts" className="hover:text-white transition-colors">
-                Système P2P
+              <a href="#ecosystem" className="hover:text-white transition-colors">
+                Réseaux compatibles
               </a>
               <a href="#simulateur" className="hover:text-white transition-colors">
                 Simulateur
@@ -133,26 +143,30 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               </a>
             </nav>
 
-            {/* Action droite selon connexion */}
+            {/* Action droite : Si connecté = profil + bouton Dashboard (AUCUN bouton connexion/commencer) */}
             <div className="flex items-center gap-3">
               {loading ? (
                 <div className="h-10 w-28 rounded-xl bg-white/10 animate-pulse" />
               ) : user ? (
-                /* Déjà connecté : uniquement bouton vers le Tableau de bord */
-                <div className="flex items-center gap-3">
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1B1A26] border border-[#2E2C40] text-[#FFB84D] text-xs font-extrabold">
-                    {user.balance.toFixed(0)} pts
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1B1A26] border border-[#2E2C40] text-xs font-semibold text-white">
+                    <User className="h-3.5 w-3.5 text-[#5B3DF5]" />
+                    <span className="truncate max-w-[120px]">{userDisplayName}</span>
+                    <span className="text-[#FFB84D] font-extrabold border-l border-[#2E2C40] pl-2">
+                      {user.balance.toFixed(0)} pts
+                    </span>
+                  </div>
+
                   <Link
                     href="/dashboard"
-                    className="addme-btn addme-btn-primary text-sm"
+                    className="addme-btn addme-btn-primary text-xs sm:text-sm py-2 px-4 sm:px-5"
                   >
-                    <span>Mon Tableau de bord</span>
+                    <span>Mon Dashboard</span>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               ) : (
-                /* Non connecté : Connexion + Commencer */
+                /* Non connecté */
                 <div className="flex items-center gap-4">
                   <Link
                     href="/login"
@@ -162,7 +176,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   </Link>
                   <Link
                     href="/register"
-                    className="addme-btn addme-btn-primary text-sm"
+                    className="addme-btn addme-btn-primary text-sm py-2.5 px-4"
                   >
                     Commencer
                   </Link>
@@ -178,7 +192,6 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
   // =========================================================================
   // 2. ESPACE APPLICATIF SAAS (/dashboard, /tasks, /campaigns, /shop, /admin)
-  //    Architecture Sidebar gauche fidèle à Dashboard.dc.html
   // =========================================================================
   if (isAppWorkspace) {
     const sidebarLinks = [
@@ -231,10 +244,13 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F7FB] text-[#12122A]">
-        {/* Topbar Mobile uniquement */}
+        {/* Topbar Mobile : Redirection logo vers la Landing Page "/" */}
         <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#E3E3EE]">
-          <Link href="/dashboard" className="text-xl font-extrabold tracking-tight text-[#12122A]">
-            AddMe<span className="text-[#5B3DF5]">.io</span>
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
+            <span className="text-xl font-extrabold tracking-tight text-[#12122A]">
+              AddMe<span className="text-[#5B3DF5]">.io</span>
+            </span>
           </Link>
           <div className="flex items-center gap-2.5">
             {user && (
@@ -263,11 +279,14 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               <div>
                 <div className="flex items-center justify-between px-2 mb-6">
                   <Link
-                    href="/dashboard"
+                    href="/"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-2xl font-extrabold text-[#12122A]"
+                    className="flex items-center gap-2"
                   >
-                    AddMe<span className="text-[#5B3DF5]">.io</span>
+                    <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
+                    <span className="text-2xl font-extrabold text-[#12122A]">
+                      AddMe<span className="text-[#5B3DF5]">.io</span>
+                    </span>
                   </Link>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
@@ -324,15 +343,23 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
           </div>
         )}
 
-        {/* Sidebar Desktop fixe à gauche (Style exact Dashboard.dc.html) */}
+        {/* Sidebar Desktop fixe : Redirection logo vers la Landing Page "/" */}
         <aside className="hidden lg:flex w-[244px] shrink-0 bg-white border-r border-[#E3E3EE] px-4 py-6 flex-col justify-between sticky top-0 h-screen">
           <div>
-            {/* Brand Logo -> renvoie toujours vers /dashboard */}
+            {/* Logo officiel menant vers "/" */}
             <Link
-              href="/dashboard"
-              className="block px-3.5 mb-6 text-[22px] font-extrabold tracking-tight text-[#12122A]"
+              href="/"
+              title="Retour à l'accueil AddMe.io"
+              className="flex items-center gap-2.5 px-3.5 mb-6 group"
             >
-              AddMe<span className="text-[#5B3DF5]">.io</span>
+              <img
+                src="/icon.svg"
+                alt="Logo AddMe.io"
+                className="h-8 w-8 rounded-xl shadow-xs group-hover:scale-105 transition-transform"
+              />
+              <span className="text-[22px] font-extrabold tracking-tight text-[#12122A]">
+                AddMe<span className="text-[#5B3DF5]">.io</span>
+              </span>
             </Link>
 
             {/* Mini carte Solde rapide */}
@@ -380,7 +407,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
             </nav>
           </div>
 
-          {/* Pied de Sidebar : Infos utilisateur + Déconnexion */}
+          {/* Pied de Sidebar */}
           <div className="pt-4 border-t border-[#E3E3EE] space-y-2.5">
             {user ? (
               <>
@@ -437,24 +464,28 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Contenu Principal de l'Application */}
+        {/* Contenu Principal */}
         <main className="flex-1 min-w-0 flex flex-col">{children}</main>
       </div>
     );
   }
 
   // =========================================================================
-  // 3. PAGES AUTHENTIFICATION & LÉGALES (/login, /register, /verify-email...)
+  // 3. PAGES AUTH & LEGALES (/login, /register, /verify-email...)
   // =========================================================================
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
       <header className="w-full bg-white border-b border-[#E3E3EE]">
         <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
           <Link
-            href={user ? "/dashboard" : "/"}
-            className="text-2xl font-extrabold tracking-tight text-[#12122A]"
+            href="/"
+            title="Retour à l'accueil"
+            className="flex items-center gap-2.5"
           >
-            AddMe<span className="text-[#5B3DF5]">.io</span>
+            <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
+            <span className="text-2xl font-extrabold tracking-tight text-[#12122A]">
+              AddMe<span className="text-[#5B3DF5]">.io</span>
+            </span>
           </Link>
           <div className="flex items-center gap-3">
             {user ? (
@@ -483,9 +514,12 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
       <main className="flex-1 flex flex-col">{children}</main>
       <footer className="bg-[#0E0D14] text-white py-6 text-xs">
         <div className="max-w-[1100px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <b>
-            AddMe<span className="text-[#FFB84D]">.io</span>
-          </b>
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/icon.svg" alt="AddMe.io" className="h-5 w-5 rounded-md" />
+            <b>
+              AddMe<span className="text-[#FFB84D]">.io</span>
+            </b>
+          </Link>
           <div className="flex items-center gap-4 text-[#C9C6DB]">
             <Link href="/legal/terms" className="hover:text-white">
               CGU
