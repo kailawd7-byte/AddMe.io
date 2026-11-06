@@ -16,19 +16,19 @@ describe("Boutique de Points & Catalogue de Packs (Étape 5)", () => {
 
     const starter = getPackById("PACK_STARTER");
     assert.ok(starter);
-    assert.equal(starter.points, 50);
+    assert.equal(starter.points, 100);
     assert.equal(starter.priceInCents, 499);
     assert.equal(starter.priceFormatted, "4,99 €");
 
     const creator = getPackById("PACK_CREATOR");
     assert.ok(creator);
-    assert.equal(creator.points, 150);
+    assert.equal(creator.points, 300);
     assert.equal(creator.priceInCents, 1299);
     assert.equal(creator.popular, true);
 
     const pro = getPackById("PACK_PRO");
     assert.ok(pro);
-    assert.equal(pro.points, 500);
+    assert.equal(pro.points, 1000);
     assert.equal(pro.priceInCents, 3499);
   });
 

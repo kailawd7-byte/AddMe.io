@@ -51,8 +51,8 @@ export async function POST(req: NextRequest) {
     // Hash du mot de passe
     const passwordHash = await hashPassword(password);
 
-    // Génération du token de vérification d'email (24h de validité)
-    const emailVerificationToken = generateSecureToken(32);
+    // Génération du code de vérification d'email à 6 chiffres (24h de validité)
+    const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString();
     const emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     // Création de l'utilisateur
@@ -106,9 +106,10 @@ export async function POST(req: NextRequest) {
         role: newUser.role,
         isEmailVerified: newUser.isEmailVerified,
       },
-      // Retourné pour faciliter les tests manuels et le développement local
+      // Retourné pour faciliter les tests manuels et la validation directe
+      verificationCode: emailVerificationToken,
       verificationToken: emailVerificationToken,
-      verificationUrl: `${origin}/verify-email?token=${emailVerificationToken}`,
+      verificationUrl: `${origin}/verify-email?code=${emailVerificationToken}`,
     });
   } catch (error) {
     console.error("Erreur registration:", error);

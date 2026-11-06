@@ -11,6 +11,7 @@ import {
   Clock,
   ArrowRight,
   CreditCard,
+  Smartphone,
   Flame,
   Zap,
   HelpCircle,
@@ -39,6 +40,7 @@ function ShopContent() {
   const isSuccessParam = searchParams.get("success") === "true";
   const isCanceledParam = searchParams.get("canceled") === "true";
 
+  const [paymentMethod, setPaymentMethod] = useState<"SAASPAY" | "STRIPE">("SAASPAY");
   const [packs, setPacks] = useState<PointPack[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
@@ -99,7 +101,7 @@ function ShopContent() {
       const res = await fetch("/api/shop/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packId: pack.id }),
+        body: JSON.stringify({ packId: pack.id, provider: paymentMethod }),
       });
 
       const data = await res.json();
@@ -107,17 +109,15 @@ function ShopContent() {
       if (!res.ok) {
         setFeedback({ type: "error", text: data.error || "Impossible d'initier le paiement." });
       } else {
-        if (data.isMock) {
-          // Mode simulation sandbox
+        if (data.url) {
+          window.location.href = data.url;
+        } else if (data.isMock) {
           setSimulatingSessionId(data.sessionId);
           setFeedback({
             type: "success",
-            text: `Session de paiement créée pour le ${pack.name} (${pack.priceFormatted}). Cliquez ci-dessous pour simuler la confirmation immédiate du paiement.`,
+            text: `Session de paiement créée pour le ${pack.name}. Cliquez ci-dessous pour simuler la validation.`,
           });
           await fetchShopData();
-        } else {
-          // Redirection vers Stripe Checkout officiel
-          window.location.href = data.url;
         }
       }
     } catch {

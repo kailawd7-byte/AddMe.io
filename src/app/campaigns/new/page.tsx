@@ -13,41 +13,37 @@ import {
   Sparkles,
   HelpCircle,
   CheckCircle2,
+  Sliders,
+  Calendar,
+  Users,
 } from "lucide-react";
 import { validateVideoPublicationUrl } from "@/lib/video-url-validator";
 
 interface SocialAccount {
   id: string;
-  platform: "TIKTOK" | "YOUTUBE";
+  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   identifier: string;
   status: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
-}
-
-interface ActionRates {
-  cost: number;
-  reward: number;
 }
 
 export default function NewCampaignPage() {
   const router = useRouter();
 
-  // User & Rates State
+  // User State
   const [balance, setBalance] = useState<number>(0);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
-  const [rates, setRates] = useState<Record<string, ActionRates>>({
-    LIKE: { cost: 1.3, reward: 1.0 },
-    COMMENT: { cost: 1.8, reward: 1.4 },
-    SUBSCRIBE: { cost: 2.5, reward: 2.0 },
-  });
   const [loading, setLoading] = useState(true);
 
-  // Form State
+  // Form State (Paramètres Simplifiés)
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [actionType, setActionType] = useState<"LIKE" | "COMMENT" | "SUBSCRIBE">("LIKE");
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [commentTemplate, setCommentTemplate] = useState<string>("");
-  const [totalQuantity, setTotalQuantity] = useState<number>(10);
-  const [dailyCap, setDailyCap] = useState<number>(5);
+
+  // Nouveaux paramètres utilisateur intuitifs :
+  const [targetQuantity, setTargetQuantity] = useState<number>(10); // Combien de personnes
+  const [rewardPerWorker, setRewardPerWorker] = useState<number>(1.5); // Récompense offerte par action
+  const [durationDays, setDurationDays] = useState<number>(5); // Durée de diffusion en jours
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +59,6 @@ export default function NewCampaignPage() {
         if (ratesRes.ok) {
           const ratesData = await ratesRes.json();
           setBalance(ratesData.balance);
-          if (ratesData.rates) setRates(ratesData.rates);
         }
 
         if (meRes.ok) {
@@ -94,18 +89,15 @@ export default function NewCampaignPage() {
   // Validation en temps réel de l'URL
   const selectedPlatform = selectedAccount?.platform || "TIKTOK";
   const urlValidation = videoUrl
-    ? validateVideoPublicationUrl(
-        selectedPlatform,
-        videoUrl,
-        selectedAccount?.identifier
-      )
+    ? validateVideoPublicationUrl(selectedPlatform, videoUrl, selectedAccount?.identifier)
     : null;
 
-  // Calculs financiers en temps réel
-  const currentCostPerUnit = rates[actionType]?.cost || 1.3;
-  const totalCost = Number((totalQuantity * currentCostPerUnit).toFixed(2));
-  const remainingBalance = Number((balance - totalCost).toFixed(2));
+  // Calculs financiers transparents
+  const interactionsCost = Number((targetQuantity * rewardPerWorker).toFixed(2));
+  const durationFee = Number((durationDays * 0.5).toFixed(2)); // 0.5 pt par jour de diffusion
+  const totalCost = Number((interactionsCost + durationFee).toFixed(2));
   const isBalanceSufficient = balance >= totalCost;
+  const dailyPacing = Math.max(1, Math.ceil(targetQuantity / durationDays));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,13 +109,13 @@ export default function NewCampaignPage() {
     }
 
     if (urlValidation && !urlValidation.valid) {
-      setError(urlValidation.error || "L'URL de la vidéo est invalide.");
+      setError(urlValidation.error || "L'URL de la publication est invalide.");
       return;
     }
 
     if (!isBalanceSufficient) {
       setError(
-        `Solde insuffisant : il vous manque ${(totalCost - balance).toFixed(1)} points pour créer cette campagne.`
+        `Solde insuffisant : il vous manque ${(totalCost - balance).toFixed(1)} points pour lancer cette campagne.`
       );
       return;
     }
@@ -139,8 +131,9 @@ export default function NewCampaignPage() {
           actionType,
           videoUrl,
           commentTemplate: actionType === "COMMENT" ? commentTemplate : undefined,
-          totalQuantity,
-          dailyCap,
+          totalQuantity: targetQuantity,
+          rewardPerWorker,
+          durationDays,
         }),
       });
 
@@ -172,10 +165,10 @@ export default function NewCampaignPage() {
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
           <Video className="h-7 w-7 text-indigo-400" />
-          Créer une nouvelle campagne
+          Lancer une nouvelle campagne
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Recevez des likes, commentaires ou abonnements 100% manuels sur une publication spécifique de votre choix.
+          Fixez vous-même vos récompenses et la durée souhaitée pour propulser vos publications TikTok, YouTube et Instagram.
         </p>
       </div>
 
@@ -186,7 +179,7 @@ export default function NewCampaignPage() {
           <div>
             <h3 className="text-lg font-bold text-white">Aucun compte social vérifié</h3>
             <p className="text-sm text-slate-300 max-w-md mx-auto mt-1 leading-relaxed">
-              Pour garantir l'intégrité de la plateforme, vous devez prouver la propriété de votre pseudo TikTok ou chaîne YouTube via le code en bio avant de publier des campagnes.
+              Pour garantir l'intégrité de la plateforme, vous devez lier votre profil TikTok, YouTube ou Instagram via le code en bio avant de créer des campagnes.
             </p>
           </div>
           <Link
@@ -198,72 +191,93 @@ export default function NewCampaignPage() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Left Columns: Form Inputs */}
-          <div className="lg:col-span-2 space-y-6 p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            {error && (
-              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-rose-400" />
-                <span>{error}</span>
-              </div>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {error && (
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-rose-400" />
+              <span>{error}</span>
+            </div>
+          )}
 
-            {/* 1. Compte Social */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                1. Compte Social Associé
-              </label>
-              <select
-                value={selectedAccountId}
-                onChange={(e) => setSelectedAccountId(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+          {/* Étape 1 : Choix du compte social */}
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-400">
+                1. Votre profil vérifié
+              </h2>
+              <Link
+                href="/dashboard/social-accounts"
+                className="text-xs text-slate-400 hover:text-white"
               >
-                {verifiedAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.platform} : @{acc.identifier} (Vérifié ✓)
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Seules les vidéos appartenant à ce compte vérifié seront acceptées.
-              </p>
+                + Ajouter un autre compte
+              </Link>
             </div>
 
-            {/* 2. Type d'action */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                2. Action Souhaitée
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { type: "LIKE", label: "Like", cost: rates.LIKE?.cost || 1.3 },
-                  { type: "COMMENT", label: "Commentaire", cost: rates.COMMENT?.cost || 1.8 },
-                  { type: "SUBSCRIBE", label: "Abonnement", cost: rates.SUBSCRIBE?.cost || 2.5 },
-                ].map((act) => (
-                  <button
-                    key={act.type}
-                    type="button"
-                    onClick={() => setActionType(act.type as any)}
-                    className={`p-3.5 rounded-2xl border text-center transition-all ${
-                      actionType === act.type
-                        ? "bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/10"
-                        : "bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-white"
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {verifiedAccounts.map((acc) => (
+                <button
+                  type="button"
+                  key={acc.id}
+                  onClick={() => setSelectedAccountId(acc.id)}
+                  className={`p-4 rounded-2xl border text-left transition-all ${
+                    selectedAccountId === acc.id
+                      ? "bg-indigo-600/15 border-indigo-500 text-white shadow-lg shadow-indigo-600/10"
+                      : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
+                  }`}
+                >
+                  <span
+                    className={`inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full mb-1 ${
+                      acc.platform === "TIKTOK"
+                        ? "bg-pink-500/20 text-pink-300"
+                        : acc.platform === "INSTAGRAM"
+                        ? "bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-pink-300"
+                        : "bg-red-500/20 text-red-300"
                     }`}
                   >
-                    <div className="text-sm font-bold">{act.label}</div>
-                    <div className="text-xs text-indigo-400 font-medium mt-1">
-                      {act.cost} pts/u
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    {acc.platform}
+                  </span>
+                  <div className="font-bold text-sm text-white truncate">@{acc.identifier}</div>
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* 3. URL de la publication */}
+          {/* Étape 2 : Type d'Action */}
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-400">
+              2. Action souhaitée sur votre publication
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { type: "LIKE", label: "Recevoir des Likes", desc: "Favorise le référencement algorithmique" },
+                { type: "COMMENT", label: "Recevoir des Commentaires", desc: "Augmente la rétention et le débat" },
+                { type: "SUBSCRIBE", label: "Gagner des Abonnés", desc: "Fidélise de vrais créateurs" },
+              ].map((act) => (
+                <button
+                  type="button"
+                  key={act.type}
+                  onClick={() => setActionType(act.type as any)}
+                  className={`p-4 rounded-2xl border text-left transition-all ${
+                    actionType === act.type
+                      ? "bg-indigo-600/15 border-indigo-500 text-white shadow-lg shadow-indigo-600/10"
+                      : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
+                  }`}
+                >
+                  <div className="font-bold text-sm text-white">{act.label}</div>
+                  <p className="text-xs text-slate-400 mt-1">{act.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Étape 3 : URL de la publication */}
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-400">
+              3. Lien direct de la publication (Vidéo / Reel / Shorts)
+            </h2>
+
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                3. URL de la Publication Vidéo
-              </label>
               <input
                 type="url"
                 required
@@ -271,178 +285,230 @@ export default function NewCampaignPage() {
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder={
                   selectedPlatform === "TIKTOK"
-                    ? `https://www.tiktok.com/@${selectedAccount?.identifier || "pseudo"}/video/...`
+                    ? "https://www.tiktok.com/@votre_compte/video/721234567890..."
+                    : selectedPlatform === "INSTAGRAM"
+                    ? "https://www.instagram.com/reel/C-xyz123/ ou /p/..."
                     : "https://www.youtube.com/watch?v=... ou /shorts/..."
                 }
-                className={`w-full px-4 py-3 bg-slate-800/80 border rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none ${
-                  urlValidation && !urlValidation.valid
-                    ? "border-rose-500 focus:border-rose-500"
-                    : urlValidation && urlValidation.valid
-                    ? "border-emerald-500 focus:border-emerald-500"
-                    : "border-slate-700 focus:border-indigo-500"
-                }`}
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
               />
 
-              {/* Real-time validation feedback */}
               {urlValidation && (
-                <div className="mt-2 text-xs">
+                <div
+                  className={`mt-2 text-xs flex items-center gap-1.5 ${
+                    urlValidation.valid ? "text-emerald-400" : "text-rose-400"
+                  }`}
+                >
                   {urlValidation.valid ? (
-                    <span className="text-emerald-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Publication vidéo valide détectée.
-                    </span>
+                    <>
+                      <CheckCircle2 className="h-4 w-4" /> Publication validée avec succès
+                    </>
                   ) : (
-                    <span className="text-rose-400 flex items-center gap-1.5">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      {urlValidation.error}
-                    </span>
+                    <>
+                      <AlertCircle className="h-4 w-4" /> {urlValidation.error}
+                    </>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Consigne de commentaire (si COMMENT sélectionné) */}
             {actionType === "COMMENT" && (
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Suggestion ou Consigne pour le Commentaire (Optionnel)
+              <div className="pt-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Idée ou consigne de commentaire (Optionnel)
                 </label>
-                <textarea
-                  rows={2}
+                <input
+                  type="text"
+                  maxLength={150}
                   value={commentTemplate}
                   onChange={(e) => setCommentTemplate(e.target.value)}
-                  placeholder="Ex: Mentionnez votre avis sincère sur le produit présenté dans la vidéo."
-                  className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+                  placeholder="Ex : Superbe montage ! / Quelle caméra as-tu utilisée ?"
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs"
                 />
               </div>
             )}
+          </div>
 
-            {/* 4. Quantité & Plafond Quotidien */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                  Quantité Totale Souhaitée
+          {/* Étape 4 : Paramètres Simplifiés (La Personnalisation Demandée) */}
+          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+              <Sliders className="w-4 h-4" />
+              4. Personnalisez votre campagne (Objectifs & Récompense)
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* 1. Nombre de personnes souhaitées */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <label className="block text-xs font-bold text-white flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  Combien de personnes ?
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={500}
-                  value={totalQuantity}
-                  onChange={(e) => setTotalQuantity(parseInt(e.target.value, 10) || 1)}
-                  className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
-                <span className="text-[11px] text-slate-500 mt-1 block">
-                  Ex: 10, 25, 50 engagements
-                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={targetQuantity}
+                    onChange={(e) => setTargetQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold text-center text-lg"
+                  />
+                  <span className="text-xs text-slate-400 shrink-0">personnes</span>
+                </div>
+                <div className="flex gap-1.5">
+                  {[5, 10, 20, 50].map((qty) => (
+                    <button
+                      type="button"
+                      key={qty}
+                      onClick={() => setTargetQuantity(qty)}
+                      className={`flex-1 py-1 text-[11px] rounded-lg font-semibold transition ${
+                        targetQuantity === qty
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-800 text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {qty}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Plafond par jour (Livraison)
-                  </label>
-                  <span className="text-xs text-indigo-400 font-bold">{dailyCap} / jour</span>
+              {/* 2. Récompense offerte par personne */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <label className="block text-xs font-bold text-white flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-amber-400" />
+                  Points offerts par personne
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step={0.5}
+                    min={0.5}
+                    max={20}
+                    value={rewardPerWorker}
+                    onChange={(e) => setRewardPerWorker(Math.max(0.5, parseFloat(e.target.value) || 0.5))}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold text-center text-lg"
+                  />
+                  <span className="text-xs text-slate-400 shrink-0">pts / action</span>
                 </div>
-                <input
-                  type="range"
-                  min={1}
-                  max={Math.min(totalQuantity, 50)}
-                  value={Math.min(dailyCap, totalQuantity)}
-                  onChange={(e) => setDailyCap(parseInt(e.target.value, 10))}
-                  className="w-full accent-indigo-500 cursor-pointer"
-                />
-                <span className="text-[11px] text-slate-500 mt-1 block">
-                  Répartit les interactions dans le temps pour un signal naturel.
+                <div className="flex gap-1.5">
+                  {[1.0, 1.5, 2.0, 3.0].map((pts) => (
+                    <button
+                      type="button"
+                      key={pts}
+                      onClick={() => setRewardPerWorker(pts)}
+                      className={`flex-1 py-1 text-[11px] rounded-lg font-semibold transition ${
+                        rewardPerWorker === pts
+                          ? "bg-amber-500 text-slate-950 font-bold"
+                          : "bg-slate-800 text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {pts} pt
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Plus vous offrez de points, plus les créateurs feront votre tâche en priorité.
+                </p>
+              </div>
+
+              {/* 3. Durée de la mission en jours */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <label className="block text-xs font-bold text-white flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-emerald-400" />
+                  Durée de diffusion
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={durationDays}
+                    onChange={(e) => setDurationDays(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold text-center text-lg"
+                  />
+                  <span className="text-xs text-slate-400 shrink-0">jours</span>
+                </div>
+                <div className="flex gap-1.5">
+                  {[1, 3, 5, 7].map((d) => (
+                    <button
+                      type="button"
+                      key={d}
+                      onClick={() => setDurationDays(d)}
+                      className={`flex-1 py-1 text-[11px] rounded-lg font-semibold transition ${
+                        durationDays === d
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-800 text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {d}j
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Frais de diffusion : 0,5 point par jour ({durationFee} pts pour {durationDays} jours).
+                </p>
+              </div>
+            </div>
+
+            {/* Récapitulatif Transparent & Solde */}
+            <div className="p-5 rounded-2xl bg-slate-950 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span>Coût des {targetQuantity} interactions :</span>
+                  <strong className="text-white">{interactionsCost} pts</strong>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <span>Frais de diffusion ({durationDays} jours à 0.5 pt/j) :</span>
+                  <strong className="text-white">+{durationFee} pts</strong>
+                </div>
+                <div className="text-[11px] text-indigo-300">
+                  Cadence algorithmique : ~{dailyPacing} interactions par jour.
+                </div>
+              </div>
+
+              <div className="text-right flex flex-col items-end">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                  Total à débiter
+                </span>
+                <span className="text-3xl font-extrabold text-white">
+                  {totalCost} <span className="text-sm font-bold text-amber-400">points</span>
+                </span>
+                <span className="text-[11px] text-slate-400 mt-0.5">
+                  Votre solde : <strong className="text-amber-300">{balance.toFixed(1)} pts</strong>
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Financial Summary Card */}
-          <div className="space-y-6">
-            <div className="p-6 rounded-3xl bg-slate-900/95 border border-slate-800 shadow-xl space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <span className="text-sm font-bold text-white flex items-center gap-2">
-                  <Coins className="h-4 w-4 text-amber-400" />
-                  Récapitulatif Financier
-                </span>
-                <span className="text-xs font-semibold text-slate-400">Ledger</span>
-              </div>
+          {/* Bouton de validation */}
+          <div className="flex items-center justify-between pt-2">
+            <Link
+              href="/campaigns"
+              className="text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              ← Annuler et revenir à mes campagnes
+            </Link>
 
-              <div className="space-y-3 text-xs">
-                <div className="flex justify-between text-slate-400">
-                  <span>Coût par unité :</span>
-                  <span className="text-white font-medium">{currentCostPerUnit} pts</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Quantité commandée :</span>
-                  <span className="text-white font-medium">× {totalQuantity}</span>
-                </div>
-                <div className="flex justify-between text-slate-300 font-semibold pt-2 border-t border-slate-800">
-                  <span>Total débité :</span>
-                  <span className="text-amber-300 font-bold text-sm">{totalCost} pts</span>
-                </div>
-
-                <div className="pt-3 border-t border-slate-800/80 space-y-1.5">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Votre solde actuel :</span>
-                    <span className="text-white">{balance.toFixed(1)} pts</span>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Solde après création :</span>
-                    <span
-                      className={`font-semibold ${
-                        remainingBalance >= 0 ? "text-emerald-400" : "text-rose-400"
-                      }`}
-                    >
-                      {remainingBalance.toFixed(1)} pts
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {!isBalanceSufficient && (
-                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs space-y-2">
-                  <div className="font-semibold flex items-center gap-1.5">
-                    <AlertCircle className="h-4 w-4" /> Solde insuffisant
-                  </div>
-                  <p>Il vous manque {(totalCost - balance).toFixed(1)} points pour cette campagne.</p>
-                  <div className="pt-1 flex gap-2">
-                    <Link
-                      href="/tasks"
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold text-[11px]"
-                    >
-                      Gagner des points
-                    </Link>
-                    <Link
-                      href="/shop"
-                      className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px]"
-                    >
-                      Acheter un pack
-                    </Link>
-                  </div>
-                </div>
+            <button
+              type="submit"
+              disabled={submitting || !isBalanceSufficient}
+              className={`px-8 py-4 rounded-xl text-sm font-bold text-white transition-all shadow-xl flex items-center gap-2 ${
+                isBalanceSufficient && !submitting
+                  ? "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30 hover:scale-102"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+              }`}
+            >
+              {submitting ? (
+                "Lancement en cours..."
+              ) : !isBalanceSufficient ? (
+                `Solde insuffisant (Rechargez ${(totalCost - balance).toFixed(1)} pts)`
+              ) : (
+                <>
+                  Lancer la campagne ({totalCost} pts)
+                  <ArrowRight className="h-4 w-4" />
+                </>
               )}
-
-              <button
-                type="submit"
-                disabled={submitting || !isBalanceSufficient || Boolean(urlValidation && !urlValidation.valid)}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
-              >
-                {submitting ? (
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Lancer la campagne ({totalCost} pts)
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-
-              <div className="text-[11px] text-slate-500 text-center leading-relaxed">
-                Distribution progressive garantie. Si vous annulez la campagne, les points non consommés vous seront intégralement remboursés.
-              </div>
-            </div>
+            </button>
           </div>
         </form>
       )}

@@ -26,9 +26,9 @@ export function generateSocialVerificationCode(): string {
  * - TikTok : retire le @ et passe en minuscules
  * - YouTube : nettoie les espaces et le préfixe @
  */
-export function normalizeSocialIdentifier(platform: "TIKTOK" | "YOUTUBE", identifier: string): string {
+export function normalizeSocialIdentifier(platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM", identifier: string): string {
   let cleaned = identifier.trim();
-  if (platform === "TIKTOK") {
+  if (platform === "TIKTOK" || platform === "INSTAGRAM") {
     cleaned = cleaned.replace(/^@/, "").toLowerCase();
   } else if (platform === "YOUTUBE") {
     cleaned = cleaned.replace(/^@/, "").trim();

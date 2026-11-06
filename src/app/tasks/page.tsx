@@ -37,12 +37,15 @@ interface QuotaInfo {
 interface TaskItem {
   taskId: string;
   campaignId: string;
-  platform: "TIKTOK" | "YOUTUBE";
+  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   videoUrl: string;
   commentTemplate: string | null;
   rewardPoints: number;
   targetHandle: string;
+  remainingSlots?: number;
+  totalQuantity?: number;
+  completedQuantity?: number;
   createdAt: string;
 }
 
@@ -50,7 +53,7 @@ interface ActiveSession {
   completionId: string;
   taskId: string;
   videoUrl: string;
-  platform: "TIKTOK" | "YOUTUBE";
+  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   commentTemplate: string | null;
   rewardPoints: number;
@@ -207,7 +210,7 @@ export default function TasksPage() {
       } else {
         setFeedback({
           type: "success",
-          text: `Bravo ! Votre tâche est validée. +${activeSession.rewardPoints} points ont été placés sous séquestre 24h et seront automatiquement crédités à votre solde.`,
+          text: `Bravo ! Votre tâche est validée. +${activeSession.rewardPoints} points ont été directement crédités à votre solde !`,
         });
         setActiveSession(null);
         await fetchTasks();
@@ -558,6 +561,16 @@ export default function TasksPage() {
               >
                 YouTube
               </button>
+              <button
+                onClick={() => setPlatformFilter("INSTAGRAM")}
+                className={`px-3 py-1.5 rounded-lg transition ${
+                  platformFilter === "INSTAGRAM"
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Instagram
+              </button>
             </div>
 
             {/* Filtre Action */}
@@ -645,10 +658,12 @@ export default function TasksPage() {
                         className={`text-xs px-2.5 py-1 rounded-xl font-bold flex items-center gap-1.5 ${
                           task.platform === "TIKTOK"
                             ? "bg-slate-800 text-rose-400 border border-rose-500/20"
+                            : task.platform === "INSTAGRAM"
+                            ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-300 border border-pink-500/30"
                             : "bg-red-500/10 text-red-500 border border-red-500/20"
                         }`}
                       >
-                        {task.platform === "TIKTOK" ? "TikTok" : "YouTube"}
+                        {task.platform === "TIKTOK" ? "TikTok" : task.platform === "INSTAGRAM" ? "Instagram" : "YouTube"}
                       </span>
 
                       <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl flex items-center gap-1">

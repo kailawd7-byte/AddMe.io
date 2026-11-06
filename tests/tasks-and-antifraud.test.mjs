@@ -18,12 +18,12 @@ import {
 
 describe("Anti-Fraude, Quotas et Réputation (Étape 4)", () => {
   it("calcule correctement le quota quotidien selon l'ancienneté", () => {
-    // 0 jour (nouveau) = 20 tâches
-    assert.equal(calculateDailyTaskLimit(0), 20);
-    // 7 jours (1 semaine) = 20 + 5 = 25
-    assert.equal(calculateDailyTaskLimit(7), 25);
-    // 30 jours (~4 semaines) = 20 + 20 = 40
-    assert.equal(calculateDailyTaskLimit(30), 40);
+    // 0 jour (nouveau) = 50 tâches
+    assert.equal(calculateDailyTaskLimit(0), 50);
+    // 7 jours (1 semaine) = 50 + 5 = 55
+    assert.equal(calculateDailyTaskLimit(7), 55);
+    // 30 jours (~4 semaines) = 50 + 20 = 70
+    assert.equal(calculateDailyTaskLimit(30), 70);
     // Ancienneté maximale plafonnée à 100 tâches
     assert.equal(calculateDailyTaskLimit(365), 100);
   });
@@ -163,7 +163,7 @@ describe("Cycle de Vie des Tâches : Découverte, Minuteur 10s, Séquestre et Si
     );
   });
 
-  it("valide la tâche avec succès lorsque le délai de 10 secondes est respecté et la place sous séquestre 24h", async () => {
+  it("valide la tâche avec succès lorsque le délai de 10 secondes est respecté et crédite directement les points", async () => {
     // Pour le test unitaire, reculons artificiellement la date startedAt de 12 secondes
     const twelveSecondsAgo = new Date(Date.now() - 12000);
     await prisma.taskCompletion.update({
@@ -172,8 +172,8 @@ describe("Cycle de Vie des Tâches : Découverte, Minuteur 10s, Séquestre et Si
     });
 
     const result = await submitTaskCompletion(testCompletionId, workerId);
-    assert.equal(result.status, "PENDING_RETENTION");
-    assert.ok(result.retentionEndsAt);
+    assert.equal(result.status, "APPROVED");
+    assert.equal(result.rewardPoints, 1.0);
 
     // Vérifier que la tâche est marquée COMPLETED
     const taskInDb = await prisma.task.findUnique({ where: { id: availableTaskId } });

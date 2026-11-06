@@ -13,9 +13,9 @@ import {
   LogOut,
   Menu,
   X,
-  User,
-  Clock,
   Sparkles,
+  ArrowRight,
+  Zap,
 } from "lucide-react";
 
 interface UserData {
@@ -40,6 +40,8 @@ export default function Navbar() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isLandingPage = pathname === "/";
 
   const fetchUser = async () => {
     try {
@@ -72,6 +74,88 @@ export default function Navbar() {
     router.refresh();
   };
 
+  // =========================================================================
+  // 1. NAVBAR DÉDIÉE À LA LANDING PAGE ("Île Flottante" Cinématographique)
+  // =========================================================================
+  if (isLandingPage) {
+    return (
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-6 rounded-full bg-slate-950/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-indigo-950/40">
+          {/* Brand */}
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 font-black text-white shadow-md shadow-indigo-500/30 group-hover:scale-105 transition-transform">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <span className="text-base font-extrabold tracking-tight text-white">
+              AddMe<span className="text-cyan-400">.io</span>
+            </span>
+          </Link>
+
+          {/* Ancres publiques (Desktop) - ZÉRO lien interne d'application */}
+          <nav className="hidden lg:flex items-center gap-6 text-xs font-medium text-slate-300">
+            <a href="#concept" className="hover:text-cyan-400 transition-colors">
+              Concept
+            </a>
+            <a href="#fonctionnement" className="hover:text-cyan-400 transition-colors">
+              Comment ça marche
+            </a>
+            <a href="#simulateur" className="hover:text-cyan-400 transition-colors">
+              Simulateur d'impact
+            </a>
+            <a href="#tarifs" className="hover:text-cyan-400 transition-colors">
+              Packs & Mobile Money
+            </a>
+            <a href="#faq" className="hover:text-cyan-400 transition-colors">
+              FAQ
+            </a>
+          </nav>
+
+          {/* Action droite : Selon statut de connexion */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {loading ? (
+              <div className="h-8 w-20 bg-slate-800/60 rounded-full animate-pulse" />
+            ) : user ? (
+              // UTILISATEUR CONNECTÉ : Uniquement accès direct à son Dashboard
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold">
+                  <Coins className="h-3.5 w-3.5 text-amber-400" />
+                  <span>{user.balance.toFixed(0)} pts</span>
+                </div>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all hover:scale-105"
+                >
+                  <span>Mon Dashboard</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            ) : (
+              // UTILISATEUR NON CONNECTÉ : Se connecter / Commencer
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105"
+                >
+                  <span>Commencer (+10 pts)</span>
+                  <Zap className="h-3.5 w-3.5 text-amber-300" />
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // =========================================================================
+  // 2. NAVBAR DÉDIÉE À L'APPLICATION & DASHBOARD (/dashboard, /tasks, /campaigns...)
+  // =========================================================================
   const navLinks = [
     { href: "/dashboard", label: "Aperçu", icon: Layers },
     { href: "/tasks", label: "Gagner des points", icon: Coins },
@@ -81,11 +165,11 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-surface-border/50 bg-[#090d16]/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-surface-border/50 bg-[#090d16]/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand */}
+        {/* Brand : Renvoie vers /dashboard pour les utilisateurs connectés */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 font-black text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
               <Sparkles className="h-5 w-5" />
             </div>
@@ -94,7 +178,7 @@ export default function Navbar() {
                 AddMe<span className="text-cyan-400">.io</span>
               </span>
               <span className="text-[10px] text-slate-400 font-medium -mt-1 hidden sm:block">
-                Échange d'engagement éthique
+                Espace Créateur
               </span>
             </div>
           </Link>
@@ -144,29 +228,17 @@ export default function Navbar() {
             <div className="h-8 w-24 bg-slate-800/50 rounded-lg animate-pulse" />
           ) : user ? (
             <div className="flex items-center gap-3">
-              {/* Solde & Points en rétention */}
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/shop"
-                  title="Solde de points disponible"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-amber-500/10 border border-amber-500/30 text-amber-300 hover:border-amber-400 transition-colors shadow-sm"
-                >
-                  <Coins className="h-4 w-4 text-amber-400 animate-spin-slow" />
-                  <span className="font-bold text-sm tracking-tight">
-                    {user.balance.toFixed(1)} <span className="text-xs font-normal text-amber-200/80">pts</span>
-                  </span>
-                </Link>
-
-                {user.pendingPoints > 0 && (
-                  <div
-                    title="Points en période de rétention de 24h"
-                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs"
-                  >
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
-                    <span>+{user.pendingPoints.toFixed(1)} en attente</span>
-                  </div>
-                )}
-              </div>
+              {/* Solde de points en direct */}
+              <Link
+                href="/shop"
+                title="Acheter ou recharger des points"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-amber-500/10 border border-amber-500/30 text-amber-300 hover:border-amber-400 transition-colors shadow-sm"
+              >
+                <Coins className="h-4 w-4 text-amber-400" />
+                <span className="font-bold text-sm tracking-tight">
+                  {user.balance.toFixed(1)} <span className="text-xs font-normal text-amber-200/80">pts</span>
+                </span>
+              </Link>
 
               {/* User badge & Déconnexion */}
               <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-slate-800">
@@ -209,7 +281,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown (uniquement pour les routes connectées) */}
       {mobileMenuOpen && user && (
         <div className="md:hidden border-b border-surface-border bg-[#090d16] px-4 pt-2 pb-6 space-y-2">
           {navLinks.map((link) => {
@@ -261,4 +333,3 @@ export default function Navbar() {
     </header>
   );
 }
-

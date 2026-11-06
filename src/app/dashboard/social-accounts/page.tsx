@@ -18,7 +18,7 @@ import {
 
 interface SocialAccount {
   id: string;
-  platform: "TIKTOK" | "YOUTUBE";
+  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   identifier: string;
   verificationCode: string;
   status: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
@@ -31,7 +31,7 @@ export default function SocialAccountsPage() {
   const [loading, setLoading] = useState(true);
 
   // Form state
-  const [platform, setPlatform] = useState<"TIKTOK" | "YOUTUBE">("TIKTOK");
+  const [platform, setPlatform] = useState<"TIKTOK" | "YOUTUBE" | "INSTAGRAM">("TIKTOK");
   const [identifier, setIdentifier] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
@@ -210,13 +210,13 @@ export default function SocialAccountsPage() {
               <label className="block text-xs font-medium text-slate-300 mb-2">
                 Sélectionnez le réseau social
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setPlatform("TIKTOK")}
-                  className={`py-3 px-4 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                     platform === "TIKTOK"
-                      ? "bg-pink-500/20 border-pink-500/60 text-pink-300 shadow-lg shadow-pink-500/10"
+                      ? "bg-pink-500/20 border-pink-500/60 text-pink-300 shadow-md"
                       : "bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-white"
                   }`}
                 >
@@ -225,10 +225,22 @@ export default function SocialAccountsPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setPlatform("INSTAGRAM")}
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    platform === "INSTAGRAM"
+                      ? "bg-gradient-to-r from-purple-500/30 to-pink-500/30 border-pink-500 text-pink-200 shadow-md"
+                      : "bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-500" />
+                  Instagram
+                </button>
+                <button
+                  type="button"
                   onClick={() => setPlatform("YOUTUBE")}
-                  className={`py-3 px-4 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                     platform === "YOUTUBE"
-                      ? "bg-rose-500/20 border-rose-500/60 text-rose-300 shadow-lg shadow-rose-500/10"
+                      ? "bg-rose-500/20 border-rose-500/60 text-rose-300 shadow-md"
                       : "bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-white"
                   }`}
                 >
@@ -241,7 +253,11 @@ export default function SocialAccountsPage() {
             {/* Identifier input */}
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                {platform === "TIKTOK" ? "Pseudo TikTok" : "Identifiant de la chaîne YouTube"}
+                {platform === "TIKTOK"
+                  ? "Pseudo TikTok"
+                  : platform === "INSTAGRAM"
+                  ? "Pseudo Instagram"
+                  : "Identifiant de la chaîne YouTube"}
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-medium text-sm">
@@ -252,7 +268,13 @@ export default function SocialAccountsPage() {
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={platform === "TIKTOK" ? "mon_pseudo_tiktok" : "MaChaineYouTube"}
+                  placeholder={
+                    platform === "TIKTOK"
+                      ? "mon_pseudo_tiktok"
+                      : platform === "INSTAGRAM"
+                      ? "mon_pseudo_instagram"
+                      : "MaChaineYouTube"
+                  }
                   className="w-full pl-8 pr-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
                 />
               </div>
@@ -307,6 +329,7 @@ export default function SocialAccountsPage() {
               {accounts.map((acc) => {
                 const isVerified = acc.status === "VERIFIED";
                 const isTikTok = acc.platform === "TIKTOK";
+                const isInstagram = acc.platform === "INSTAGRAM";
 
                 return (
                   <div
@@ -324,10 +347,12 @@ export default function SocialAccountsPage() {
                           className={`h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-sm text-white ${
                             isTikTok
                               ? "bg-gradient-to-tr from-pink-600 to-rose-400 shadow-md shadow-pink-500/20"
+                              : isInstagram
+                              ? "bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 shadow-md shadow-pink-500/20"
                               : "bg-gradient-to-tr from-rose-600 to-red-500 shadow-md shadow-rose-500/20"
                           }`}
                         >
-                          {isTikTok ? "TT" : "YT"}
+                          {isTikTok ? "TT" : isInstagram ? "IG" : "YT"}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -336,7 +361,11 @@ export default function SocialAccountsPage() {
                             </span>
                             <span
                               className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                isTikTok ? "bg-pink-500/20 text-pink-300" : "bg-rose-500/20 text-rose-300"
+                                isTikTok
+                                  ? "bg-pink-500/20 text-pink-300"
+                                  : isInstagram
+                                  ? "bg-purple-500/20 text-pink-200 border border-pink-500/30"
+                                  : "bg-rose-500/20 text-rose-300"
                               }`}
                             >
                               {acc.platform}
@@ -378,7 +407,7 @@ export default function SocialAccountsPage() {
                       <div className="mt-5 pt-5 border-t border-slate-800/80 space-y-4">
                         <div className="text-xs text-slate-300 leading-relaxed">
                           <strong>Étape obligatoire :</strong> Pour prouver que vous êtes le propriétaire du compte{" "}
-                          <span className="text-white font-medium">@{acc.identifier}</span>, copiez ce code et placez-le dans la <strong>biographie</strong> ou <strong>description</strong> de votre profil {acc.platform === "TIKTOK" ? "TikTok" : "YouTube"}.
+                          <span className="text-white font-medium">@{acc.identifier}</span>, copiez ce code et placez-le dans la <strong>biographie</strong> ou <strong>description</strong> de votre profil {acc.platform === "TIKTOK" ? "TikTok" : acc.platform === "INSTAGRAM" ? "Instagram" : "YouTube"}.
                         </div>
 
                         {/* Code Copy Box */}

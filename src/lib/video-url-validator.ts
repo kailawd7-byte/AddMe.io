@@ -11,7 +11,7 @@ export interface VideoUrlValidationResult {
  * Vérifie également la concordance avec le pseudo vérifié lorsque possible.
  */
 export function validateVideoPublicationUrl(
-  platform: "TIKTOK" | "YOUTUBE",
+  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM",
   rawUrl: string,
   expectedIdentifier?: string
 ): VideoUrlValidationResult {
@@ -180,6 +180,76 @@ export function validateVideoPublicationUrl(
       valid: false,
       error:
         "Format de vidéo YouTube non reconnu. Exemples valides : https://www.youtube.com/watch?v=dQw4w9WgXcQ ou https://www.youtube.com/shorts/abcd123",
+    };
+  }
+
+  // ==========================================
+  // Validation INSTAGRAM
+  // ==========================================
+  if (platform === "INSTAGRAM") {
+    const validInstagramHosts = ["instagram.com", "m.instagram.com", "instagr.am"];
+    if (!validInstagramHosts.includes(hostname)) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir du domaine instagram.com (ex: https://www.instagram.com/reel/...)",
+      };
+    }
+
+    const pathname = urlObj.pathname;
+
+    // Détection d'un simple lien de profil (INTERDIT)
+    const isBareProfile =
+      /^\/[a-zA-Z0-9_.]+\/?$/.test(pathname) &&
+      !pathname.startsWith("/p/") &&
+      !pathname.startsWith("/reel/") &&
+      !pathname.startsWith("/reels/") &&
+      !pathname.startsWith("/tv/");
+
+    if (isBareProfile) {
+      return {
+        valid: false,
+        error:
+          "L'engagement est réservé aux PUBLICATIONS spécifiques. Vous avez fourni un lien de profil ; veuillez fournir l'URL directe d'un Reel ou d'un Post Instagram.",
+      };
+    }
+
+    // 1. Format Reel : /reel/SHORTCODE ou /reels/SHORTCODE
+    const reelMatch = pathname.match(/^\/reels?\/([a-zA-Z0-9_-]+)/);
+    if (reelMatch) {
+      const code = reelMatch[1];
+      return {
+        valid: true,
+        normalizedUrl: `https://www.instagram.com/reel/${code}/`,
+        extractedId: code,
+      };
+    }
+
+    // 2. Format Post classique : /p/SHORTCODE
+    const postMatch = pathname.match(/^\/p\/([a-zA-Z0-9_-]+)/);
+    if (postMatch) {
+      const code = postMatch[1];
+      return {
+        valid: true,
+        normalizedUrl: `https://www.instagram.com/p/${code}/`,
+        extractedId: code,
+      };
+    }
+
+    // 3. Format IGTV : /tv/SHORTCODE
+    const tvMatch = pathname.match(/^\/tv\/([a-zA-Z0-9_-]+)/);
+    if (tvMatch) {
+      const code = tvMatch[1];
+      return {
+        valid: true,
+        normalizedUrl: `https://www.instagram.com/tv/${code}/`,
+        extractedId: code,
+      };
+    }
+
+    return {
+      valid: false,
+      error:
+        "Format de publication Instagram non reconnu. Exemple attendu : https://www.instagram.com/reel/C-xyz123/ ou https://www.instagram.com/p/C-xyz123/",
     };
   }
 

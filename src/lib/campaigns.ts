@@ -10,6 +10,8 @@ export interface CreateCampaignInput {
   videoUrl: string;
   commentTemplate?: string;
   totalQuantity: number;
+  rewardPerWorker?: number;
+  durationDays?: number;
   dailyCap?: number;
 }
 
@@ -18,11 +20,10 @@ export interface CreateCampaignInput {
  */
 export async function createCampaign(input: CreateCampaignInput) {
   const { userId, socialAccountId, actionType, videoUrl, commentTemplate, totalQuantity } = input;
-  const dailyCap = Math.max(1, Math.min(input.dailyCap || 10, 100)); // Borne entre 1 et 100 / jour
 
   // 1. Quantité minimale requise
   if (!totalQuantity || totalQuantity < 1) {
-    throw new Error("La quantité souhaitée doit être d'au moins 1 engagement.");
+    throw new Error("Le nombre de personnes souhaitées doit être d'au moins 1.");
   }
 
   // 2. Vérification du compte social associé
@@ -41,7 +42,7 @@ export async function createCampaign(input: CreateCampaignInput) {
     );
   }
 
-  const platform = socialAccount.platform as "TIKTOK" | "YOUTUBE";
+  const platform = socialAccount.platform as "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
 
   // 3. Validation stricte de l'URL de PUBLICATION (interdiction formelle des liens de profils)
   const urlValidation = validateVideoPublicationUrl(platform, videoUrl, socialAccount.identifier);
@@ -50,17 +51,29 @@ export async function createCampaign(input: CreateCampaignInput) {
   }
   const cleanVideoUrl = urlValidation.normalizedUrl;
 
-  // 4. Récupération des tarifs dynamiques
-  const rates = await getActionRates(actionType);
-  const costPerUnit = rates.cost;
-  const rewardPerUnit = rates.reward;
-  const totalCost = Number((totalQuantity * costPerUnit).toFixed(2));
+  // 4. Calcul transparent des coûts (rémunération par action + frais de diffusion par durée)
+  const defaultRates = await getActionRates(actionType);
+  const rewardPerUnit =
+    input.rewardPerWorker && input.rewardPerWorker >= 0.5
+      ? Number(input.rewardPerWorker.toFixed(1))
+      : defaultRates.reward;
+  const costPerUnit = rewardPerUnit;
+
+  const durationDays = input.durationDays ? Math.max(1, Math.min(input.durationDays, 60)) : 5;
+  const durationFee = Number((durationDays * 0.5).toFixed(2)); // 0.5 pt par jour de diffusion
+  const unitsCost = Number((totalQuantity * costPerUnit).toFixed(2));
+  const totalCost = Number((unitsCost + durationFee).toFixed(2));
+
+  // Répartition progressive automatique par jour
+  const dailyCap = input.dailyCap
+    ? Math.max(1, Math.min(input.dailyCap, 100))
+    : Math.max(1, Math.ceil(totalQuantity / durationDays));
 
   // 5. Vérification préalable du solde de points disponible
   const currentBalance = await getUserBalance(userId);
   if (currentBalance < totalCost) {
     throw new Error(
-      `SOLDE_INSUFFISANT: Solde actuel (${currentBalance.toFixed(1)} pts) insuffisant. Coût total de la campagne : ${totalCost.toFixed(1)} pts.`
+      `SOLDE_INSUFFISANT: Solde actuel (${currentBalance.toFixed(1)} pts) insuffisant. Coût total de la campagne : ${totalCost.toFixed(1)} pts (${unitsCost} pts pour les ${totalQuantity} actions + ${durationFee} pts pour ${durationDays} jours de diffusion).`
     );
   }
 
@@ -78,7 +91,7 @@ export async function createCampaign(input: CreateCampaignInput) {
         referenceType: "CAMPAIGN",
         referenceId: campaignId,
         idempotencyKey,
-        description: `Création de campagne : ${totalQuantity} ${actionType.toLowerCase()}s sur ${platform} (${costPerUnit} pts/u)`,
+        description: `Création de campagne : ${totalQuantity} ${actionType.toLowerCase()}s sur ${platform} (${costPerUnit} pts/u + ${durationFee} pts pour ${durationDays}j)`,
       },
       tx
     );

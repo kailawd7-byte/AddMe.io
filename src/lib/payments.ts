@@ -16,21 +16,25 @@ export const stripe = isRealStripeKey
     })
   : null;
 
+export type PaymentProvider = "STRIPE" | "SAASPAY";
+
 export interface CreateCheckoutResult {
   url: string;
   sessionId: string;
   paymentId: string;
   pack: PointPack;
   isMock: boolean;
+  provider: PaymentProvider;
 }
 
 /**
- * Crée une session de paiement pour un pack de points (Stripe Checkout réel ou sandbox sécurisée)
+ * Crée une session de paiement pour un pack de points (SaaSPay Mobile Money ou Stripe Checkout)
  */
 export async function createCheckoutSession(
   userId: string,
   packId: string,
-  originUrl: string = "http://localhost:3000"
+  originUrl: string = "http://localhost:3000",
+  provider: PaymentProvider = "STRIPE"
 ): Promise<CreateCheckoutResult> {
   const pack = getPackById(packId);
   if (!pack) {
@@ -50,7 +54,90 @@ export async function createCheckoutSession(
     throw new Error("Votre compte est suspendu ou restreint. Vous ne pouvez pas acheter de points.");
   }
 
-  // Tenter de créer une session Stripe Checkout si la clé est valide
+  // 1. PAIEMENT MOBILE MONEY VIA SAASPAY (Wave, Orange, MTN, Moov)
+  if (provider === "SAASPAY") {
+    const saaspayApiKey = process.env.SAASPAY_API_KEY || "";
+    const isRealSaasPay = saaspayApiKey.startsWith("sk_");
+
+    if (isRealSaasPay) {
+      try {
+        const response = await fetch("https://api.saspay.me/api/v1/checkout-sessions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${saaspayApiKey}`,
+          },
+          body: JSON.stringify({
+            amount: pack.priceInFcfa,
+            currency: "XOF",
+            customer_email: user.email,
+            reference: `addme_${user.id}_${Date.now()}`,
+            return_url: `${originUrl}/shop?success=true&provider=saaspay`,
+            metadata: {
+              userId: user.id,
+              packId: pack.id,
+              pointsAmount: pack.points,
+            },
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.url) {
+          const payment = await prisma.payment.create({
+            data: {
+              userId: user.id,
+              packId: pack.id,
+              pointsAmount: pack.points,
+              amountInCents: pack.priceInFcfa * 100,
+              currency: "XOF",
+              provider: "SAASPAY",
+              stripeSessionId: data.session_id || data.id,
+              status: "PENDING",
+            },
+          });
+
+          return {
+            url: data.url,
+            sessionId: data.session_id || data.id,
+            paymentId: payment.id,
+            pack,
+            isMock: false,
+            provider: "SAASPAY",
+          };
+        }
+      } catch (err: any) {
+        console.warn("Échec appel direct API SaasPay (mode simulation Mobile Money activé) :", err.message);
+      }
+    }
+
+    // Mode simulation / bac à sable Mobile Money pour SaasPay
+    const mockSessionId = `sp_mock_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const payment = await prisma.payment.create({
+      data: {
+        userId: user.id,
+        packId: pack.id,
+        pointsAmount: pack.points,
+        amountInCents: pack.priceInFcfa * 100,
+        currency: "XOF",
+        provider: "SAASPAY",
+        stripeSessionId: mockSessionId,
+        status: "PENDING",
+      },
+    });
+
+    const mockCheckoutUrl = `${originUrl}/shop/saaspay?session_id=${mockSessionId}&pack_id=${pack.id}&amount=${pack.priceInFcfa}&points=${pack.points}`;
+
+    return {
+      url: mockCheckoutUrl,
+      sessionId: mockSessionId,
+      paymentId: payment.id,
+      pack,
+      isMock: true,
+      provider: "SAASPAY",
+    };
+  }
+
+  // 2. PAIEMENT CARTE BANCAIRE VIA STRIPE
   if (stripe) {
     try {
       const session = await stripe.checkout.sessions.create({
@@ -100,6 +187,7 @@ export async function createCheckoutSession(
         paymentId: payment.id,
         pack,
         isMock: false,
+        provider: "STRIPE",
       };
     } catch (err: any) {
       console.warn("Échec appel direct API Stripe (mode simulation activé) :", err.message);
@@ -130,6 +218,7 @@ export async function createCheckoutSession(
     paymentId: payment.id,
     pack,
     isMock: true,
+    provider: "STRIPE",
   };
 }
 

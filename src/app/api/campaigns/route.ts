@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { socialAccountId, actionType, videoUrl, commentTemplate, totalQuantity, dailyCap } = body;
+    const { socialAccountId, actionType, videoUrl, commentTemplate, totalQuantity, dailyCap, rewardPerWorker, durationDays } = body;
 
     if (!socialAccountId || !actionType || !videoUrl || !totalQuantity) {
       return NextResponse.json(
@@ -59,12 +59,10 @@ export async function POST(req: NextRequest) {
     const quantityNum = parseInt(totalQuantity, 10);
     if (isNaN(quantityNum) || quantityNum < 1) {
       return NextResponse.json(
-        { error: "La quantité souhaitée doit être un nombre supérieur ou égal à 1." },
+        { error: "Le nombre de personnes souhaitées doit être un nombre supérieur ou égal à 1." },
         { status: 400 }
       );
     }
-
-    const dailyCapNum = dailyCap ? parseInt(dailyCap, 10) : 10;
 
     const campaign = await createCampaign({
       userId: user.id,
@@ -73,7 +71,9 @@ export async function POST(req: NextRequest) {
       videoUrl,
       commentTemplate,
       totalQuantity: quantityNum,
-      dailyCap: dailyCapNum,
+      rewardPerWorker: rewardPerWorker ? parseFloat(rewardPerWorker) : undefined,
+      durationDays: durationDays ? parseInt(durationDays, 10) : undefined,
+      dailyCap: dailyCap ? parseInt(dailyCap, 10) : undefined,
     });
 
     return NextResponse.json({

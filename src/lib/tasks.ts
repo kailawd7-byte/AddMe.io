@@ -77,9 +77,21 @@ export async function getAvailableTasks(userId: string, filters: GetTasksFilter 
     (t) => t.campaign.deliveredToday < t.campaign.dailyCap
   );
 
+  // Dédoublonner par campagne pour afficher UNE SEULE carte par vidéo/publication
+  const campaignsMap = new Map<string, (typeof availableTasks)[0] & { totalAvailableSlots: number }>();
+  for (const t of filteredTasks) {
+    if (!campaignsMap.has(t.campaignId)) {
+      campaignsMap.set(t.campaignId, { ...t, totalAvailableSlots: 1 });
+    } else {
+      campaignsMap.get(t.campaignId)!.totalAvailableSlots += 1;
+    }
+  }
+
+  const uniqueTasks = Array.from(campaignsMap.values());
+
   return {
     quota,
-    tasks: filteredTasks.map((t) => ({
+    tasks: uniqueTasks.map((t) => ({
       taskId: t.id,
       campaignId: t.campaign.id,
       platform: t.campaign.platform,
@@ -88,6 +100,9 @@ export async function getAvailableTasks(userId: string, filters: GetTasksFilter 
       commentTemplate: t.campaign.commentTemplate,
       rewardPoints: t.campaign.rewardPerUnit,
       targetHandle: t.campaign.socialAccount.identifier,
+      totalQuantity: t.campaign.totalQuantity,
+      completedQuantity: t.campaign.completedQuantity,
+      remainingSlots: t.totalAvailableSlots,
       createdAt: t.createdAt,
     })),
   };
@@ -206,30 +221,41 @@ export async function submitTaskCompletion(
     );
   }
 
-  // 3. Calcul de la fin de la période de rétention (24 heures)
-  const retentionHours = SYSTEM_DEFAULTS.RETENTION_PERIOD_HOURS; // 24
-  const retentionEndsAt = new Date(Date.now() + retentionHours * 60 * 60 * 1000);
-
-  // 4. Validation atomique en base de données
+  // 3. Validation atomique et crédit direct en base de données
   const updated = await prisma.$transaction(async (tx) => {
-    // A. Mise à jour de la completion
+    // A. Crédit direct des points au Ledger du travailleur (Idempotent)
+    const idempotencyKey = `task-reward-${completion.id}`;
+    await recordLedgerTransaction(
+      {
+        userId,
+        amount: completion.rewardPoints,
+        type: "TASK_REWARD",
+        referenceType: "TASK_COMPLETION",
+        referenceId: completion.id,
+        idempotencyKey,
+        description: `Récompense : ${completion.task.campaign.actionType.toLowerCase()} sur ${completion.task.campaign.platform} (@${completion.task.campaign.videoUrl.slice(0, 30)}...)`,
+      },
+      tx
+    );
+
+    // B. Mise à jour de la completion en statut APPROUVÉ (sans attente 24h)
     const updatedComp = await tx.taskCompletion.update({
       where: { id: completionId },
       data: {
-        status: "PENDING_RETENTION",
+        status: "APPROVED",
         submittedAt: new Date(),
-        retentionEndsAt,
+        retentionEndsAt: new Date(),
         screenshotUrl: payload.screenshotUrl?.trim() || null,
       },
     });
 
-    // B. Finalisation de la tâche
+    // C. Finalisation de la tâche
     await tx.task.update({
       where: { id: completion.taskId },
       data: { status: "COMPLETED" },
     });
 
-    // C. Incrémentation des compteurs de la campagne
+    // D. Incrémentation des compteurs de la campagne
     const campaign = completion.task.campaign;
     const newCompleted = campaign.completedQuantity + 1;
     const isCompleted = newCompleted >= campaign.totalQuantity;
@@ -243,7 +269,7 @@ export async function submitTaskCompletion(
       },
     });
 
-    // D. Incrémentation du quota quotidien du travailleur
+    // E. Incrémentation du quota quotidien du travailleur
     await tx.user.update({
       where: { id: userId },
       data: {
@@ -257,10 +283,9 @@ export async function submitTaskCompletion(
 
   return {
     success: true,
-    message: `Tâche validée avec succès ! ${completion.rewardPoints} points ont été placés en rétention pour 24 heures et seront crédités automatiquement à votre solde.`,
+    message: `Félicitations ! +${completion.rewardPoints} points ont été directement crédités à votre solde !`,
     status: updated.status,
     completionId: updated.id,
-    retentionEndsAt,
     rewardPoints: completion.rewardPoints,
   };
 }

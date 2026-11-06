@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { packId } = body;
+    const { packId, provider = "STRIPE" } = body;
 
     if (!packId) {
       return NextResponse.json(
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       "http://localhost:3000";
 
-    const session = await createCheckoutSession(user.id, packId, origin);
+    const session = await createCheckoutSession(user.id, packId, origin, provider);
 
     return NextResponse.json({
       success: true,
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       paymentId: session.paymentId,
       isMock: session.isMock,
       pack: session.pack,
+      provider: session.provider,
     });
   } catch (error: any) {
     console.error("Erreur création checkout session:", error);

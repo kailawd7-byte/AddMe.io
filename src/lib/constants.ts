@@ -1,6 +1,7 @@
 export const PLATFORMS = {
   TIKTOK: "TIKTOK",
   YOUTUBE: "YOUTUBE",
+  INSTAGRAM: "INSTAGRAM",
 } as const;
 
 export type PlatformType = keyof typeof PLATFORMS;
@@ -58,11 +59,13 @@ export const SYSTEM_DEFAULTS = {
   WELCOME_BONUS_POINTS: 10.0,
   DEFAULT_REWARD_PER_TASK: 1.0,
   DEFAULT_COST_PER_TASK: 1.3,
+  CAMPAIGN_DAILY_DURATION_FEE: 0.5, // 0.5 point par jour de diffusion
+  DEFAULT_CAMPAIGN_DURATION_DAYS: 5,
   MIN_TASK_DURATION_SECONDS: 10,
-  RETENTION_PERIOD_HOURS: 24,
+  RETENTION_PERIOD_HOURS: 0, // Validation directe des points
   RANDOM_AUDIT_SAMPLE_RATE: 0.1, // 10% de demandes de capture
-  BASE_DAILY_TASK_LIMIT: 20, // Plafond initial par travailleur
-  BASE_DAILY_CAMPAIGN_CAP: 10, // Plafond d'actions quotidiennes par campagne
+  BASE_DAILY_TASK_LIMIT: 50, // Plafond initial par travailleur
+  BASE_DAILY_CAMPAIGN_CAP: 20, // Plafond d'actions quotidiennes par campagne
 };
 
 export interface PointPack {
@@ -71,6 +74,8 @@ export interface PointPack {
   points: number;
   priceInCents: number;
   priceFormatted: string;
+  priceInFcfa: number;
+  priceFcfaFormatted: string;
   description: string;
   popular?: boolean;
   badge?: string;
@@ -82,37 +87,43 @@ export const POINT_PACKS: PointPack[] = [
   {
     id: "PACK_STARTER",
     name: "Pack Découverte",
-    points: 50,
+    points: 100,
     priceInCents: 499,
     priceFormatted: "4,99 €",
+    priceInFcfa: 3000,
+    priceFcfaFormatted: "3 000 FCFA",
     description: "Idéal pour booster vos premières publications et tester la plateforme.",
     popular: false,
-    equivalentLikes: 38,
-    equivalentComments: 27,
+    equivalentLikes: 100,
+    equivalentComments: 75,
   },
   {
     id: "PACK_CREATOR",
     name: "Pack Créateur",
-    points: 150,
+    points: 300,
     priceInCents: 1299,
     priceFormatted: "12,99 €",
-    description: "Le pack recommandé pour déclencher les algorithmes TikTok & YouTube sur une publication clé.",
+    priceInFcfa: 8500,
+    priceFcfaFormatted: "8 500 FCFA",
+    description: "Le pack recommandé pour déclencher les algorithmes sur une publication clé.",
     popular: true,
     badge: "Le plus populaire",
-    equivalentLikes: 115,
-    equivalentComments: 83,
+    equivalentLikes: 300,
+    equivalentComments: 220,
   },
   {
     id: "PACK_PRO",
     name: "Pack Influence",
-    points: 500,
+    points: 1000,
     priceInCents: 3499,
     priceFormatted: "34,99 €",
+    priceInFcfa: 22500,
+    priceFcfaFormatted: "22 500 FCFA",
     description: "Tarif optimisé par point pour les créateurs qui publient régulièrement du contenu ambitieux.",
     popular: false,
     badge: "Meilleure valeur / pt",
-    equivalentLikes: 384,
-    equivalentComments: 277,
+    equivalentLikes: 1000,
+    equivalentComments: 750,
   },
 ];
 

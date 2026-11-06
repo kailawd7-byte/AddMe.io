@@ -45,8 +45,8 @@ export const resetPasswordSchema = z.object({
 });
 
 export const linkSocialAccountSchema = z.object({
-  platform: z.enum(["TIKTOK", "YOUTUBE"], {
-    errorMap: () => ({ message: "Plateforme non supportée. Choisissez TikTok ou YouTube." }),
+  platform: z.enum(["TIKTOK", "YOUTUBE", "INSTAGRAM"], {
+    errorMap: () => ({ message: "Plateforme non supportée. Choisissez TikTok, YouTube ou Instagram." }),
   }),
   identifier: z
     .string()
@@ -56,5 +56,26 @@ export const linkSocialAccountSchema = z.object({
     .regex(/^[@a-zA-Z0-9_.\-]+$/, {
       message: "L'identifiant contient des caractères invalides (utilisez lettres, chiffres, tirets, points ou @)",
     }),
+});
+
+export const createCampaignSchema = z.object({
+  socialAccountId: z.string().min(1, { message: "Veuillez sélectionner un compte social vérifié" }),
+  platform: z.enum(["TIKTOK", "YOUTUBE", "INSTAGRAM"], {
+    errorMap: () => ({ message: "Choisissez TikTok, YouTube ou Instagram." }),
+  }),
+  actionType: z.enum(["LIKE", "COMMENT", "SUBSCRIBE"]),
+  videoUrl: z.string().url({ message: "L'URL de la publication est invalide" }),
+  commentTemplate: z.string().max(280).optional(),
+  targetQuantity: z.coerce.number().int().min(1, { message: "Au moins 1 interaction demandée" }).max(10000),
+  rewardPerWorker: z.coerce.number().min(0.5, { message: "Récompense minimale : 0.5 point" }).max(100),
+  durationDays: z.coerce.number().int().min(1, { message: "Durée minimale : 1 jour" }).max(60).default(5),
+});
+
+export const verifyCodeSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .length(6, { message: "Le code de vérification doit comporter 6 chiffres" })
+    .regex(/^[0-9]+$/, { message: "Le code doit être numérique" }),
 });
 

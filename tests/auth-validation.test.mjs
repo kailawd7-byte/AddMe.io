@@ -44,7 +44,7 @@ describe("Validation des entrées & Règles Métier", () => {
     assert.equal(badEmail.success, false);
   });
 
-  it("valide et restreint les plateformes à TIKTOK et YOUTUBE uniquement", () => {
+  it("valide et restreint les plateformes à TIKTOK, YOUTUBE et INSTAGRAM uniquement", () => {
     const validTikTok = linkSocialAccountSchema.safeParse({
       platform: "TIKTOK",
       identifier: "creator_pro",
@@ -57,8 +57,14 @@ describe("Validation des entrées & Règles Métier", () => {
     });
     assert.equal(validYouTube.success, true);
 
+    const validInstagram = linkSocialAccountSchema.safeParse({
+      platform: "INSTAGRAM",
+      identifier: "creator_insta",
+    });
+    assert.equal(validInstagram.success, true);
+
     const invalidPlatform = linkSocialAccountSchema.safeParse({
-      platform: "INSTAGRAM", // Hors périmètre MVP
+      platform: "TWITTER", // Hors périmètre actuel
       identifier: "creator_pro",
     });
     assert.equal(invalidPlatform.success, false);
@@ -67,6 +73,7 @@ describe("Validation des entrées & Règles Métier", () => {
   it("normalise correctement les identifiants de comptes sociaux", () => {
     assert.equal(normalizeSocialIdentifier("TIKTOK", "@SuperCreator"), "supercreator");
     assert.equal(normalizeSocialIdentifier("YOUTUBE", " @ChannelHandle "), "ChannelHandle");
+    assert.equal(normalizeSocialIdentifier("INSTAGRAM", "@InstaCreator"), "instacreator");
   });
 });
 
