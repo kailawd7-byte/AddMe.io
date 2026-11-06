@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "test": "node --experimental-strip-types --test tests/auth-validation.test.mjs tests/auth-database.test.mjs tests/ledger-and-campaigns.test.mjs tests/tasks-and-antifraud.test.mjs tests/shop-and-payments.test.mjs tests/admin-and-legal.test.mjs",
     "test:watch": "vitest",
     "db:push": "prisma db push",
