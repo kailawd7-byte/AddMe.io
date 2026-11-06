@@ -56,7 +56,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
+    const origin =
+      req.nextUrl.origin ||
+      req.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+
+    const resetUrl = `${origin}/reset-password?token=${resetToken}`;
 
     return NextResponse.json({
       success: true,

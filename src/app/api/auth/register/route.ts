@@ -91,6 +91,12 @@ export async function POST(req: NextRequest) {
       role: newUser.role,
     });
 
+    const origin =
+      req.nextUrl.origin ||
+      req.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+
     return NextResponse.json({
       success: true,
       message: "Compte créé avec succès ! Veuillez vérifier votre email pour débloquer votre bonus de 10 points.",
@@ -102,7 +108,7 @@ export async function POST(req: NextRequest) {
       },
       // Retourné pour faciliter les tests manuels et le développement local
       verificationToken: emailVerificationToken,
-      verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify-email?token=${emailVerificationToken}`,
+      verificationUrl: `${origin}/verify-email?token=${emailVerificationToken}`,
     });
   } catch (error) {
     console.error("Erreur registration:", error);
