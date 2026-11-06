@@ -3,39 +3,29 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Video,
   Plus,
   Play,
   Pause,
   XCircle,
   ExternalLink,
-  Coins,
-  Clock,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
-  Sparkles,
-  ShieldAlert,
   Eye,
-  Camera,
-  Check,
   X,
-  FileText,
 } from "lucide-react";
 
 interface CompletionDetail {
   id: string;
   workerUserId: string;
-  status: "IN_PROGRESS" | "PENDING_RETENTION" | "APPROVED" | "REJECTED" | "FLAGGED";
+  status: string;
   startedAt: string;
   submittedAt: string | null;
-  retentionEndsAt: string | null;
   screenshotUrl?: string | null;
 }
 
 interface CampaignItem {
   id: string;
-  platform: "TIKTOK" | "YOUTUBE";
+  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   videoUrl: string;
   commentTemplate: string | null;
@@ -49,7 +39,7 @@ interface CampaignItem {
   refundedPoints: number;
   status: "ACTIVE" | "PAUSED" | "COMPLETED" | "CANCELLED";
   createdAt: string;
-  socialAccount: {
+  socialAccount?: {
     platform: string;
     identifier: string;
     status: string;
@@ -61,15 +51,20 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("ALL");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
-  // État du modal d'inspections des exécutions
+  // Inspection des exécutions
   const [inspectCampaignId, setInspectCampaignId] = useState<string | null>(null);
   const [inspectCompletions, setInspectCompletions] = useState<CompletionDetail[]>([]);
   const [inspectLoading, setInspectLoading] = useState(false);
 
-  // État du modal de signalement
-  const [reportingCompletionId, setReportingCompletionId] = useState<string | null>(null);
+  // Signalement
+  const [reportingCompletionId, setReportingCompletionId] = useState<string | null>(
+    null
+  );
   const [reportReason, setReportReason] = useState("");
   const [submittingReport, setSubmittingReport] = useState(false);
 
@@ -78,7 +73,7 @@ export default function CampaignsPage() {
       const res = await fetch("/api/campaigns");
       if (res.ok) {
         const data = await res.json();
-        setCampaigns(data.campaigns);
+        setCampaigns(data.campaigns || []);
       }
     } catch (err) {
       console.error(err);
@@ -105,68 +100,62 @@ export default function CampaignsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setFeedback({ type: "error", text: data.error || "Action impossible." });
+        setFeedback({
+          type: "error",
+          text: data.error || "Erreur lors de la mise à jour.",
+        });
       } else {
         setFeedback({ type: "success", text: data.message });
         await fetchCampaigns();
       }
     } catch {
-      setFeedback({ type: "error", text: "Erreur de connexion au serveur." });
+      setFeedback({ type: "error", text: "Erreur réseau." });
     } finally {
       setActionLoadingId(null);
     }
   };
 
-  const handleCancelCampaign = async (campaign: CampaignItem) => {
-    const unconsumed = campaign.totalQuantity - campaign.completedQuantity;
-    const refundEst = (unconsumed * campaign.costPerUnit).toFixed(1);
-
+  const handleCancelCampaign = async (campaignId: string) => {
     if (
       !confirm(
-        `Voulez-vous vraiment annuler cette campagne ?\n\n${unconsumed} tâche(s) restante(s) vous seront immédiatement remboursées pour un montant de ${refundEst} points sur votre solde.`
+        "Annuler cette campagne ? Les points des actions non effectuées vous seront immédiatement remboursés."
       )
     ) {
       return;
     }
 
-    setActionLoadingId(campaign.id);
+    setActionLoadingId(campaignId);
     setFeedback(null);
 
     try {
-      const res = await fetch(`/api/campaigns/${campaign.id}/cancel`, {
+      const res = await fetch(`/api/campaigns/${campaignId}/cancel`, {
         method: "POST",
       });
-
       const data = await res.json();
       if (!res.ok) {
-        setFeedback({ type: "error", text: data.error || "Impossible d'annuler la campagne." });
+        setFeedback({
+          type: "error",
+          text: data.error || "Impossible d'annuler la campagne.",
+        });
       } else {
         setFeedback({ type: "success", text: data.message });
         await fetchCampaigns();
       }
     } catch {
-      setFeedback({ type: "error", text: "Erreur réseau lors de l'annulation." });
+      setFeedback({ type: "error", text: "Erreur réseau." });
     } finally {
       setActionLoadingId(null);
     }
   };
 
-  const handleOpenInspectModal = async (campaignId: string) => {
+  const handleInspect = async (campaignId: string) => {
     setInspectCampaignId(campaignId);
     setInspectLoading(true);
-    setInspectCompletions([]);
-
     try {
       const res = await fetch(`/api/campaigns/${campaignId}`);
       if (res.ok) {
         const data = await res.json();
-        const completionsList: CompletionDetail[] = [];
-        data.campaign.tasks.forEach((t: any) => {
-          if (t.completions && t.completions.length > 0) {
-            completionsList.push(...t.completions);
-          }
-        });
-        setInspectCompletions(completionsList);
+        setInspectCompletions(data.completions || []);
       }
     } catch (err) {
       console.error(err);
@@ -175,436 +164,355 @@ export default function CampaignsPage() {
     }
   };
 
-  const handleSubmitReport = async () => {
-    if (!reportingCompletionId || reportReason.trim().length < 5) {
-      alert("Veuillez indiquer un motif clair (au moins 5 caractères).");
-      return;
-    }
-
+  const handleSubmitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportingCompletionId || !reportReason.trim()) return;
     setSubmittingReport(true);
+
     try {
       const res = await fetch(`/api/tasks/${reportingCompletionId}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reportReason.trim() }),
+        body: JSON.stringify({ reason: reportReason }),
       });
-
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Erreur lors du signalement.");
+        setFeedback({
+          type: "error",
+          text: data.error || "Erreur lors du signalement.",
+        });
       } else {
-        alert(data.message || "Signalement effectué avec succès.");
+        setFeedback({ type: "success", text: data.message });
         setReportingCompletionId(null);
         setReportReason("");
-        if (inspectCampaignId) {
-          handleOpenInspectModal(inspectCampaignId);
-        }
+        if (inspectCampaignId) await handleInspect(inspectCampaignId);
       }
     } catch {
-      alert("Erreur réseau lors du signalement.");
+      setFeedback({ type: "error", text: "Erreur réseau." });
     } finally {
       setSubmittingReport(false);
     }
   };
 
-  const filteredCampaigns = campaigns.filter((c) => {
-    if (filter === "ALL") return true;
-    return c.status === filter;
-  });
+  const filteredCampaigns =
+    filter === "ALL"
+      ? campaigns
+      : campaigns.filter((c) => c.status === filter);
+
+  const formatAction = (action: string) => {
+    if (action === "LIKE") return "Like";
+    if (action === "COMMENT") return "Commentaire";
+    return "Abonnement";
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-6">
+      {/* En-tête */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <Video className="h-7 w-7 text-indigo-400" />
-            Mes Campagnes
+          <h1 className="text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
+            Mes campagnes
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Suivez la progression de vos engagements, inspectez les exécutions, mettez en pause ou annulez à tout
-            moment.
+          <p className="text-sm text-[#5A5A70] mt-0.5">
+            Suivez la progression de vos publications et gérez vos budgets de
+            points.
           </p>
         </div>
 
-        <Link
-          href="/campaigns/new"
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all hover:scale-105 shrink-0"
-        >
+        <Link href="/campaigns/new" className="addme-btn addme-btn-primary">
           <Plus className="h-4 w-4" />
-          Nouvelle campagne
+          <span>Nouvelle campagne</span>
         </Link>
       </div>
 
-      {/* Global feedback message */}
+      {/* Filtres Chips */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        {[
+          { id: "ALL", label: "Toutes" },
+          { id: "ACTIVE", label: "En cours" },
+          { id: "PAUSED", label: "En pause" },
+          { id: "COMPLETED", label: "Terminées" },
+          { id: "CANCELLED", label: "Annulées" },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setFilter(item.id)}
+            className={`addme-chip ${filter === item.id ? "on" : ""}`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       {feedback && (
         <div
-          className={`p-4 rounded-xl text-sm flex items-center gap-3 ${
+          className={`p-4 rounded-2xl border flex items-center gap-3 text-sm font-semibold ${
             feedback.type === "success"
-              ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
-              : "bg-rose-500/10 border border-rose-500/30 text-rose-300"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
           }`}
         >
           {feedback.type === "success" ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
           ) : (
-            <AlertTriangle className="h-5 w-5 shrink-0 text-rose-400" />
+            <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0" />
           )}
           <span>{feedback.text}</span>
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800">
-        {[
-          { key: "ALL", label: "Toutes" },
-          { key: "ACTIVE", label: "Actives" },
-          { key: "PAUSED", label: "En pause" },
-          { key: "COMPLETED", label: "Terminées" },
-          { key: "CANCELLED", label: "Annulées" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setFilter(tab.key)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-              filter === tab.key
-                ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/40"
-                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Campaigns List */}
-      {loading ? (
-        <div className="py-20 text-center text-slate-400">
-          <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          Chargement de vos campagnes...
-        </div>
-      ) : filteredCampaigns.length === 0 ? (
-        <div className="py-16 rounded-3xl bg-slate-900/40 border border-dashed border-slate-800 text-center space-y-4">
-          <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto">
-            <Video className="h-6 w-6" />
+      {/* Liste des campagnes */}
+      <div className="addme-card-static">
+        {loading ? (
+          <div className="py-12 text-center text-[#5A5A70]">
+            <div className="h-8 w-8 border-3 border-[#5B3DF5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            Chargement de vos campagnes...
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white">Aucune campagne trouvée</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              Vous n&apos;avez pas de campagne correspondant à ce filtre. Lancez votre première publication dès maintenant !
+        ) : filteredCampaigns.length === 0 ? (
+          <div className="py-12 text-center space-y-3">
+            <b className="text-base font-bold text-[#12122A] block">
+              Aucune campagne trouvée
+            </b>
+            <p className="text-sm text-[#5A5A70]">
+              Lancez une campagne sur une de vos vidéos TikTok, Instagram ou
+              YouTube pour recevoir de l’engagement réel.
             </p>
+            <Link
+              href="/campaigns/new"
+              className="addme-btn addme-btn-primary text-xs"
+            >
+              Créer une campagne
+            </Link>
           </div>
-          <Link
-            href="/campaigns/new"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs shadow-md"
-          >
-            Créer une campagne
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredCampaigns.map((camp) => {
-            const isTikTok = camp.platform === "TIKTOK";
-            const progress = Math.min(100, Math.round((camp.completedQuantity / camp.totalQuantity) * 100));
-            const isLoading = actionLoadingId === camp.id;
+        ) : (
+          <div>
+            {filteredCampaigns.map((camp, idx) => {
+              const pct = Math.min(
+                100,
+                Math.round(
+                  ((camp.completedQuantity || 0) /
+                    Math.max(1, camp.totalQuantity)) *
+                    100
+                )
+              );
+              const shortCode =
+                camp.platform === "TIKTOK"
+                  ? "TT"
+                  : camp.platform === "INSTAGRAM"
+                  ? "IG"
+                  : "YT";
+              const isBusy = actionLoadingId === camp.id;
 
-            return (
-              <div
-                key={camp.id}
-                className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 transition-all space-y-5"
-              >
-                {/* Header row: Platform, Action, Status & Control Buttons */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`h-10 w-10 rounded-2xl flex items-center justify-center font-bold text-xs text-white ${
-                        isTikTok
-                          ? "bg-gradient-to-tr from-pink-600 to-rose-400 shadow-md shadow-pink-500/20"
-                          : "bg-gradient-to-tr from-rose-600 to-red-500 shadow-md shadow-rose-500/20"
-                      }`}
-                    >
-                      {isTikTok ? "TT" : "YT"}
+              return (
+                <div key={camp.id} className="addme-row">
+                  <div className="addme-thumb">{shortCode}</div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <b className="text-base font-bold text-[#12122A]">
+                        Campagne #{idx + 1} · @{camp.socialAccount?.identifier || "profil"}
+                      </b>
+                      <span
+                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                          camp.status === "ACTIVE"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : camp.status === "PAUSED"
+                            ? "bg-amber-50 text-amber-800 border border-amber-200"
+                            : "bg-[#F7F7FB] text-[#5A5A70] border border-[#E3E3EE]"
+                        }`}
+                      >
+                        {camp.status === "ACTIVE"
+                          ? "Active"
+                          : camp.status === "PAUSED"
+                          ? "En pause"
+                          : camp.status === "COMPLETED"
+                          ? "Terminée"
+                          : "Annulée"}
+                      </span>
                     </div>
 
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white text-base">
-                          {camp.actionType === "LIKE"
-                            ? "Likes"
-                            : camp.actionType === "COMMENT"
-                            ? "Commentaires"
-                            : "Abonnements"}
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          sur @{camp.socialAccount.identifier}
-                        </span>
-                      </div>
+                    <div className="text-xs text-[#5A5A70] flex flex-wrap items-center gap-2 mt-1">
+                      <span>
+                        {camp.platform} · {formatAction(camp.actionType)}
+                      </span>
+                      <span>•</span>
+                      <span className="font-bold text-[#5B3DF5]">
+                        {camp.rewardPerUnit} pt/action
+                      </span>
+                      <span>•</span>
+                      <span>Budget : {camp.totalCost} pts</span>
                       <a
                         href={camp.videoUrl}
                         target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 truncate max-w-xs sm:max-w-md"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[#5B3DF5] hover:underline font-semibold"
                       >
-                        {camp.videoUrl}
-                        <ExternalLink className="h-3 w-3 shrink-0" />
+                        <span>Voir la publication</span>
+                        <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
                   </div>
 
-                  {/* Status Badge & Controls */}
-                  <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                    {camp.status === "ACTIVE" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                        Active
-                      </span>
-                    )}
-                    {camp.status === "PAUSED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-1.5">
-                        <Pause className="h-3 w-3" />
-                        En pause
-                      </span>
-                    )}
-                    {camp.status === "COMPLETED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Terminée
-                      </span>
-                    )}
-                    {camp.status === "CANCELLED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                        Annulée ({camp.refundedPoints} pts remboursés)
-                      </span>
-                    )}
+                  {/* Barre de progression */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-sm font-extrabold text-[#12122A]">
+                        {camp.completedQuantity} / {camp.totalQuantity}
+                      </div>
+                      <div className="text-[11px] text-[#5A5A70]">{pct}% livré</div>
+                    </div>
+                    <i className="block w-[110px] h-2 rounded-full bg-[#E3E3EE] overflow-hidden">
+                      <b
+                        className="block h-full bg-[#5B3DF5] rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </i>
+                  </div>
 
-                    {/* Inspect completions button */}
+                  {/* Boutons d'action */}
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleOpenInspectModal(camp.id)}
-                      title="Inspecter les actions reçues et signaler"
-                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-medium flex items-center gap-1.5 transition border border-slate-700"
+                      type="button"
+                      onClick={() => handleInspect(camp.id)}
+                      className="addme-btn addme-btn-ghost py-2 px-3 text-xs"
+                      title="Voir les exécutions"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Exécutions ({camp.completedQuantity})</span>
+                      <Eye className="h-4 w-4 text-[#5B3DF5]" />
+                      <span>Détails</span>
                     </button>
 
-                    {/* Pause / Resume action */}
                     {(camp.status === "ACTIVE" || camp.status === "PAUSED") && (
-                      <button
-                        onClick={() => handleToggleStatus(camp)}
-                        disabled={isLoading}
-                        title={camp.status === "ACTIVE" ? "Mettre en pause" : "Réactiver"}
-                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-                      >
-                        {camp.status === "ACTIVE" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </button>
-                    )}
+                      <>
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => handleToggleStatus(camp)}
+                          className="addme-btn addme-btn-ghost py-2 px-3 text-xs"
+                          title={
+                            camp.status === "ACTIVE"
+                              ? "Mettre en pause"
+                              : "Reprendre"
+                          }
+                        >
+                          {camp.status === "ACTIVE" ? (
+                            <Pause className="h-4 w-4 text-amber-600" />
+                          ) : (
+                            <Play className="h-4 w-4 text-emerald-600" />
+                          )}
+                        </button>
 
-                    {/* Cancel action */}
-                    {(camp.status === "ACTIVE" || camp.status === "PAUSED") && (
-                      <button
-                        onClick={() => handleCancelCampaign(camp)}
-                        disabled={isLoading}
-                        title="Annuler la campagne et rembourser les points restants"
-                        className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Optional comment preview */}
-                {camp.commentTemplate && (
-                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs text-slate-300">
-                    <span className="text-slate-500 font-semibold block mb-0.5">Consigne de commentaire :</span>
-                    « {camp.commentTemplate} »
-                  </div>
-                )}
-
-                {/* Progress bar */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-400">
-                      Progression : <strong className="text-white">{camp.completedQuantity}</strong> sur{" "}
-                      <strong>{camp.totalQuantity}</strong> validés
-                    </span>
-                    <span className="font-bold text-indigo-400">{progress}%</span>
-                  </div>
-                  <div className="h-2.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full transition-all duration-500"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Footer metrics: daily cap + points breakdown */}
-                <div className="pt-2 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>
-                      Distribution progressive : <strong>{camp.deliveredToday} / {camp.dailyCap}</strong> max aujourd&apos;hui
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 text-slate-300">
-                      <Coins className="h-3.5 w-3.5 text-amber-400" />
-                      <span>Total : <strong>{camp.totalCost} pts</strong></span>
-                    </div>
-                    {camp.refundedPoints > 0 && (
-                      <span className="text-emerald-400 font-medium">
-                        (+{camp.refundedPoints} pts remboursés)
-                      </span>
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => handleCancelCampaign(camp.id)}
+                          className="addme-btn addme-btn-ghost py-2 px-3 text-xs text-rose-600 hover:border-rose-300"
+                          title="Annuler et rembourser le solde restant"
+                        >
+                          <XCircle className="h-4 w-4 text-rose-600" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-      {/* MODAL D'INSPECTION DES EXÉCUTIONS & SIGNALEMENT */}
+      {/* Modal d'inspection des exécutions */}
       {inspectCampaignId && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[85vh] flex flex-col space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-indigo-400" /> Exécutions de la campagne
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Vérifiez les actions reçues. Vous disposez de 24h pour signaler une action non effectuée.
-                </p>
-              </div>
+        <div className="fixed inset-0 z-50 bg-[#12122A]/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="addme-card-static max-w-xl w-full space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#E3E3EE] pb-3">
+              <b className="text-lg font-extrabold text-[#12122A]">
+                Historique des interactions reçues
+              </b>
               <button
+                type="button"
                 onClick={() => setInspectCampaignId(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="p-1.5 rounded-lg hover:bg-[#F7F7FB]"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5 text-[#5A5A70]" />
               </button>
             </div>
 
-            <div className="overflow-y-auto space-y-3 flex-1 pr-1">
-              {inspectLoading ? (
-                <div className="py-12 text-center text-slate-400 text-xs">Chargement des exécutions...</div>
-              ) : inspectCompletions.length === 0 ? (
-                <div className="py-12 text-center text-slate-500 text-xs">
-                  Aucune exécution enregistrée pour cette campagne pour l&apos;instant.
-                </div>
-              ) : (
-                inspectCompletions.map((comp) => {
-                  const isPending = comp.status === "PENDING_RETENTION";
-                  const isApproved = comp.status === "APPROVED";
-                  const isFlagged = comp.status === "FLAGGED";
-
-                  return (
-                    <div
-                      key={comp.id}
-                      className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
-                              isPending
-                                ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                                : isApproved
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : isFlagged
-                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                : "bg-slate-800 text-slate-400"
-                            }`}
-                          >
-                            {isPending
-                              ? "Séquestre 24h"
-                              : isApproved
-                              ? "Validé / Points remis"
-                              : isFlagged
-                              ? "Signalé en arbitrage"
-                              : comp.status}
-                          </span>
-                          <span className="text-slate-400">
-                            {comp.submittedAt ? new Date(comp.submittedAt).toLocaleString("fr-FR") : "En cours"}
-                          </span>
-                        </div>
-
-                        {comp.screenshotUrl && (
-                          <div className="pt-1">
-                            <a
-                              href={comp.screenshotUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 font-medium"
-                            >
-                              <Camera className="w-3.5 h-3.5" /> Voir la preuve de capture d&apos;écran
-                            </a>
-                          </div>
-                        )}
+            {inspectLoading ? (
+              <div className="py-8 text-center text-sm text-[#5A5A70]">
+                Chargement...
+              </div>
+            ) : inspectCompletions.length === 0 ? (
+              <div className="py-8 text-center text-sm text-[#5A5A70]">
+                Aucune exécution enregistrée pour le moment.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {inspectCompletions.map((comp) => (
+                  <div
+                    key={comp.id}
+                    className="p-3.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE] flex items-center justify-between gap-3"
+                  >
+                    <div className="text-xs">
+                      <div className="font-bold text-[#12122A]">
+                        Membre #{comp.workerUserId.slice(0, 6)} •{" "}
+                        <span className="text-emerald-600">{comp.status}</span>
                       </div>
-
-                      {/* Bouton de signalement */}
-                      <div>
-                        {isFlagged ? (
-                          <span className="text-rose-400 font-semibold flex items-center gap-1">
-                            <ShieldAlert className="w-3.5 h-3.5" /> Signalement en cours
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setReportingCompletionId(comp.id);
-                              setReportReason("");
-                            }}
-                            className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-semibold flex items-center gap-1.5 transition"
-                          >
-                            <ShieldAlert className="w-3.5 h-3.5" /> Signaler (Non fait)
-                          </button>
-                        )}
+                      <div className="text-[#5A5A70] mt-0.5">
+                        Validé le{" "}
+                        {new Date(
+                          comp.submittedAt || comp.startedAt
+                        ).toLocaleString("fr-FR")}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
 
-            {/* Formulaire de signalement intégré */}
+                    {comp.status !== "FLAGGED" && (
+                      <button
+                        type="button"
+                        onClick={() => setReportingCompletionId(comp.id)}
+                        className="text-xs font-bold text-rose-600 hover:underline"
+                      >
+                        Signaler un litige
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {reportingCompletionId && (
-              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-rose-300 flex items-center gap-1.5 uppercase">
-                    <ShieldAlert className="w-4 h-4" /> Signaler cette tâche comme non réalisée
-                  </h4>
+              <form
+                onSubmit={handleSubmitReport}
+                className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-3"
+              >
+                <div className="text-xs font-bold text-rose-900">
+                  Motif du signalement (ex: action non visible sur ma publication)
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="Expliquez brièvement le problème..."
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-rose-300 text-xs text-[#12122A]"
+                />
+                <div className="flex justify-end gap-2">
                   <button
+                    type="button"
                     onClick={() => setReportingCompletionId(null)}
-                    className="text-xs text-rose-400 hover:text-white"
+                    className="px-3 py-1.5 rounded-lg text-xs text-[#5A5A70]"
                   >
                     Annuler
                   </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReport}
+                    className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold"
+                  >
+                    Envoyer le signalement
+                  </button>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Indiquez le motif précis (ex: &quot;Aucun like reçu sur la vidéo après vérification&quot;,
-                  &quot;Commentaire absent&quot;). Les points du travailleur seront immédiatement gelés en attente de vérification admin.
-                </p>
-                <textarea
-                  rows={2}
-                  placeholder="Motif du signalement (min. 5 caractères)..."
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
-                />
-                <button
-                  disabled={submittingReport || reportReason.trim().length < 5}
-                  onClick={handleSubmitReport}
-                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition ${
-                    submittingReport || reportReason.trim().length < 5
-                      ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                      : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30"
-                  }`}
-                >
-                  {submittingReport ? "Envoi du signalement..." : "Confirmer le signalement & Geler les points"}
-                </button>
-              </div>
+              </form>
             )}
           </div>
         </div>

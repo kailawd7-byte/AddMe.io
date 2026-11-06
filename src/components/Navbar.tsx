@@ -7,15 +7,16 @@ import {
   Coins,
   ShieldCheck,
   Video,
-  Layers,
+  LayoutDashboard,
   ShoppingBag,
   Share2,
   LogOut,
   Menu,
   X,
-  Sparkles,
   ArrowRight,
-  Zap,
+  PlusCircle,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 
 interface UserData {
@@ -34,14 +35,26 @@ interface UserData {
   }>;
 }
 
-export default function Navbar() {
+const APP_ROUTE_PREFIXES = [
+  "/dashboard",
+  "/tasks",
+  "/campaigns",
+  "/shop",
+  "/admin",
+];
+
+export default function Navbar({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const isLandingPage = pathname === "/";
+  const isAppWorkspace = APP_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+  );
 
   const fetchUser = async () => {
     try {
@@ -65,7 +78,15 @@ export default function Navbar() {
 
   useEffect(() => {
     fetchUser();
+    setMobileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isLandingPage) return;
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isLandingPage]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -75,261 +96,413 @@ export default function Navbar() {
   };
 
   // =========================================================================
-  // 1. NAVBAR DÉDIÉE À LA LANDING PAGE ("Île Flottante" Cinématographique)
+  // 1. LANDING PAGE ("/") : Header public uniquement + contenu plein écran
   // =========================================================================
   if (isLandingPage) {
     return (
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl">
-        <div className="flex h-14 items-center justify-between px-4 sm:px-6 rounded-full bg-slate-950/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-indigo-950/40">
-          {/* Brand */}
-          <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 font-black text-white shadow-md shadow-indigo-500/30 group-hover:scale-105 transition-transform">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <span className="text-base font-extrabold tracking-tight text-white">
-              AddMe<span className="text-cyan-400">.io</span>
-            </span>
-          </Link>
+      <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
+        <header
+          className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+            scrolled
+              ? "bg-[#0E0D14]/90 backdrop-blur-xl border-b border-[#2E2C40] py-3.5 shadow-2xl"
+              : "bg-transparent py-5"
+          }`}
+        >
+          <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-between gap-4">
+            {/* Logo AddMe.io */}
+            <Link href="/" className="text-2xl font-extrabold tracking-tight text-white">
+              AddMe<span className="text-[#FFB84D]">.io</span>
+            </Link>
 
-          {/* Ancres publiques (Desktop) - ZÉRO lien interne d'application */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-medium text-slate-300">
-            <a href="#concept" className="hover:text-cyan-400 transition-colors">
-              Concept
-            </a>
-            <a href="#fonctionnement" className="hover:text-cyan-400 transition-colors">
-              Comment ça marche
-            </a>
-            <a href="#simulateur" className="hover:text-cyan-400 transition-colors">
-              Simulateur d'impact
-            </a>
-            <a href="#tarifs" className="hover:text-cyan-400 transition-colors">
-              Packs & Mobile Money
-            </a>
-            <a href="#faq" className="hover:text-cyan-400 transition-colors">
-              FAQ
-            </a>
-          </nav>
+            {/* Navigation publique uniquement (ZÉRO lien interne dashboard) */}
+            <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-[#C9C6DB]">
+              <a href="#how" className="hover:text-white transition-colors">
+                Fonctionnement
+              </a>
+              <a href="#artefacts" className="hover:text-white transition-colors">
+                Système P2P
+              </a>
+              <a href="#simulateur" className="hover:text-white transition-colors">
+                Simulateur
+              </a>
+              <a href="#prix" className="hover:text-white transition-colors">
+                Tarifs
+              </a>
+              <a href="#faq" className="hover:text-white transition-colors">
+                FAQ
+              </a>
+            </nav>
 
-          {/* Action droite : Selon statut de connexion */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {loading ? (
-              <div className="h-8 w-20 bg-slate-800/60 rounded-full animate-pulse" />
-            ) : user ? (
-              // UTILISATEUR CONNECTÉ : Uniquement accès direct à son Dashboard
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold">
-                  <Coins className="h-3.5 w-3.5 text-amber-400" />
-                  <span>{user.balance.toFixed(0)} pts</span>
+            {/* Action droite selon connexion */}
+            <div className="flex items-center gap-3">
+              {loading ? (
+                <div className="h-10 w-28 rounded-xl bg-white/10 animate-pulse" />
+              ) : user ? (
+                /* Déjà connecté : uniquement bouton vers le Tableau de bord */
+                <div className="flex items-center gap-3">
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1B1A26] border border-[#2E2C40] text-[#FFB84D] text-xs font-extrabold">
+                    {user.balance.toFixed(0)} pts
+                  </span>
+                  <Link
+                    href="/dashboard"
+                    className="addme-btn addme-btn-primary text-sm"
+                  >
+                    <span>Mon Tableau de bord</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all hover:scale-105"
-                >
-                  <span>Mon Dashboard</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            ) : (
-              // UTILISATEUR NON CONNECTÉ : Se connecter / Commencer
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/login"
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
-                >
-                  Se connecter
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all hover:scale-105"
-                >
-                  <span>Commencer (+10 pts)</span>
-                  <Zap className="h-3.5 w-3.5 text-amber-300" />
-                </Link>
-              </div>
-            )}
+              ) : (
+                /* Non connecté : Connexion + Commencer */
+                <div className="flex items-center gap-4">
+                  <Link
+                    href="/login"
+                    className="text-sm font-semibold text-white/90 hover:text-[#FFB84D] transition-colors"
+                  >
+                    Connexion
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="addme-btn addme-btn-primary text-sm"
+                  >
+                    Commencer
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+        <main className="flex-1 flex flex-col">{children}</main>
+      </div>
     );
   }
 
   // =========================================================================
-  // 2. NAVBAR DÉDIÉE À L'APPLICATION & DASHBOARD (/dashboard, /tasks, /campaigns...)
+  // 2. ESPACE APPLICATIF SAAS (/dashboard, /tasks, /campaigns, /shop, /admin)
+  //    Architecture Sidebar gauche fidèle à Dashboard.dc.html
   // =========================================================================
-  const navLinks = [
-    { href: "/dashboard", label: "Aperçu", icon: Layers },
-    { href: "/tasks", label: "Gagner des points", icon: Coins },
-    { href: "/campaigns", label: "Mes campagnes", icon: Video },
-    { href: "/dashboard/social-accounts", label: "Comptes sociaux", icon: Share2 },
-    { href: "/shop", label: "Boutique", icon: ShoppingBag },
-  ];
+  if (isAppWorkspace) {
+    const sidebarLinks = [
+      {
+        href: "/dashboard",
+        label: "Tableau de bord",
+        icon: LayoutDashboard,
+        active: pathname === "/dashboard",
+      },
+      {
+        href: "/tasks",
+        label: "Gagner des points",
+        icon: Coins,
+        active: pathname.startsWith("/tasks"),
+      },
+      {
+        href: "/campaigns",
+        label: "Mes campagnes",
+        icon: Video,
+        active: pathname === "/campaigns",
+      },
+      {
+        href: "/campaigns/new",
+        label: "Nouvelle campagne",
+        icon: PlusCircle,
+        active: pathname === "/campaigns/new",
+      },
+      {
+        href: "/shop",
+        label: "Boutique",
+        icon: ShoppingBag,
+        active: pathname.startsWith("/shop"),
+      },
+      {
+        href: "/dashboard/social-accounts",
+        label: "Comptes liés",
+        icon: Share2,
+        active: pathname.startsWith("/dashboard/social-accounts"),
+      },
+    ];
 
-  return (
-    <header className="sticky top-0 z-50 w-full border-b border-surface-border/50 bg-[#090d16]/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand : Renvoie vers /dashboard pour les utilisateurs connectés */}
-        <div className="flex items-center gap-8">
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 font-black text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors">
-                AddMe<span className="text-cyan-400">.io</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium -mt-1 hidden sm:block">
-                Espace Créateur
-              </span>
-            </div>
+    if (user?.role === "ADMIN") {
+      sidebarLinks.push({
+        href: "/admin",
+        label: "Administration",
+        icon: ShieldCheck,
+        active: pathname.startsWith("/admin"),
+      });
+    }
+
+    return (
+      <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F7FB] text-[#12122A]">
+        {/* Topbar Mobile uniquement */}
+        <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#E3E3EE]">
+          <Link href="/dashboard" className="text-xl font-extrabold tracking-tight text-[#12122A]">
+            AddMe<span className="text-[#5B3DF5]">.io</span>
           </Link>
-
-          {/* Desktop Nav Links */}
-          {user && (
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isActive
-                        ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
-                        : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-
-              {user.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    pathname.startsWith("/admin")
-                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                      : "text-rose-400 hover:bg-rose-500/10"
-                  }`}
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Admin
-                </Link>
-              )}
-            </nav>
-          )}
-        </div>
-
-        {/* Right Section: User Points & Auth */}
-        <div className="flex items-center gap-3">
-          {loading ? (
-            <div className="h-8 w-24 bg-slate-800/50 rounded-lg animate-pulse" />
-          ) : user ? (
-            <div className="flex items-center gap-3">
-              {/* Solde de points en direct */}
+          <div className="flex items-center gap-2.5">
+            {user && (
               <Link
                 href="/shop"
-                title="Acheter ou recharger des points"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-amber-500/10 border border-amber-500/30 text-amber-300 hover:border-amber-400 transition-colors shadow-sm"
+                className="px-3 py-1.5 rounded-xl bg-[#EEEAFF] text-[#5B3DF5] font-extrabold text-xs"
               >
-                <Coins className="h-4 w-4 text-amber-400" />
-                <span className="font-bold text-sm tracking-tight">
-                  {user.balance.toFixed(1)} <span className="text-xs font-normal text-amber-200/80">pts</span>
-                </span>
+                {user.balance.toFixed(1)} pts
               </Link>
-
-              {/* User badge & Déconnexion */}
-              <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-slate-800">
-                <span className="text-xs text-slate-400 font-medium truncate max-w-[140px]" title={user.email}>
-                  {user.email.split("@")[0]}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  title="Se déconnecter"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Mobile menu trigger */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="px-3.5 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors"
-              >
-                Connexion
-              </Link>
-              <Link
-                href="/register"
-                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-md shadow-indigo-600/30 transition-all hover:scale-[1.02]"
-              >
-                Commencer (+10 pts)
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Menu Dropdown (uniquement pour les routes connectées) */}
-      {mobileMenuOpen && user && (
-        <div className="md:hidden border-b border-surface-border bg-[#090d16] px-4 pt-2 pb-6 space-y-2">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium ${
-                  isActive
-                    ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
-                    : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {link.label}
-              </Link>
-            );
-          })}
-
-          {user.role === "ADMIN" && (
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20"
-            >
-              <ShieldCheck className="h-5 w-5" />
-              Panneau d'administration
-            </Link>
-          )}
-
-          <div className="pt-3 border-t border-slate-800 flex justify-between items-center px-1">
-            <span className="text-xs text-slate-400 truncate">{user.email}</span>
+            )}
             <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                handleLogout();
-              }}
-              className="flex items-center gap-1.5 text-xs text-rose-400 font-medium px-2 py-1 rounded hover:bg-rose-500/10"
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl border border-[#E3E3EE] text-[#12122A] hover:bg-[#F7F7FB]"
+              aria-label="Ouvrir le menu"
             >
-              <LogOut className="h-3.5 w-3.5" />
-              Déconnexion
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-      )}
-    </header>
+
+        {/* Drawer Mobile */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-[#12122A]/50 backdrop-blur-xs flex">
+            <div className="w-72 bg-white h-full p-5 flex flex-col justify-between shadow-2xl">
+              <div>
+                <div className="flex items-center justify-between px-2 mb-6">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-2xl font-extrabold text-[#12122A]"
+                  >
+                    AddMe<span className="text-[#5B3DF5]">.io</span>
+                  </Link>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-1.5 rounded-lg text-[#5A5A70] hover:bg-[#F7F7FB]"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <nav className="space-y-1">
+                  {sidebarLinks.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-colors ${
+                          item.active
+                            ? "bg-[#EEEAFF] text-[#3A22C8] font-semibold"
+                            : "text-[#3A3A52] hover:bg-[#F7F7FB] font-medium"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {user && (
+                <div className="pt-4 border-t border-[#E3E3EE] space-y-3">
+                  <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE]">
+                    <div className="text-xs font-semibold text-[#12122A] truncate">
+                      {user.email}
+                    </div>
+                    <div className="text-[11px] text-[#5A5A70] mt-0.5 flex items-center justify-between">
+                      <span>Réputation : {user.reputationScore.toFixed(0)}/100</span>
+                      <span className="font-bold text-[#5B3DF5]">{user.balance.toFixed(1)} pts</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Se déconnecter
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+          </div>
+        )}
+
+        {/* Sidebar Desktop fixe à gauche (Style exact Dashboard.dc.html) */}
+        <aside className="hidden lg:flex w-[244px] shrink-0 bg-white border-r border-[#E3E3EE] px-4 py-6 flex-col justify-between sticky top-0 h-screen">
+          <div>
+            {/* Brand Logo -> renvoie toujours vers /dashboard */}
+            <Link
+              href="/dashboard"
+              className="block px-3.5 mb-6 text-[22px] font-extrabold tracking-tight text-[#12122A]"
+            >
+              AddMe<span className="text-[#5B3DF5]">.io</span>
+            </Link>
+
+            {/* Mini carte Solde rapide */}
+            {user && (
+              <div className="mx-1 mb-5 p-3.5 rounded-2xl bg-[#5B3DF5] text-white shadow-md shadow-[#5B3DF5]/20">
+                <div className="flex items-center justify-between text-[11px] font-medium opacity-85">
+                  <span>Solde disponible</span>
+                  <Coins className="h-3.5 w-3.5 text-[#FFB84D]" />
+                </div>
+                <div className="text-2xl font-extrabold tracking-tight mt-0.5">
+                  {user.balance.toFixed(1)} pts
+                </div>
+                <Link
+                  href="/shop"
+                  className="mt-2.5 block text-center py-1.5 px-3 rounded-lg bg-white text-[#3A22C8] text-xs font-bold hover:bg-[#F7F7FB] transition-colors"
+                >
+                  + Acheter des points
+                </Link>
+              </div>
+            )}
+
+            {/* Liens de navigation */}
+            <nav className="space-y-1">
+              {sidebarLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-all ${
+                      item.active
+                        ? "bg-[#EEEAFF] text-[#3A22C8] font-semibold"
+                        : "text-[#3A3A52] hover:bg-[#F7F7FB] hover:text-[#12122A] font-medium"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-4 w-4 shrink-0 ${
+                        item.active ? "text-[#5B3DF5]" : "text-[#5A5A70]"
+                      }`}
+                    />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Pied de Sidebar : Infos utilisateur + Déconnexion */}
+          <div className="pt-4 border-t border-[#E3E3EE] space-y-2.5">
+            {user ? (
+              <>
+                {!user.isEmailVerified && (
+                  <Link
+                    href="/verify-email"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold hover:bg-amber-100 transition-colors"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                    <span>Vérifier email (+10 pts)</span>
+                  </Link>
+                )}
+                <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE]">
+                  <div className="flex items-center justify-between gap-1">
+                    <span
+                      className="text-xs font-bold text-[#12122A] truncate"
+                      title={user.email}
+                    >
+                      {user.email.split("@")[0]}
+                    </span>
+                    {user.isEmailVerified && (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    )}
+                  </div>
+                  <div className="text-[11px] text-[#5A5A70] truncate mt-0.5">
+                    {user.email}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-[#E3E3EE] flex items-center justify-between text-[11px]">
+                    <span className="text-[#5A5A70]">Réputation</span>
+                    <span className="font-bold text-[#12122A]">
+                      {user.reputationScore.toFixed(0)}/100
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-[10px] text-xs font-semibold text-[#5A5A70] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Déconnexion</span>
+                </button>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Link
+                  href="/login"
+                  className="addme-btn addme-btn-primary w-full text-xs"
+                >
+                  Se connecter
+                </Link>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Contenu Principal de l'Application */}
+        <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 3. PAGES AUTHENTIFICATION & LÉGALES (/login, /register, /verify-email...)
+  // =========================================================================
+  return (
+    <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
+      <header className="w-full bg-white border-b border-[#E3E3EE]">
+        <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
+          <Link
+            href={user ? "/dashboard" : "/"}
+            className="text-2xl font-extrabold tracking-tight text-[#12122A]"
+          >
+            AddMe<span className="text-[#5B3DF5]">.io</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <Link href="/dashboard" className="addme-btn addme-btn-primary text-xs">
+                Mon Tableau de bord
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold text-[#5A5A70] hover:text-[#12122A] px-3 py-2"
+                >
+                  Connexion
+                </Link>
+                <Link
+                  href="/register"
+                  className="addme-btn addme-btn-primary text-xs py-2.5 px-4"
+                >
+                  Créer un compte (+10 pts)
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 flex flex-col">{children}</main>
+      <footer className="bg-[#0E0D14] text-white py-6 text-xs">
+        <div className="max-w-[1100px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <b>
+            AddMe<span className="text-[#FFB84D]">.io</span>
+          </b>
+          <div className="flex items-center gap-4 text-[#C9C6DB]">
+            <Link href="/legal/terms" className="hover:text-white">
+              CGU
+            </Link>
+            <span>·</span>
+            <Link href="/legal/privacy" className="hover:text-white">
+              Confidentialité
+            </Link>
+            <span>·</span>
+            <Link href="/legal/disclaimer" className="hover:text-white">
+              Avertissement Réseaux
+            </Link>
+            <span>·</span>
+            <span>© {new Date().getFullYear()} AddMe.io</span>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

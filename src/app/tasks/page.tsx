@@ -1,25 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import {
-  Sparkles,
   CheckCircle2,
   ExternalLink,
   Clock,
-  Shield,
   AlertTriangle,
-  Play,
-  Heart,
-  MessageCircle,
-  UserPlus,
-  Flame,
-  Award,
   RefreshCw,
   Camera,
-  Coins,
-  ChevronRight,
-  Info,
   Check,
   Copy,
 } from "lucide-react";
@@ -31,7 +19,6 @@ interface QuotaInfo {
   reputationScore: number;
   isReputationHealthy: boolean;
   canCompleteMoreTasks: boolean;
-  daysActive: number;
 }
 
 interface TaskItem {
@@ -65,11 +52,13 @@ interface ActiveSession {
 export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+
   const [platformFilter, setPlatformFilter] = useState<string>("ALL");
   const [actionFilter, setActionFilter] = useState<string>("ALL");
 
-  // État de la tâche en cours
+  // Session de tâche active (Chronomètre 10s)
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [startingTaskId, setStartingTaskId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -77,21 +66,35 @@ export default function TasksPage() {
   const [hasOpenedLink, setHasOpenedLink] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState("");
   const [copiedTemplate, setCopiedTemplate] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchTasks = async () => {
+  const fetchBalanceAndTasks = async () => {
     try {
       const params = new URLSearchParams();
       if (platformFilter !== "ALL") params.append("platform", platformFilter);
       if (actionFilter !== "ALL") params.append("actionType", actionFilter);
 
-      const res = await fetch(`/api/tasks?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setTasks(data.tasks);
-        setQuota(data.quota);
+      const [tasksRes, meRes] = await Promise.all([
+        fetch(`/api/tasks?${params.toString()}`),
+        fetch("/api/auth/me"),
+      ]);
+
+      if (tasksRes.ok) {
+        const data = await tasksRes.json();
+        setTasks(data.tasks || []);
+        setQuota(data.quota || null);
+      }
+
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        if (meData.authenticated && meData.user) {
+          setBalance(meData.user.balance ?? 0);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -101,10 +104,10 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchBalanceAndTasks();
   }, [platformFilter, actionFilter]);
 
-  // Gestion du chronomètre 10 secondes lorsque la session active change
+  // Chronomètre 10 secondes
   useEffect(() => {
     if (activeSession) {
       setSecondsRemaining(activeSession.minDurationSeconds || 10);
@@ -123,8 +126,6 @@ export default function TasksPage() {
           return prev - 1;
         });
       }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
     }
 
     return () => {
@@ -143,53 +144,28 @@ export default function TasksPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setFeedback({ type: "error", text: data.error || "Impossible de démarrer la tâche." });
-      } else {
-        setActiveSession({
-          completionId: data.completionId,
-          taskId: data.taskId,
-          videoUrl: data.videoUrl,
-          platform: data.platform,
-          actionType: data.actionType,
-          commentTemplate: data.commentTemplate,
-          rewardPoints: data.rewardPoints,
-          minDurationSeconds: data.minDurationSeconds,
-          requiresScreenshot: data.requiresScreenshot,
-          startedAt: data.startedAt,
+        setFeedback({
+          type: "error",
+          text: data.error || "Impossible de démarrer cette tâche.",
         });
+      } else {
+        setActiveSession(data.session);
+        // Ouverture automatique de la publication dans un nouvel onglet
+        window.open(task.videoUrl, "_blank", "noopener,noreferrer");
+        setHasOpenedLink(true);
       }
     } catch {
-      setFeedback({ type: "error", text: "Erreur réseau lors du démarrage de la tâche." });
+      setFeedback({
+        type: "error",
+        text: "Erreur réseau lors du démarrage de la tâche.",
+      });
     } finally {
       setStartingTaskId(null);
     }
   };
 
-  const handleOpenVideo = () => {
-    if (activeSession) {
-      window.open(activeSession.videoUrl, "_blank", "noopener,noreferrer");
-      setHasOpenedLink(true);
-    }
-  };
-
   const handleSubmitTask = async () => {
     if (!activeSession) return;
-    if (secondsRemaining > 0) {
-      setFeedback({
-        type: "error",
-        text: `Veuillez patienter encore ${secondsRemaining}s sur la publication avant de valider.`,
-      });
-      return;
-    }
-
-    if (activeSession.requiresScreenshot && !screenshotUrl.trim()) {
-      setFeedback({
-        type: "error",
-        text: "Cette tâche fait l'objet d'un contrôle de conformité : veuillez fournir l'URL de votre capture d'écran.",
-      });
-      return;
-    }
-
     setSubmitting(true);
     setFeedback(null);
 
@@ -206,510 +182,402 @@ export default function TasksPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setFeedback({ type: "error", text: data.error || "Échec de validation de la tâche." });
+        setFeedback({
+          type: "error",
+          text: data.error || "Validation refusée.",
+        });
       } else {
         setFeedback({
           type: "success",
-          text: `Bravo ! Votre tâche est validée. +${activeSession.rewardPoints} points ont été directement crédités à votre solde !`,
+          text:
+            data.message ||
+            `+${activeSession.rewardPoints} points crédités immédiatement à votre solde !`,
         });
         setActiveSession(null);
-        await fetchTasks();
+        await fetchBalanceAndTasks();
       }
     } catch {
-      setFeedback({ type: "error", text: "Erreur de communication avec le serveur." });
+      setFeedback({
+        type: "error",
+        text: "Erreur réseau lors de la validation.",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const copyComment = (text: string) => {
+  const copyCommentTemplate = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedTemplate(true);
     setTimeout(() => setCopiedTemplate(false), 2000);
   };
 
-  const getActionLabel = (type: string) => {
-    switch (type) {
-      case "LIKE":
-        return { label: "J'aime la vidéo", icon: Heart, color: "text-rose-400 bg-rose-500/10 border-rose-500/20" };
-      case "COMMENT":
-        return { label: "Commenter la vidéo", icon: MessageCircle, color: "text-sky-400 bg-sky-500/10 border-sky-500/20" };
-      case "SUBSCRIBE":
-        return { label: "S'abonner au créateur", icon: UserPlus, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
-      default:
-        return { label: type, icon: Play, color: "text-slate-400 bg-slate-500/10 border-slate-500/20" };
-    }
+  const formatPlatform = (platform: string) => {
+    if (platform === "TIKTOK") return "TikTok";
+    if (platform === "INSTAGRAM") return "Instagram";
+    return "YouTube";
+  };
+
+  const formatAction = (action: string) => {
+    if (action === "LIKE") return "Like";
+    if (action === "COMMENT") return "Commentaire";
+    return "Abonnement";
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Titre & Stratégie Cognitive */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Échange P2P Réel
-              </span>
-              <span className="text-xs text-slate-400">100% Manuel • Zéro bot</span>
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight mt-2 text-white">
-              Gagner des points d&apos;engagement
-            </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-              Interagissez avec les publications d&apos;autres créateurs vérifiés. Vos points sont garantis et crédités
-              sur votre solde pour propulser vos propres vidéos.
+    <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-5">
+      {/* En-tête : Titre + Carte Solde (Style exact Taches.dc.html) */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
+            Gagner des points
+          </h1>
+          {quota && (
+            <p className="text-xs text-[#5A5A70] mt-0.5">
+              Quota du jour : {quota.dailyTasksCompleted} / {quota.dailyTaskLimit} tâches •{" "}
+              1 seule action par publication • Crédit direct
             </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchTasks()}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-sm font-medium transition"
-            >
-              <RefreshCw className="w-4 h-4" /> Actualiser
-            </button>
-            <Link
-              href="/campaigns/new"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/20 transition"
-            >
-              <Coins className="w-4 h-4" /> Dépenser mes points
-            </Link>
-          </div>
+          )}
         </div>
 
-        {/* Message d'alerte global (Succès / Erreur) */}
-        {feedback && (
-          <div
-            className={`p-4 rounded-2xl border flex items-start gap-3 transition ${
-              feedback.type === "success"
-                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
-                : "bg-rose-500/10 border-rose-500/20 text-rose-300"
-            }`}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={fetchBalanceAndTasks}
+            className="addme-btn addme-btn-ghost py-2.5 px-3.5 text-xs"
+            title="Actualiser la liste"
           >
-            {feedback.type === "success" ? (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-400 mt-0.5" />
-            ) : (
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-400 mt-0.5" />
-            )}
-            <p className="text-sm font-medium leading-relaxed">{feedback.text}</p>
+            <RefreshCw className="h-4 w-4 text-[#5A5A70]" />
+            <span>Actualiser</span>
+          </button>
+
+          <span className="addme-card-static py-2.5 px-5 inline-flex items-center gap-2">
+            <span className="text-xs text-[#5A5A70] font-medium">Solde :</span>
+            <b className="text-[#5B3DF5] font-extrabold text-lg">
+              {balance.toFixed(1)} pts
+            </b>
+          </span>
+        </div>
+      </div>
+
+      {/* Filtres Chips (Style exact Taches.dc.html) */}
+      <div className="flex flex-wrap items-center gap-2.5 my-4">
+        <button
+          type="button"
+          onClick={() => {
+            setPlatformFilter("ALL");
+            setActionFilter("ALL");
+          }}
+          className={`addme-chip ${
+            platformFilter === "ALL" && actionFilter === "ALL" ? "on" : ""
+          }`}
+        >
+          Tous
+        </button>
+
+        {/* Filtres par Réseau */}
+        <button
+          type="button"
+          onClick={() =>
+            setPlatformFilter(platformFilter === "TIKTOK" ? "ALL" : "TIKTOK")
+          }
+          className={`addme-chip ${platformFilter === "TIKTOK" ? "on" : ""}`}
+        >
+          TikTok
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            setPlatformFilter(
+              platformFilter === "INSTAGRAM" ? "ALL" : "INSTAGRAM"
+            )
+          }
+          className={`addme-chip ${platformFilter === "INSTAGRAM" ? "on" : ""}`}
+        >
+          Instagram
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            setPlatformFilter(platformFilter === "YOUTUBE" ? "ALL" : "YOUTUBE")
+          }
+          className={`addme-chip ${platformFilter === "YOUTUBE" ? "on" : ""}`}
+        >
+          YouTube
+        </button>
+
+        <span className="h-5 w-[1px] bg-[#E3E3EE] mx-1 hidden sm:inline-block" />
+
+        {/* Filtres par Action */}
+        <button
+          type="button"
+          onClick={() =>
+            setActionFilter(actionFilter === "LIKE" ? "ALL" : "LIKE")
+          }
+          className={`addme-chip ${actionFilter === "LIKE" ? "on" : ""}`}
+        >
+          Like
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            setActionFilter(actionFilter === "COMMENT" ? "ALL" : "COMMENT")
+          }
+          className={`addme-chip ${actionFilter === "COMMENT" ? "on" : ""}`}
+        >
+          Commentaire
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            setActionFilter(actionFilter === "SUBSCRIBE" ? "ALL" : "SUBSCRIBE")
+          }
+          className={`addme-chip ${actionFilter === "SUBSCRIBE" ? "on" : ""}`}
+        >
+          Abonnement
+        </button>
+      </div>
+
+      {/* Bandeau d'instruction Lavande (#EEEAFF / #D9D2FF - Style exact Taches.dc.html) */}
+      <div
+        className="addme-card-static text-sm text-[#12122A] leading-relaxed"
+        style={{ background: "#EEEAFF", borderColor: "#D9D2FF" }}
+      >
+        Ouvrez la publication, faites l’action vous-même, puis revenez valider.
+        Un chronomètre de 10 secondes s’affiche pendant la tâche et vos points
+        sont crédités <strong>immédiatement</strong> sur votre solde dès
+        validation. Chaque publication ne peut être effectuée qu’
+        <strong>une seule fois</strong>.
+      </div>
+
+      {/* Message de confirmation ou d'erreur */}
+      {feedback && (
+        <div
+          className={`p-4 rounded-2xl border flex items-center gap-3 text-sm font-semibold ${
+            feedback.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
+          }`}
+        >
+          {feedback.type === "success" ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0" />
+          )}
+          <span>{feedback.text}</span>
+        </div>
+      )}
+
+      {/* PANNEAU DE TÂCHE EN COURS D'EXÉCUTION (Chrono 10s actif) */}
+      {activeSession && (
+        <div className="addme-card-static border-2 border-[#5B3DF5] shadow-xl space-y-5 animate-up">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E3E3EE] pb-4">
+            <div>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[#5B3DF5]">
+                Mission en cours • {formatPlatform(activeSession.platform)} ·{" "}
+                {formatAction(activeSession.actionType)}
+              </span>
+              <h3 className="text-xl font-extrabold text-[#12122A] mt-0.5">
+                Effectuez l’action puis validez vos +{activeSession.rewardPoints}{" "}
+                pt{activeSession.rewardPoints > 1 ? "s" : ""}
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#EEEAFF] text-[#3A22C8] font-extrabold text-sm">
+              <Clock className="h-4 w-4 text-[#5B3DF5]" />
+              {secondsRemaining > 0 ? (
+                <span>Chronomètre : {secondsRemaining}s restantes</span>
+              ) : (
+                <span className="text-emerald-700">✓ Temps écoulé (Prêt)</span>
+              )}
+            </div>
           </div>
-        )}
 
-        {/* Indicateurs de Réputation et de Quota Quotidien */}
-        {quota && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Jauge Quota Quotidien */}
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Flame className="w-4 h-4 text-amber-400" /> Quota du jour
-                </span>
-                <span className="text-xs font-bold text-slate-300">
-                  {quota.dailyTasksCompleted} / {quota.dailyTaskLimit} effectuées
-                </span>
-              </div>
-              <div className="mt-3">
-                <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-amber-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, (quota.dailyTasksCompleted / Math.max(1, quota.dailyTaskLimit)) * 100)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-slate-400 mt-2">
-                {quota.tasksRemainingToday > 0 ? (
-                  <span>
-                    Il vous reste <strong className="text-amber-400">{quota.tasksRemainingToday}</strong> tâche(s)
-                    possible(s) aujourd&apos;hui.
-                  </span>
-                ) : (
-                  <span className="text-rose-400 font-semibold">Plafond quotidien atteint. Revenez demain !</span>
-                )}
-              </p>
-            </div>
-
-            {/* Score de Réputation */}
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-emerald-400" /> Réputation P2P
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    quota.reputationScore >= 90
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      : quota.reputationScore >= 70
-                      ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
-                      : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                  }`}
-                >
-                  {quota.reputationScore.toFixed(0)} / 100
-                </span>
-              </div>
-              <p className="text-sm font-semibold text-white mt-2">
-                {quota.reputationScore >= 90
-                  ? "Créateur exemplaire"
-                  : quota.reputationScore >= 70
-                  ? "Profil d'engagement actif"
-                  : "Attention : risque de suspension (< 50)"}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                Chaque tâche validée renforce votre indice et débloque un quota journalier supérieur.
-              </p>
-            </div>
-
-            {/* Période de Séquestre 24h & Sécurité */}
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-indigo-400" /> Séquestre anti-fraude
-                </span>
-                <span className="text-xs font-medium text-slate-400">Rétention 24h</span>
-              </div>
-              <p className="text-sm font-semibold text-white mt-2">Points garantis</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Pour protéger les créateurs contre le désabonnement immédiat, vos points sont automatiquement libérés
-                après 24h.
-              </p>
-            </div>
+          {/* Barre de progression du chronomètre */}
+          <div className="w-full h-2.5 rounded-full bg-[#E3E3EE] overflow-hidden">
+            <div
+              className="h-full bg-[#5B3DF5] transition-all duration-500"
+              style={{
+                width: `${Math.min(
+                  100,
+                  ((10 - secondsRemaining) / 10) * 100
+                )}%`,
+              }}
+            />
           </div>
-        )}
 
-        {/* MODAL / CONSOLE ACTIVE D'EXÉCUTION DE TÂCHE */}
-        {activeSession && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-700 w-full max-w-xl rounded-3xl p-6 sm:p-8 shadow-2xl relative space-y-6">
-              {/* En-tête session */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg ${
-                      activeSession.platform === "TIKTOK"
-                        ? "bg-slate-800 text-rose-400 border border-rose-500/20"
-                        : "bg-red-500/10 text-red-500 border border-red-500/20"
-                    }`}
-                  >
-                    {activeSession.platform === "TIKTOK" ? "TT" : "YT"}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      {getActionLabel(activeSession.actionType).label}
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Sur la publication officielle de la campagne • Gain promis :{" "}
-                      <span className="text-emerald-400 font-bold">+{activeSession.rewardPoints} points</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Minuteur 10s */}
-                <div
-                  className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl border ${
-                    secondsRemaining > 0
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                  }`}
-                >
-                  <span className="text-lg font-extrabold leading-none">{secondsRemaining}</span>
-                  <span className="text-[10px] uppercase font-semibold">sec</span>
-                </div>
-              </div>
-
-              {/* Étape 1 : Ouvrir la vidéo */}
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-xs flex items-center justify-center">
-                      1
-                    </span>{" "}
-                    Ouvrez la vidéo dans un nouvel onglet
+          {/* Modèle de commentaire si requis */}
+          {activeSession.actionType === "COMMENT" &&
+            activeSession.commentTemplate && (
+              <div className="p-4 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE] flex items-center justify-between gap-3">
+                <div className="text-xs">
+                  <span className="text-[#5A5A70] block font-semibold mb-0.5">
+                    Commentaire suggéré par le créateur :
                   </span>
-                  {hasOpenedLink && (
-                    <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" /> Lien ouvert
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400">
-                  Regardez la vidéo et effectuez l&apos;action demandée avec votre compte authentique.
-                </p>
-                <button
-                  onClick={handleOpenVideo}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition border border-slate-700"
-                >
-                  <ExternalLink className="w-4 h-4 text-indigo-400" />
-                  Ouvrir la publication {activeSession.platform === "TIKTOK" ? "TikTok" : "YouTube"}
-                </button>
-              </div>
-
-              {/* Si Commentaire spécifique demandé */}
-              {activeSession.actionType === "COMMENT" && activeSession.commentTemplate && (
-                <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-900/40 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                      <MessageCircle className="w-4 h-4" /> Modèle de commentaire suggéré
-                    </span>
-                    <button
-                      onClick={() => copyComment(activeSession.commentTemplate!)}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition"
-                    >
-                      {copiedTemplate ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" /> Copié !
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" /> Copier
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-sm bg-slate-950/80 p-2.5 rounded-xl border border-indigo-900/50 font-mono text-slate-200">
+                  <strong className="text-[#12122A] text-sm">
                     &ldquo;{activeSession.commentTemplate}&rdquo;
-                  </p>
+                  </strong>
                 </div>
-              )}
-
-              {/* Étape 2 : Contrôle Aléatoire 10% avec Capture si demandé */}
-              {activeSession.requiresScreenshot && (
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
-                  <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs uppercase tracking-wider">
-                    <Camera className="w-4 h-4" /> Contrôle aléatoire de conformité (10%)
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Cette tâche a été sélectionnée par le système anti-fraude. Veuillez fournir une capture d&apos;écran
-                    prouvant votre action (ex: hébergée sur Imgur, Lightshot ou URL directe).
-                  </p>
-                  <input
-                    type="url"
-                    placeholder="https://i.imgur.com/exemple.png"
-                    value={screenshotUrl}
-                    onChange={(e) => setScreenshotUrl(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-              )}
-
-              {/* Étape 3 : Validation de la tâche */}
-              <div className="space-y-3 pt-2">
                 <button
-                  disabled={
-                    secondsRemaining > 0 ||
-                    submitting ||
-                    (activeSession.requiresScreenshot && !screenshotUrl.trim())
+                  type="button"
+                  onClick={() =>
+                    copyCommentTemplate(activeSession.commentTemplate!)
                   }
-                  onClick={handleSubmitTask}
-                  className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm shadow-xl flex items-center justify-center gap-2 transition ${
-                    secondsRemaining > 0 ||
-                    (activeSession.requiresScreenshot && !screenshotUrl.trim())
-                      ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                      : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20 cursor-pointer"
-                  }`}
+                  className="addme-btn addme-btn-ghost text-xs py-2 px-3"
                 >
-                  {submitting ? (
-                    "Validation en cours..."
-                  ) : secondsRemaining > 0 ? (
-                    `Patientez encore ${secondsRemaining}s sur la publication...`
+                  {copiedTemplate ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>Copié</span>
+                    </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      Valider l&apos;action & Réclamer +{activeSession.rewardPoints} points
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copier</span>
                     </>
                   )}
                 </button>
-
-                <button
-                  onClick={() => setActiveSession(null)}
-                  className="w-full text-center text-xs text-slate-400 hover:text-slate-300 py-2 transition"
-                >
-                  Fermer sans valider (la tâche sera réattribuée)
-                </button>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Barre de Filtres de Recherche */}
-        <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Filtre Réseau */}
-            <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium">
-              <button
-                onClick={() => setPlatformFilter("ALL")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  platformFilter === "ALL" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Tous les réseaux
-              </button>
-              <button
-                onClick={() => setPlatformFilter("TIKTOK")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  platformFilter === "TIKTOK" ? "bg-rose-600 text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                TikTok
-              </button>
-              <button
-                onClick={() => setPlatformFilter("YOUTUBE")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  platformFilter === "YOUTUBE" ? "bg-red-600 text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                YouTube
-              </button>
-              <button
-                onClick={() => setPlatformFilter("INSTAGRAM")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  platformFilter === "INSTAGRAM"
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Instagram
-              </button>
+          {/* Contrôle aléatoire de capture d'écran si demandé */}
+          {activeSession.requiresScreenshot && (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                <Camera className="h-4 w-4 text-amber-600" />
+                <span>
+                  Contrôle de conformité : veuillez indiquer un lien de capture
+                  ou preuve d’action
+                </span>
+              </div>
+              <input
+                type="text"
+                value={screenshotUrl}
+                onChange={(e) => setScreenshotUrl(e.target.value)}
+                placeholder="Ex : https://imgur.com/... ou confirmation"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5]"
+              />
             </div>
+          )}
 
-            {/* Filtre Action */}
-            <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+          {/* Boutons d'action de la session */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <a
+              href={activeSession.videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setHasOpenedLink(true)}
+              className="addme-btn addme-btn-ghost text-xs"
+            >
+              <ExternalLink className="h-4 w-4 text-[#5B3DF5]" />
+              <span>Rouvrir la publication ({activeSession.platform})</span>
+            </a>
+
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => setActionFilter("ALL")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  actionFilter === "ALL" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-                }`}
+                type="button"
+                onClick={() => setActiveSession(null)}
+                className="addme-btn addme-btn-ghost text-xs"
               >
-                Toutes actions
+                Annuler
               </button>
               <button
-                onClick={() => setActionFilter("LIKE")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  actionFilter === "LIKE" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-                }`}
+                type="button"
+                disabled={secondsRemaining > 0 || submitting}
+                onClick={handleSubmitTask}
+                className="addme-btn addme-btn-primary disabled:opacity-50"
               >
-                Likes
-              </button>
-              <button
-                onClick={() => setActionFilter("COMMENT")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  actionFilter === "COMMENT" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Commentaires
-              </button>
-              <button
-                onClick={() => setActionFilter("SUBSCRIBE")}
-                className={`px-3 py-1.5 rounded-lg transition ${
-                  actionFilter === "SUBSCRIBE" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Abonnements
+                {submitting ? (
+                  <span>Validation en cours...</span>
+                ) : secondsRemaining > 0 ? (
+                  <span>Patientez {secondsRemaining}s...</span>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>
+                      Valider et recevoir +{activeSession.rewardPoints} pt
+                      {activeSession.rewardPoints > 1 ? "s" : ""}
+                    </span>
+                  </>
+                )}
               </button>
             </div>
           </div>
-
-          <span className="text-xs text-slate-400 font-medium">
-            <strong className="text-slate-200">{tasks.length}</strong> tâche(s) disponible(s)
-          </span>
         </div>
+      )}
 
-        {/* Liste des Tâches Disponibles */}
+      {/* LISTE DES TÂCHES DISPONIBLES (1 seule carte par publication - Style exact Taches.dc.html) */}
+      <div className="addme-card-static">
         {loading ? (
-          <div className="py-20 text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm text-slate-400">Recherche des tâches disponibles...</p>
+          <div className="py-12 text-center text-[#5A5A70] space-y-3">
+            <div className="h-8 w-8 border-3 border-[#5B3DF5] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm">Chargement des publications disponibles...</p>
           </div>
         ) : tasks.length === 0 ? (
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-12 text-center space-y-4">
-            <div className="w-16 h-16 rounded-3xl bg-slate-800/60 border border-slate-700 flex items-center justify-center mx-auto text-slate-500">
-              <Sparkles className="w-8 h-8 text-indigo-400" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Aucune tâche disponible pour l&apos;instant</h3>
-            <p className="text-sm text-slate-400 max-w-md mx-auto">
-              Toutes les tâches actuelles ont été accomplies ou vous avez déjà participé aux campagnes actives. Revenez
-              très vite ou lancez votre propre campagne !
+          <div className="py-12 text-center space-y-2">
+            <b className="text-base font-bold text-[#12122A] block">
+              Aucune nouvelle publication à afficher
+            </b>
+            <p className="text-sm text-[#5A5A70] max-w-md mx-auto">
+              Vous avez déjà accompli toutes les publications disponibles pour ce
+              filtre, ou aucune mission n’est en attente. Revenez dans quelques
+              instants !
             </p>
-            <div className="pt-2">
-              <Link
-                href="/campaigns/new"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition"
-              >
-                Lancer une campagne de visibilité
-              </Link>
-            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div>
             {tasks.map((task) => {
-              const actionMeta = getActionLabel(task.actionType);
-              const ActionIcon = actionMeta.icon;
+              const shortCode =
+                task.platform === "TIKTOK"
+                  ? "TT"
+                  : task.platform === "INSTAGRAM"
+                  ? "IG"
+                  : "YT";
+              const isStarting = startingTaskId === task.taskId;
+              const isCurrentlyActive = activeSession?.taskId === task.taskId;
 
               return (
-                <div
-                  key={task.taskId}
-                  className="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 hover:border-slate-700 transition flex flex-col justify-between space-y-4 group"
-                >
-                  <div className="space-y-3">
-                    {/* Badge réseau & Action */}
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-xl font-bold flex items-center gap-1.5 ${
-                          task.platform === "TIKTOK"
-                            ? "bg-slate-800 text-rose-400 border border-rose-500/20"
-                            : task.platform === "INSTAGRAM"
-                            ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-300 border border-pink-500/30"
-                            : "bg-red-500/10 text-red-500 border border-red-500/20"
-                        }`}
-                      >
-                        {task.platform === "TIKTOK" ? "TikTok" : task.platform === "INSTAGRAM" ? "Instagram" : "YouTube"}
+                <div key={task.taskId} className="addme-row">
+                  <div className="addme-thumb">{shortCode}</div>
+
+                  <div className="flex-1 min-w-0">
+                    <b className="block text-base font-bold text-[#12122A] truncate">
+                      Publication de {task.targetHandle || `@créateur`}
+                    </b>
+                    <div className="text-sm text-[#5A5A70] flex flex-wrap items-center gap-2 mt-0.5">
+                      <span>
+                        {formatPlatform(task.platform)} ·{" "}
+                        {formatAction(task.actionType)}
                       </span>
-
-                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl flex items-center gap-1">
-                        +{task.rewardPoints} pts
-                      </span>
-                    </div>
-
-                    {/* Titre / Action */}
-                    <div>
-                      <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
-                        <ActionIcon className="w-4 h-4 text-indigo-400" />
-                        <span>{actionMeta.label}</span>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Créateur : <strong className="text-slate-300">@{task.targetHandle}</strong>
-                      </p>
-                    </div>
-
-                    {/* Aperçu commentaire éventuel */}
-                    {task.commentTemplate && (
-                      <div className="text-xs bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-slate-400 italic line-clamp-2">
-                        &ldquo;{task.commentTemplate}&rdquo;
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bouton d'action */}
-                  <div className="pt-2 border-t border-slate-800/60">
-                    <button
-                      disabled={startingTaskId === task.taskId || Boolean(quota && !quota.canCompleteMoreTasks)}
-                      onClick={() => handleStartTask(task)}
-                      className={`w-full py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition ${
-                        quota && !quota.canCompleteMoreTasks
-                          ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                          : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 group-hover:scale-[1.02]"
-                      }`}
-                    >
-                      {startingTaskId === task.taskId ? (
-                        "Réservation..."
-                      ) : (
+                      {task.remainingSlots !== undefined && (
                         <>
-                          <Play className="w-3.5 h-3.5 fill-current" /> Faire la tâche (+{task.rewardPoints} pts)
+                          <span>•</span>
+                          <span className="text-xs">
+                            {task.remainingSlots} place
+                            {task.remainingSlots > 1 ? "s" : ""} restante
+                            {task.remainingSlots > 1 ? "s" : ""}
+                          </span>
                         </>
                       )}
-                    </button>
+                    </div>
                   </div>
+
+                  <span className="text-[#5B3DF5] font-extrabold text-lg">
+                    +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={isStarting || isCurrentlyActive}
+                    onClick={() => handleStartTask(task)}
+                    className="addme-btn addme-btn-primary text-sm disabled:opacity-50"
+                  >
+                    {isStarting
+                      ? "Ouverture..."
+                      : isCurrentlyActive
+                      ? "En cours..."
+                      : "Faire la tâche"}
+                  </button>
                 </div>
               );
             })}
