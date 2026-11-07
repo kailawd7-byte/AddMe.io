@@ -18,10 +18,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Environment files
+# Environment files & Secrets
 .env
-.env*.local
+.env.*
+*.env
 !.env.example
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
 
 # Local SQLite databases
 *.db

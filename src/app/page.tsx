@@ -235,7 +235,7 @@ export default function HomePage() {
                       </span>
                     </div>
                     <b className="text-[#FFB84D] text-lg font-extrabold shrink-0 group-hover:scale-110 transition-transform">
-                      +1 pt
+                      +1 pts
                     </b>
                   </div>
                 </div>
