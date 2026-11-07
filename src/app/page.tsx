@@ -31,7 +31,9 @@ export default function HomePage() {
   const [clickedPanels, setClickedPanels] = useState<Record<string, boolean>>({});
 
   // Simulateur de campagne
-  const [simPlatform, setSimPlatform] = useState<"TIKTOK" | "INSTAGRAM" | "YOUTUBE">("TIKTOK");
+  const [simPlatform, setSimPlatform] = useState<
+    "TIKTOK" | "INSTAGRAM" | "YOUTUBE" | "FACEBOOK" | "SNAPCHAT" | "LINKEDIN" | "X" | "THREADS"
+  >("TIKTOK");
   const [simAction, setSimAction] = useState<"LIKE" | "COMMENT" | "SUBSCRIBE">("LIKE");
   const [simQuantity, setSimQuantity] = useState<number>(30);
   const [simReward, setSimReward] = useState<number>(1);
@@ -117,10 +119,10 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg sm:text-[19px] leading-[1.6] text-[#C9C6DB] max-w-xl m-0">
-                Propulsez vos contenus sur vos réseaux en échange d’engagement.
+                Propulsez vos contenus sur vos 8 réseaux favoris en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
-                pour faire décoller votre visibilité.
+                pour faire décoller votre visibilité sur TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X et Threads.
               </p>
 
               {/* Actions selon le statut de connexion */}
@@ -177,13 +179,13 @@ export default function HomePage() {
                   <div className="opacity-75">Crédit direct sans attente</div>
                 </div>
                 <div>
-                  <div className="font-extrabold text-white text-base">3 Réseaux</div>
-                  <div className="opacity-75">TikTok, Instagram, YouTube</div>
+                  <div className="font-extrabold text-white text-base">8 Réseaux</div>
+                  <div className="opacity-75">TikTok, IG, YT, X, FB, SC...</div>
                 </div>
               </div>
             </div>
 
-            {/* Colonne Droite : 3 Panels Interactifs au survol/clic */}
+            {/* Colonne Droite : 3 Panels Interactifs avec Icônes Réseaux Officielles */}
             <div
               className="flex-[1_1_400px] relative h-[440px] sm:h-[460px] w-full max-w-[480px] mx-auto"
               style={{ perspective: "1200px" }}
@@ -219,9 +221,11 @@ export default function HomePage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5 mt-2.5 flex-nowrap">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-pink-600 to-rose-400 flex items-center justify-center font-extrabold text-sm text-white shrink-0 group-hover:scale-110 transition-transform">
-                      TT
-                    </div>
+                    <img
+                      src="/images/networks/tiktok.png"
+                      alt="TikTok"
+                      className="w-12 h-12 rounded-xl object-contain shadow-lg shrink-0 group-hover:scale-110 transition-transform bg-black p-1"
+                    />
                     <div className="flex-1 min-w-0">
                       <b className="block text-white text-sm truncate group-hover:text-[#FFB84D] transition-colors">
                         Vidéo de @créateur_tiktok
@@ -261,9 +265,11 @@ export default function HomePage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5 mt-2.5 flex-nowrap">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 flex items-center justify-center font-extrabold text-sm text-white shrink-0 group-hover:scale-110 transition-transform">
-                      IG
-                    </div>
+                    <img
+                      src="/images/networks/instagram.png"
+                      alt="Instagram"
+                      className="w-12 h-12 rounded-xl object-contain shadow-lg shrink-0 group-hover:scale-110 transition-transform"
+                    />
                     <div className="flex-1 min-w-0">
                       <b className="block text-white text-sm truncate group-hover:text-[#FFB84D] transition-colors">
                         Reel de @studio_art
@@ -305,9 +311,11 @@ export default function HomePage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5 mt-2.5 flex-nowrap">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center font-extrabold text-sm text-white shrink-0 group-hover:scale-110 transition-transform">
-                      YT
-                    </div>
+                    <img
+                      src="/images/networks/youtube.png"
+                      alt="YouTube"
+                      className="w-12 h-12 rounded-xl object-contain shadow-lg shrink-0 group-hover:scale-110 transition-transform bg-white/10 p-1"
+                    />
                     <div className="flex-1 min-w-0">
                       <b className="block text-white text-sm truncate group-hover:text-[#FFB84D] transition-colors">
                         Short de @crea_media
@@ -379,8 +387,11 @@ export default function HomePage() {
          ===================================================================== */}
       <section id="ecosystem" className="bg-[#0E0D14] text-white py-14 sm:py-16 border-b border-[#2E2C40]">
         <div className="max-w-[1140px] mx-auto px-6 text-center">
-          <p className="text-xs sm:text-[13px] uppercase tracking-[0.2em] text-[#8E8CA0] font-semibold mb-10">
-            Compatible avec l&apos;écosystème des créateurs de contenu
+          <p className="text-xs sm:text-[13px] uppercase tracking-[0.2em] text-[#8E8CA0] font-semibold mb-3">
+            Compatible avec l&apos;écosystème des 8 grands réseaux sociaux
+          </p>
+          <p className="text-sm text-[#C9C6DB] max-w-2xl mx-auto mb-10 leading-relaxed">
+            Utilisez la plateforme AddMe.io pour amplifier votre visibilité, vos abonnés et vos interactions réelles sur l’ensemble de ces 8 réseaux.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 lg:gap-20">
@@ -596,23 +607,40 @@ export default function HomePage() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-2">
                     1. Réseau social
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["TIKTOK", "INSTAGRAM", "YOUTUBE"] as const).map((net) => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: "TIKTOK", label: "TikTok" },
+                      { id: "INSTAGRAM", label: "Instagram" },
+                      { id: "YOUTUBE", label: "YouTube" },
+                      { id: "FACEBOOK", label: "Facebook" },
+                      { id: "SNAPCHAT", label: "Snapchat" },
+                      { id: "LINKEDIN", label: "LinkedIn" },
+                      { id: "X", label: "X" },
+                      { id: "THREADS", label: "Threads" },
+                    ].map((net) => (
                       <button
-                        key={net}
+                        key={net.id}
                         type="button"
-                        onClick={() => setSimPlatform(net)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all ${
-                          simPlatform === net
+                        onClick={() =>
+                          setSimPlatform(
+                            net.id as
+                              | "TIKTOK"
+                              | "INSTAGRAM"
+                              | "YOUTUBE"
+                              | "FACEBOOK"
+                              | "SNAPCHAT"
+                              | "LINKEDIN"
+                              | "X"
+                              | "THREADS"
+                          )
+                        }
+                        className={`py-2 px-1.5 rounded-xl text-[11px] font-bold border transition-all truncate text-center ${
+                          simPlatform === net.id
                             ? "bg-[#12122A] text-white border-[#12122A]"
                             : "bg-[#F7F7FB] text-[#5A5A70] border-[#E3E3EE] hover:border-[#5B3DF5]"
                         }`}
                       >
-                        {net === "TIKTOK"
-                          ? "TikTok"
-                          : net === "INSTAGRAM"
-                          ? "Instagram"
-                          : "YouTube"}
+                        {net.label}
                       </button>
                     ))}
                   </div>
