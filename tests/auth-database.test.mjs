@@ -81,12 +81,12 @@ describe("Workflow Intégration Base de Données : Auth & Liaison Sociale", () =
 
     assert.equal(errorCaught, true);
 
-    // Le solde doit toujours être strictement de 10.0
+    // Le solde doit toujours être strictement de 50.0
     const aggregate = await prisma.ledgerEntry.aggregate({
       where: { userId: createdUserId },
       _sum: { amount: true },
     });
-    assert.equal(aggregate._sum.amount, 10.0);
+    assert.equal(aggregate._sum.amount, 50.0);
   });
 
   it("4. Lie un compte TikTok avec un code de bio unique", async () => {

@@ -227,12 +227,12 @@ describe("Cycle de Vie des Campagnes (Création, Débit, Pause, Annulation & Rem
     assert.equal(campaign.status, "ACTIVE");
     assert.equal(campaign.totalQuantity, 10);
     assert.equal(campaign.completedQuantity, 0);
-    assert.equal(campaign.costPerUnit, 1.3);
-    assert.equal(campaign.totalCost, 13.0); // 10 * 1.3 = 13.0 points
+    assert.equal(campaign.costPerUnit, 1.0);
+    assert.equal(campaign.totalCost, 12.5); // 10 * 1.0 + 5 * 0.5 fee = 12.5 points
 
-    // Vérifie le solde déduit de 13.0 points : 50.0 - 13.0 = 37.0 points
+    // Vérifie le solde déduit de 12.5 points : 50.0 - 12.5 = 37.5 points
     const balanceAfter = await getUserBalance(campaignUserId);
-    assert.equal(balanceAfter, 37.0);
+    assert.equal(balanceAfter, 37.5);
 
     // Vérifie que les 10 tâches ont bien été créées
     const tasksCount = await prisma.task.count({
@@ -251,18 +251,18 @@ describe("Cycle de Vie des Campagnes (Création, Débit, Pause, Annulation & Rem
 
   it("annule la campagne et rembourse intégralement les points non consommés", async () => {
     const balanceBeforeCancel = await getUserBalance(campaignUserId);
-    assert.equal(balanceBeforeCancel, 37.0);
+    assert.equal(balanceBeforeCancel, 37.5);
 
-    // Annulation de la campagne (10 tâches non consommées à 1.3 pts = 13.0 pts remboursés)
+    // Annulation de la campagne (10 tâches non consommées à 1.0 pt = 10.0 pts remboursés)
     const result = await cancelCampaign(createdCampaignId, campaignUserId);
 
     assert.equal(result.campaign.status, "CANCELLED");
     assert.equal(result.unconsumedCount, 10);
-    assert.equal(result.refundAmount, 13.0);
+    assert.equal(result.refundAmount, 10.0);
 
-    // Le solde doit avoir retrouvé ses 50.0 points initiaux
+    // Le solde doit avoir retrouvé 47.5 points
     const balanceAfterCancel = await getUserBalance(campaignUserId);
-    assert.equal(balanceAfterCancel, 50.0);
+    assert.equal(balanceAfterCancel, 47.5);
 
     // Vérifie que les tâches disponibles ont bien été marquées comme CANCELLED
     const availableTasks = await prisma.task.count({

@@ -90,10 +90,15 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   }, [isLandingPage]);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    router.push("/login");
-    router.refresh();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      setUser(null);
+      // Redirection automatique vers la landing page
+      window.location.href = "/";
+    }
   };
 
   // =========================================================================
