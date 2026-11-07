@@ -13,7 +13,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { completionId, screenshotUrl } = body;
+    const { completionId, screenshotUrl, externalTimeSpentSeconds } = body;
 
     if (!completionId) {
       return NextResponse.json(
@@ -24,6 +24,10 @@ export async function POST(
 
     const result = await submitTaskCompletion(completionId, user.id, {
       screenshotUrl,
+      externalTimeSpentSeconds:
+        typeof externalTimeSpentSeconds === "number"
+          ? externalTimeSpentSeconds
+          : undefined,
     });
 
     return NextResponse.json(result);

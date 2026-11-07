@@ -2,6 +2,12 @@ import { prisma } from "./prisma.ts";
 import { recordLedgerTransaction } from "./ledger.ts";
 import { checkUserTaskEligibility, adjustReputationScore } from "./reputation.ts";
 import { SYSTEM_DEFAULTS } from "./constants.ts";
+import {
+  captureBaselineSnapshot,
+  encodeSnapshotMetadata,
+  decodeSnapshotMetadata,
+  verifyTaskActionWithBot,
+} from "./action-verifier.ts";
 
 export interface GetTasksFilter {
   platform?: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
@@ -278,6 +284,19 @@ export async function startTask(
       existingActiveCompletion.taskId === taskId ||
       existingActiveCompletion.task?.campaignId === requestedTask.campaignId
     ) {
+      if (!decodeSnapshotMetadata(existingActiveCompletion.screenshotUrl)) {
+        const snap = await captureBaselineSnapshot(
+          existingActiveCompletion.task.campaign.platform,
+          existingActiveCompletion.task.campaign.actionType,
+          existingActiveCompletion.task.campaign.videoUrl,
+          existingActiveCompletion.task.campaign.socialAccount.identifier
+        );
+        await prisma.taskCompletion.update({
+          where: { id: existingActiveCompletion.id },
+          data: { screenshotUrl: encodeSnapshotMetadata(snap) },
+        });
+      }
+
       const elapsedSeconds = Math.floor(
         (Date.now() - new Date(existingActiveCompletion.startedAt).getTime()) / 1000
       );
@@ -343,6 +362,14 @@ export async function startTask(
   const targetTask = requestedTask;
   const requiresScreenshot = false;
 
+  // Capture par le Robot AddMe des compteurs en direct AVANT l'action (Likes, Commentaires, Abonnés)
+  const baselineSnapshot = await captureBaselineSnapshot(
+    targetTask.campaign.platform,
+    targetTask.campaign.actionType,
+    targetTask.campaign.videoUrl,
+    targetTask.campaign.socialAccount.identifier
+  );
+
   // Création atomique de la completion et réservation de la tâche
   const completion = await prisma.$transaction(async (tx) => {
     await tx.task.update({
@@ -357,6 +384,7 @@ export async function startTask(
         status: "IN_PROGRESS",
         startedAt: new Date(),
         requiresScreenshot,
+        screenshotUrl: encodeSnapshotMetadata(baselineSnapshot),
         rewardPoints: targetTask.campaign.rewardPerUnit,
         ipAddress: clientInfo.ip || null,
         userAgent: clientInfo.userAgent?.slice(0, 255) || null,
@@ -375,7 +403,7 @@ export async function startTask(
     rewardPoints: completion.rewardPoints,
     targetHandle: targetTask.campaign.socialAccount.identifier,
     startedAt: completion.startedAt,
-    minDurationSeconds: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS, // 10s
+    minDurationSeconds: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS, // 20s
     secondsRemaining: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS,
     requiresScreenshot,
   };
@@ -412,18 +440,26 @@ export async function cancelTaskCompletion(completionId: string, userId: string)
 }
 
 /**
- * Valide l'accomplissement d'une tâche (contrôle du timer 10s, capture d'écran si requise, mise en séquestre 24h).
+ * Valide l'accomplissement d'une tâche (contrôle du timer 20s + Robot de vérification d'action en direct).
  */
 export async function submitTaskCompletion(
   completionId: string,
   userId: string,
-  payload: { screenshotUrl?: string } = {}
+  payload: { screenshotUrl?: string; externalTimeSpentSeconds?: number } = {}
 ) {
   const completion = await prisma.taskCompletion.findUnique({
     where: { id: completionId },
     include: {
       task: {
-        include: { campaign: true },
+        include: {
+          campaign: {
+            include: {
+              socialAccount: {
+                select: { platform: true, identifier: true },
+              },
+            },
+          },
+        },
       },
     },
   });
@@ -436,14 +472,14 @@ export async function submitTaskCompletion(
     throw new Error(`Cette tâche a déjà été soumise (statut : ${completion.status}).`);
   }
 
-  // 1. Contrôle strict de la durée minimale (10 secondes) côté serveur
+  // 1. Contrôle strict de la durée minimale (20 secondes) côté serveur
   const elapsedMs = Date.now() - new Date(completion.startedAt).getTime();
   const minRequiredMs = (SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS - 0.5) * 1000; // Marge réseau de 500ms
 
   if (elapsedMs < minRequiredMs) {
     const elapsedSeconds = (elapsedMs / 1000).toFixed(1);
     throw new Error(
-      `DURÉE_INSUFFISANTE: Vous devez visionner la publication au moins 10 secondes (temps écoulé : ${elapsedSeconds} s).`
+      `DURÉE_INSUFFISANTE: Vous devez rester sur la publication au moins ${SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS} secondes (temps écoulé : ${elapsedSeconds} s).`
     );
   }
 
@@ -454,7 +490,25 @@ export async function submitTaskCompletion(
     );
   }
 
-  // 3. Validation atomique et crédit direct en base de données
+  // 3. Vérification en temps réel par le Robot Anti-Fraude AddMe (comparaison des compteurs Avant / Après)
+  const baselineSnapshot = decodeSnapshotMetadata(completion.screenshotUrl);
+  const botVerification = await verifyTaskActionWithBot({
+    platform: completion.task.campaign.platform,
+    actionType: completion.task.campaign.actionType,
+    videoUrl: completion.task.campaign.videoUrl,
+    targetHandle: completion.task.campaign.socialAccount.identifier,
+    baselineSnapshot,
+    externalTimeSpentSeconds: payload.externalTimeSpentSeconds,
+  });
+
+  if (!botVerification.verified) {
+    throw new Error(
+      botVerification.reason ||
+        "🤖 Robot de vérification AddMe : Action non détectée sur la publication. Veuillez réellement effectuer l'action avant de valider."
+    );
+  }
+
+  // 4. Validation atomique et crédit direct en base de données
   const updated = await prisma.$transaction(async (tx) => {
     // A. Crédit direct des points au Ledger du travailleur (Idempotent)
     const idempotencyKey = `task-reward-${completion.id}`;
@@ -466,7 +520,7 @@ export async function submitTaskCompletion(
         referenceType: "TASK_COMPLETION",
         referenceId: completion.id,
         idempotencyKey,
-        description: `Récompense : ${completion.task.campaign.actionType.toLowerCase()} sur ${completion.task.campaign.platform} (@${completion.task.campaign.videoUrl.slice(0, 30)}...)`,
+        description: `Récompense vérifiée par Robot : ${completion.task.campaign.actionType.toLowerCase()} sur ${completion.task.campaign.platform} (@${completion.task.campaign.socialAccount.identifier})`,
       },
       tx
     );
@@ -478,7 +532,9 @@ export async function submitTaskCompletion(
         status: "APPROVED",
         submittedAt: new Date(),
         retentionEndsAt: new Date(),
-        screenshotUrl: payload.screenshotUrl?.trim() || null,
+        screenshotUrl:
+          payload.screenshotUrl?.trim() ||
+          `VERIFIED:${botVerification.source}:${botVerification.beforeCount ?? "?"}->${botVerification.afterCount ?? "ok"}`,
       },
     });
 
@@ -516,7 +572,7 @@ export async function submitTaskCompletion(
 
   return {
     success: true,
-    message: `Félicitations ! +${completion.rewardPoints} points ont été directement crédités à votre solde !`,
+    message: `🤖 Action vérifiée par le robot ! +${completion.rewardPoints} points ont été directement crédités à votre solde !`,
     status: updated.status,
     completionId: updated.id,
     rewardPoints: completion.rewardPoints,

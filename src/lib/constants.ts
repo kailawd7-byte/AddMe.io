@@ -61,7 +61,7 @@ export const SYSTEM_DEFAULTS = {
   DEFAULT_COST_PER_TASK: 1.3,
   CAMPAIGN_DAILY_DURATION_FEE: 0.5, // 0.5 point par jour de diffusion
   DEFAULT_CAMPAIGN_DURATION_DAYS: 5,
-  MIN_TASK_DURATION_SECONDS: 10,
+  MIN_TASK_DURATION_SECONDS: 20,
   RETENTION_PERIOD_HOURS: 0, // Validation directe des points
   RANDOM_AUDIT_SAMPLE_RATE: 0.1, // 10% de demandes de capture
   BASE_DAILY_TASK_LIMIT: 50, // Plafond initial par travailleur

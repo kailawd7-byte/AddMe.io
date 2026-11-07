@@ -11,6 +11,8 @@ import {
   Check,
   Copy,
   XCircle,
+  ShieldCheck,
+  PauseCircle,
 } from "lucide-react";
 
 interface QuotaInfo {
@@ -53,6 +55,8 @@ interface ActiveSession {
   startedAt: string;
 }
 
+const REQUIRED_DURATION_SEC = 20;
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
@@ -62,13 +66,15 @@ export default function TasksPage() {
   const [platformFilter, setPlatformFilter] = useState<string>("ALL");
   const [actionFilter, setActionFilter] = useState<string>("ALL");
 
-  // Session de tâche active (Chronomètre 10s)
+  // Session de tâche active (Chronomètre 20s + Robot de vérification)
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [startingTaskId, setStartingTaskId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(10);
-  const [hasOpenedLink, setHasOpenedLink] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(
+    REQUIRED_DURATION_SEC
+  );
+  const [isTimerPaused, setIsTimerPaused] = useState<boolean>(false);
   const [screenshotUrl, setScreenshotUrl] = useState("");
   const [copiedTemplate, setCopiedTemplate] = useState(false);
   const [feedback, setFeedback] = useState<{
@@ -77,8 +83,11 @@ export default function TasksPage() {
   } | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const autoSubmittingRef = useRef<boolean>(false);
   const activeBannerRef = useRef<HTMLDivElement | null>(null);
+
+  // Suivi précis du temps réellement passé hors de l'onglet AddMe.io (sur la publication cible)
+  const accumulatedExternalMsRef = useRef<number>(0);
+  const leftPageAtRef = useRef<number | null>(null);
 
   const fetchBalanceAndTasks = useCallback(async () => {
     try {
@@ -96,12 +105,24 @@ export default function TasksPage() {
         setTasks(data.tasks || []);
         setQuota(data.quota || null);
 
-        // Si l'utilisateur avait déjà une tâche en cours en base, on restaure son chronomètre !
         if (data.activeSession) {
           setActiveSession((prev) => {
             if (prev?.completionId === data.activeSession.completionId) {
               return prev;
             }
+            // Si la session est restaurée après un rechargement de page, initialiser le temps écoulé
+            const minDur =
+              data.activeSession.minDurationSeconds || REQUIRED_DURATION_SEC;
+            const initialRem =
+              typeof data.activeSession.secondsRemaining === "number"
+                ? data.activeSession.secondsRemaining
+                : minDur;
+            accumulatedExternalMsRef.current = Math.max(
+              0,
+              (minDur - initialRem) * 1000
+            );
+            leftPageAtRef.current = null;
+            setSecondsRemaining(initialRem);
             return data.activeSession;
           });
         }
@@ -127,11 +148,17 @@ export default function TasksPage() {
   const handleSubmitTask = useCallback(
     async (sessionOverride?: ActiveSession) => {
       const targetSession = sessionOverride || activeSession;
-      if (!targetSession || autoSubmittingRef.current) return;
+      if (!targetSession || submitting) return;
 
-      autoSubmittingRef.current = true;
       setSubmitting(true);
       setFeedback(null);
+
+      // Calcul du temps total passé sur la publication externe
+      let currentExternalMs = accumulatedExternalMsRef.current;
+      if (leftPageAtRef.current !== null) {
+        currentExternalMs += Date.now() - leftPageAtRef.current;
+      }
+      const externalTimeSpentSeconds = Math.round(currentExternalMs / 1000);
 
       try {
         const res = await fetch(`/api/tasks/${targetSession.taskId}/submit`, {
@@ -140,6 +167,7 @@ export default function TasksPage() {
           body: JSON.stringify({
             completionId: targetSession.completionId,
             screenshotUrl: screenshotUrl.trim() || undefined,
+            externalTimeSpentSeconds,
           }),
         });
 
@@ -148,16 +176,20 @@ export default function TasksPage() {
         if (!res.ok) {
           setFeedback({
             type: "error",
-            text: data.error || "Validation refusée.",
+            text:
+              data.error ||
+              "🤖 Robot de vérification AddMe : Action non détectée. Veuillez effectuer l'action sur la publication puis réessayer.",
           });
         } else {
           setFeedback({
             type: "success",
             text:
               data.message ||
-              `Félicitations ! +${targetSession.rewardPoints} points ont été crédités immédiatement à votre solde !`,
+              `🤖 Action vérifiée par le robot ! +${targetSession.rewardPoints} points ont été crédités immédiatement à votre solde !`,
           });
           setActiveSession(null);
+          accumulatedExternalMsRef.current = 0;
+          leftPageAtRef.current = null;
           await fetchBalanceAndTasks();
           // Synchroniser immédiatement le solde affiché dans la Sidebar à gauche
           window.dispatchEvent(new Event("addme:balance-updated"));
@@ -165,30 +197,87 @@ export default function TasksPage() {
       } catch {
         setFeedback({
           type: "error",
-          text: "Erreur réseau lors de la validation.",
+          text: "Erreur réseau lors de la vérification par le robot.",
         });
       } finally {
         setSubmitting(false);
-        autoSubmittingRef.current = false;
       }
     },
-    [activeSession, screenshotUrl, fetchBalanceAndTasks]
+    [activeSession, submitting, screenshotUrl, fetchBalanceAndTasks]
   );
 
-  // Chronomètre 10 secondes basé sur l'horloge réelle (insensible à la mise en arrière-plan de l'onglet)
+  // Chronomètre 20 secondes intelligent : ne décompte que lorsque l'utilisateur est sur la publication externe !
+  // Si l'utilisateur referme TikTok/YouTube/Instagram avant les 20s, le chronomètre se met en pause.
   useEffect(() => {
     if (!activeSession) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
 
-    const minDur = activeSession.minDurationSeconds || 10;
-    const startMs = new Date(activeSession.startedAt).getTime();
+    const minDur = activeSession.minDurationSeconds || REQUIRED_DURATION_SEC;
+
+    const handleLeaveAddMe = () => {
+      if (leftPageAtRef.current === null) {
+        leftPageAtRef.current = Date.now();
+      }
+      setIsTimerPaused(false);
+    };
+
+    const handleReturnToAddMe = () => {
+      if (leftPageAtRef.current !== null) {
+        accumulatedExternalMsRef.current += Date.now() - leftPageAtRef.current;
+        leftPageAtRef.current = null;
+      }
+      const totalElapsedSec = accumulatedExternalMsRef.current / 1000;
+      const rem = Math.max(0, Math.ceil(minDur - totalElapsedSec));
+      setSecondsRemaining(rem);
+      setIsTimerPaused(rem > 0);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleLeaveAddMe();
+      } else {
+        handleReturnToAddMe();
+      }
+    };
+
+    window.addEventListener("blur", handleLeaveAddMe);
+    window.addEventListener("focus", handleReturnToAddMe);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     const updateClock = () => {
-      const elapsedSec = (Date.now() - startMs) / 1000;
-      const remaining = Math.max(0, Math.ceil(minDur - elapsedSec));
+      // Vérifie si l'utilisateur est actuellement hors de la page AddMe.io (sur TikTok/YouTube/Instagram)
+      const isUserAwayOnSocialTab =
+        document.visibilityState === "hidden" || !document.hasFocus();
+
+      if (isUserAwayOnSocialTab) {
+        if (leftPageAtRef.current === null) {
+          leftPageAtRef.current = Date.now();
+        }
+        setIsTimerPaused(false);
+      } else {
+        if (leftPageAtRef.current !== null) {
+          accumulatedExternalMsRef.current +=
+            Date.now() - leftPageAtRef.current;
+          leftPageAtRef.current = null;
+        }
+      }
+
+      const activeAwayMs =
+        leftPageAtRef.current !== null
+          ? Date.now() - leftPageAtRef.current
+          : 0;
+      const totalExternalSec =
+        (accumulatedExternalMsRef.current + activeAwayMs) / 1000;
+      const remaining = Math.max(0, Math.ceil(minDur - totalExternalSec));
+
       setSecondsRemaining(remaining);
+      if (!isUserAwayOnSocialTab && remaining > 0) {
+        setIsTimerPaused(true);
+      } else {
+        setIsTimerPaused(false);
+      }
     };
 
     updateClock();
@@ -197,34 +286,11 @@ export default function TasksPage() {
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      window.removeEventListener("blur", handleLeaveAddMe);
+      window.removeEventListener("focus", handleReturnToAddMe);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [activeSession]);
-
-  // Validation automatique lorsque l'utilisateur revient sur l'onglet AddMe.io après les 10 secondes
-  useEffect(() => {
-    if (!activeSession) return;
-
-    const checkAndAutoValidateOnReturn = () => {
-      if (document.visibilityState !== "visible") return;
-      if (activeSession.requiresScreenshot) return;
-
-      const minDur = activeSession.minDurationSeconds || 10;
-      const startMs = new Date(activeSession.startedAt).getTime();
-      const elapsedSec = (Date.now() - startMs) / 1000;
-
-      if (elapsedSec >= minDur && hasOpenedLink && !autoSubmittingRef.current) {
-        handleSubmitTask(activeSession);
-      }
-    };
-
-    window.addEventListener("focus", checkAndAutoValidateOnReturn);
-    document.addEventListener("visibilitychange", checkAndAutoValidateOnReturn);
-
-    return () => {
-      window.removeEventListener("focus", checkAndAutoValidateOnReturn);
-      document.removeEventListener("visibilitychange", checkAndAutoValidateOnReturn);
-    };
-  }, [activeSession, hasOpenedLink, handleSubmitTask]);
 
   const handleStartTask = async (task: TaskItem) => {
     setStartingTaskId(task.taskId);
@@ -243,10 +309,16 @@ export default function TasksPage() {
         });
       } else {
         const sessionData: ActiveSession = data.session || data;
+        const minDur = sessionData.minDurationSeconds || REQUIRED_DURATION_SEC;
+
+        // Réinitialisation du compteur de présence externe à 20s
+        accumulatedExternalMsRef.current = 0;
+        leftPageAtRef.current = Date.now();
+        setSecondsRemaining(minDur);
+        setIsTimerPaused(false);
         setActiveSession(sessionData);
         setScreenshotUrl("");
         setCopiedTemplate(false);
-        setHasOpenedLink(true);
 
         // Ouverture automatique de la publication dans un nouvel onglet
         window.open(task.videoUrl, "_blank", "noopener,noreferrer");
@@ -268,6 +340,14 @@ export default function TasksPage() {
     }
   };
 
+  const handleReopenPublication = () => {
+    if (!activeSession) return;
+    leftPageAtRef.current = Date.now();
+    setIsTimerPaused(false);
+    setFeedback(null);
+    window.open(activeSession.videoUrl, "_blank", "noopener,noreferrer");
+  };
+
   const handleCancelTask = async () => {
     if (!activeSession) return;
     setCancelling(true);
@@ -278,7 +358,8 @@ export default function TasksPage() {
         body: JSON.stringify({ completionId: activeSession.completionId }),
       });
       setActiveSession(null);
-      setHasOpenedLink(false);
+      accumulatedExternalMsRef.current = 0;
+      leftPageAtRef.current = null;
       await fetchBalanceAndTasks();
     } catch {
       setActiveSession(null);
@@ -305,6 +386,8 @@ export default function TasksPage() {
     return "Abonnement";
   };
 
+  const minDur = activeSession?.minDurationSeconds || REQUIRED_DURATION_SEC;
+
   return (
     <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-5">
       {/* En-tête : Titre + Carte Solde */}
@@ -316,7 +399,7 @@ export default function TasksPage() {
           {quota && (
             <p className="text-xs text-[#5A5A70] mt-0.5">
               Quota du jour : {quota.dailyTasksCompleted} / {quota.dailyTaskLimit} tâches •{" "}
-              Chronomètre 10s • Crédit direct immédiat
+              Chronomètre 20s • Vérification par Robot Anti-Fraude
             </p>
           )}
         </div>
@@ -424,14 +507,13 @@ export default function TasksPage() {
         className="addme-card-static text-sm text-[#12122A] leading-relaxed"
         style={{ background: "#EEEAFF", borderColor: "#D9D2FF" }}
       >
-        Ouvrez la publication, faites l’action vous-même, puis revenez valider.
-        Un <strong>chronomètre de 10 secondes</strong> s’affiche pendant la
-        tâche et vos points sont crédités <strong>immédiatement</strong> sur
-        votre solde dès validation (ou automatiquement à votre retour sur la
-        page une fois les 10 secondes écoulées). Un <strong>Like</strong> ou un{" "}
-        <strong>Abonnement</strong> ne peut être fait qu’
-        <strong>une seule fois</strong> par publication/compte ; un{" "}
-        <strong>Commentaire</strong> peut être effectué plusieurs fois.
+        Ouvrez la publication, restez dessus au moins{" "}
+        <strong>20 secondes</strong> et effectuez réellement l’action demandée.
+        Si vous refermez la page trop tôt, le chronomètre se met en pause. Au
+        moment de valider, notre{" "}
+        <strong>Robot de Vérification Anti-Fraude</strong> contrôle en direct
+        sur le réseau social que le compteur (Like, Abonnement ou Commentaire) a
+        bien augmenté avant de créditer vos points.
       </div>
 
       {/* Message de confirmation ou d'erreur */}
@@ -452,7 +534,7 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* PANNEAU DE TÂCHE EN COURS D'EXÉCUTION (Chrono 10s actif) */}
+      {/* PANNEAU DE TÂCHE EN COURS D'EXÉCUTION (Chrono 20s + Robot Anti-Fraude) */}
       {activeSession && (
         <div
           ref={activeBannerRef}
@@ -460,55 +542,94 @@ export default function TasksPage() {
         >
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E3E3EE] pb-4">
             <div>
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#5B3DF5]">
-                Mission en cours • {formatPlatform(activeSession.platform)} ·{" "}
-                {formatAction(activeSession.actionType)}
-                {activeSession.targetHandle
-                  ? ` (@${activeSession.targetHandle})`
-                  : ""}
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[#5B3DF5] flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4" />
+                <span>
+                  Contrôle par Robot Actif •{" "}
+                  {formatPlatform(activeSession.platform)} ·{" "}
+                  {formatAction(activeSession.actionType)}
+                  {activeSession.targetHandle
+                    ? ` (@${activeSession.targetHandle})`
+                    : ""}
+                </span>
               </span>
               <h3 className="text-xl font-extrabold text-[#12122A] mt-0.5">
-                Effectuez l’action puis validez vos +{activeSession.rewardPoints}{" "}
-                pt{activeSession.rewardPoints > 1 ? "s" : ""}
+                Effectuez le {formatAction(activeSession.actionType).toLowerCase()}{" "}
+                sur {formatPlatform(activeSession.platform)} puis lancez la
+                vérification (+{activeSession.rewardPoints} pt
+                {activeSession.rewardPoints > 1 ? "s" : ""})
               </h3>
             </div>
 
             <div
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-sm ${
-                secondsRemaining > 0
-                  ? "bg-[#EEEAFF] text-[#3A22C8]"
-                  : "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                secondsRemaining === 0
+                  ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                  : isTimerPaused
+                  ? "bg-amber-50 border border-amber-300 text-amber-800"
+                  : "bg-[#EEEAFF] text-[#3A22C8]"
               }`}
             >
-              <Clock
-                className={`h-4 w-4 ${
-                  secondsRemaining > 0
-                    ? "text-[#5B3DF5] animate-spin"
-                    : "text-emerald-600"
-                }`}
-              />
-              {secondsRemaining > 0 ? (
-                <span>Chronomètre : {secondsRemaining}s restantes</span>
+              {secondsRemaining === 0 ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <span>✓ 20s écoulées — Prêt pour vérification Robot !</span>
+                </>
+              ) : isTimerPaused ? (
+                <>
+                  <PauseCircle className="h-4 w-4 text-amber-600" />
+                  <span>
+                    En pause ({secondsRemaining}s restantes) — Restez sur{" "}
+                    {formatPlatform(activeSession.platform)}
+                  </span>
+                </>
               ) : (
-                <span>✓ 10s écoulées — Prêt à créditer !</span>
+                <>
+                  <Clock className="h-4 w-4 text-[#5B3DF5] animate-spin" />
+                  <span>Chronomètre : {secondsRemaining}s restantes</span>
+                </>
               )}
             </div>
           </div>
 
-          {/* Barre de progression du chronomètre */}
+          {/* Barre de progression du chronomètre 20s */}
           <div className="w-full h-3 rounded-full bg-[#E3E3EE] overflow-hidden">
             <div
               className={`h-full transition-all duration-300 ${
-                secondsRemaining > 0 ? "bg-[#5B3DF5]" : "bg-emerald-500"
+                secondsRemaining === 0
+                  ? "bg-emerald-500"
+                  : isTimerPaused
+                  ? "bg-amber-500"
+                  : "bg-[#5B3DF5]"
               }`}
               style={{
                 width: `${Math.min(
                   100,
-                  Math.max(5, ((10 - secondsRemaining) / 10) * 100)
+                  Math.max(5, ((minDur - secondsRemaining) / minDur) * 100)
                 )}%`,
               }}
             />
           </div>
+
+          {/* Alerte si l'utilisateur a refermé la publication avant les 20 secondes */}
+          {isTimerPaused && secondsRemaining > 0 && (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900 flex items-center justify-between gap-3">
+              <span>
+                ⚠️ Vous êtes revenu sur AddMe.io avant la fin des 20 secondes (il
+                reste <strong>{secondsRemaining}s</strong>). Le chronomètre ne
+                défile que pendant que vous êtes sur la publication{" "}
+                {formatPlatform(activeSession.platform)}.
+              </span>
+              <button
+                type="button"
+                onClick={handleReopenPublication}
+                className="addme-btn addme-btn-primary py-2 px-3.5 text-xs shrink-0"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Reprendre sur {formatPlatform(activeSession.platform)}</span>
+              </button>
+            </div>
+          )}
 
           {/* Modèle de commentaire si requis */}
           {activeSession.actionType === "COMMENT" &&
@@ -566,18 +687,16 @@ export default function TasksPage() {
 
           {/* Boutons d'action de la session */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <a
-              href={activeSession.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setHasOpenedLink(true)}
+            <button
+              type="button"
+              onClick={handleReopenPublication}
               className="addme-btn addme-btn-ghost text-xs"
             >
               <ExternalLink className="h-4 w-4 text-[#5B3DF5]" />
               <span>
                 Rouvrir la publication ({formatPlatform(activeSession.platform)})
               </span>
-            </a>
+            </button>
 
             <div className="flex items-center gap-3">
               <button
@@ -596,14 +715,14 @@ export default function TasksPage() {
                 className="addme-btn addme-btn-primary disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>Validation en cours...</span>
+                  <span>🤖 Vérification par le robot en cours...</span>
                 ) : secondsRemaining > 0 ? (
-                  <span>Patientez {secondsRemaining}s...</span>
+                  <span>Patientez {secondsRemaining}s sur la publication...</span>
                 ) : (
                   <>
-                    <CheckCircle2 className="h-4 w-4" />
+                    <ShieldCheck className="h-4 w-4" />
                     <span>
-                      Valider et recevoir +{activeSession.rewardPoints} pt
+                      Vérifier mon action & Recevoir +{activeSession.rewardPoints} pt
                       {activeSession.rewardPoints > 1 ? "s" : ""}
                     </span>
                   </>
@@ -685,10 +804,10 @@ export default function TasksPage() {
                       className="addme-btn addme-btn-primary text-sm disabled:opacity-60"
                     >
                       {submitting
-                        ? "Validation..."
+                        ? "🤖 Vérification..."
                         : secondsRemaining > 0
                         ? `Chrono : ${secondsRemaining}s...`
-                        : `Valider (+${task.rewardPoints} pt${
+                        : `Vérifier (+${task.rewardPoints} pt${
                             task.rewardPoints > 1 ? "s" : ""
                           })`}
                     </button>
@@ -699,7 +818,7 @@ export default function TasksPage() {
                       onClick={() => handleStartTask(task)}
                       className="addme-btn addme-btn-primary text-sm disabled:opacity-50"
                     >
-                      {isStarting ? "Ouverture..." : "Faire la tâche"}
+                      {isStarting ? "Inspection Robot..." : "Faire la tâche"}
                     </button>
                   )}
                 </div>
