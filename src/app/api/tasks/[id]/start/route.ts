@@ -24,7 +24,10 @@ export async function POST(
       userAgent,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      session: result,
+    });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Impossible de démarrer la tâche." },

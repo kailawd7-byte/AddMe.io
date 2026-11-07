@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   CheckCircle2,
   ExternalLink,
@@ -10,6 +10,7 @@ import {
   Camera,
   Check,
   Copy,
+  XCircle,
 } from "lucide-react";
 
 interface QuotaInfo {
@@ -39,12 +40,15 @@ interface TaskItem {
 interface ActiveSession {
   completionId: string;
   taskId: string;
+  campaignId?: string;
   videoUrl: string;
   platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   commentTemplate: string | null;
   rewardPoints: number;
+  targetHandle?: string;
   minDurationSeconds: number;
+  secondsRemaining?: number;
   requiresScreenshot: boolean;
   startedAt: string;
 }
@@ -62,6 +66,7 @@ export default function TasksPage() {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [startingTaskId, setStartingTaskId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(10);
   const [hasOpenedLink, setHasOpenedLink] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState("");
@@ -72,8 +77,10 @@ export default function TasksPage() {
   } | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSubmittingRef = useRef<boolean>(false);
+  const activeBannerRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchBalanceAndTasks = async () => {
+  const fetchBalanceAndTasks = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (platformFilter !== "ALL") params.append("platform", platformFilter);
@@ -88,6 +95,16 @@ export default function TasksPage() {
         const data = await tasksRes.json();
         setTasks(data.tasks || []);
         setQuota(data.quota || null);
+
+        // Si l'utilisateur avait déjà une tâche en cours en base, on restaure son chronomètre !
+        if (data.activeSession) {
+          setActiveSession((prev) => {
+            if (prev?.completionId === data.activeSession.completionId) {
+              return prev;
+            }
+            return data.activeSession;
+          });
+        }
       }
 
       if (meRes.ok) {
@@ -101,37 +118,113 @@ export default function TasksPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [platformFilter, actionFilter]);
 
   useEffect(() => {
     fetchBalanceAndTasks();
-  }, [platformFilter, actionFilter]);
+  }, [fetchBalanceAndTasks]);
 
-  // Chronomètre 10 secondes
-  useEffect(() => {
-    if (activeSession) {
-      setSecondsRemaining(activeSession.minDurationSeconds || 10);
-      setHasOpenedLink(false);
-      setScreenshotUrl("");
-      setCopiedTemplate(false);
+  const handleSubmitTask = useCallback(
+    async (sessionOverride?: ActiveSession) => {
+      const targetSession = sessionOverride || activeSession;
+      if (!targetSession || autoSubmittingRef.current) return;
 
-      if (timerRef.current) clearInterval(timerRef.current);
+      autoSubmittingRef.current = true;
+      setSubmitting(true);
+      setFeedback(null);
 
-      timerRef.current = setInterval(() => {
-        setSecondsRemaining((prev) => {
-          if (prev <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            return 0;
-          }
-          return prev - 1;
+      try {
+        const res = await fetch(`/api/tasks/${targetSession.taskId}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            completionId: targetSession.completionId,
+            screenshotUrl: screenshotUrl.trim() || undefined,
+          }),
         });
-      }, 1000);
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setFeedback({
+            type: "error",
+            text: data.error || "Validation refusée.",
+          });
+        } else {
+          setFeedback({
+            type: "success",
+            text:
+              data.message ||
+              `Félicitations ! +${targetSession.rewardPoints} points ont été crédités immédiatement à votre solde !`,
+          });
+          setActiveSession(null);
+          await fetchBalanceAndTasks();
+          // Synchroniser immédiatement le solde affiché dans la Sidebar à gauche
+          window.dispatchEvent(new Event("addme:balance-updated"));
+        }
+      } catch {
+        setFeedback({
+          type: "error",
+          text: "Erreur réseau lors de la validation.",
+        });
+      } finally {
+        setSubmitting(false);
+        autoSubmittingRef.current = false;
+      }
+    },
+    [activeSession, screenshotUrl, fetchBalanceAndTasks]
+  );
+
+  // Chronomètre 10 secondes basé sur l'horloge réelle (insensible à la mise en arrière-plan de l'onglet)
+  useEffect(() => {
+    if (!activeSession) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
     }
+
+    const minDur = activeSession.minDurationSeconds || 10;
+    const startMs = new Date(activeSession.startedAt).getTime();
+
+    const updateClock = () => {
+      const elapsedSec = (Date.now() - startMs) / 1000;
+      const remaining = Math.max(0, Math.ceil(minDur - elapsedSec));
+      setSecondsRemaining(remaining);
+    };
+
+    updateClock();
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(updateClock, 250);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [activeSession]);
+
+  // Validation automatique lorsque l'utilisateur revient sur l'onglet AddMe.io après les 10 secondes
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const checkAndAutoValidateOnReturn = () => {
+      if (document.visibilityState !== "visible") return;
+      if (activeSession.requiresScreenshot) return;
+
+      const minDur = activeSession.minDurationSeconds || 10;
+      const startMs = new Date(activeSession.startedAt).getTime();
+      const elapsedSec = (Date.now() - startMs) / 1000;
+
+      if (elapsedSec >= minDur && hasOpenedLink && !autoSubmittingRef.current) {
+        handleSubmitTask(activeSession);
+      }
+    };
+
+    window.addEventListener("focus", checkAndAutoValidateOnReturn);
+    document.addEventListener("visibilitychange", checkAndAutoValidateOnReturn);
+
+    return () => {
+      window.removeEventListener("focus", checkAndAutoValidateOnReturn);
+      document.removeEventListener("visibilitychange", checkAndAutoValidateOnReturn);
+    };
+  }, [activeSession, hasOpenedLink, handleSubmitTask]);
 
   const handleStartTask = async (task: TaskItem) => {
     setStartingTaskId(task.taskId);
@@ -149,10 +242,21 @@ export default function TasksPage() {
           text: data.error || "Impossible de démarrer cette tâche.",
         });
       } else {
-        setActiveSession(data.session);
+        const sessionData: ActiveSession = data.session || data;
+        setActiveSession(sessionData);
+        setScreenshotUrl("");
+        setCopiedTemplate(false);
+        setHasOpenedLink(true);
+
         // Ouverture automatique de la publication dans un nouvel onglet
         window.open(task.videoUrl, "_blank", "noopener,noreferrer");
-        setHasOpenedLink(true);
+
+        setTimeout(() => {
+          activeBannerRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 150);
       }
     } catch {
       setFeedback({
@@ -164,45 +268,22 @@ export default function TasksPage() {
     }
   };
 
-  const handleSubmitTask = async () => {
+  const handleCancelTask = async () => {
     if (!activeSession) return;
-    setSubmitting(true);
-    setFeedback(null);
-
+    setCancelling(true);
     try {
-      const res = await fetch(`/api/tasks/${activeSession.taskId}/submit`, {
+      await fetch(`/api/tasks/${activeSession.taskId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          completionId: activeSession.completionId,
-          screenshotUrl: screenshotUrl.trim() || undefined,
-        }),
+        body: JSON.stringify({ completionId: activeSession.completionId }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setFeedback({
-          type: "error",
-          text: data.error || "Validation refusée.",
-        });
-      } else {
-        setFeedback({
-          type: "success",
-          text:
-            data.message ||
-            `+${activeSession.rewardPoints} points crédités immédiatement à votre solde !`,
-        });
-        setActiveSession(null);
-        await fetchBalanceAndTasks();
-      }
+      setActiveSession(null);
+      setHasOpenedLink(false);
+      await fetchBalanceAndTasks();
     } catch {
-      setFeedback({
-        type: "error",
-        text: "Erreur réseau lors de la validation.",
-      });
+      setActiveSession(null);
     } finally {
-      setSubmitting(false);
+      setCancelling(false);
     }
   };
 
@@ -226,7 +307,7 @@ export default function TasksPage() {
 
   return (
     <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-5">
-      {/* En-tête : Titre + Carte Solde (Style exact Taches.dc.html) */}
+      {/* En-tête : Titre + Carte Solde */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
@@ -235,7 +316,7 @@ export default function TasksPage() {
           {quota && (
             <p className="text-xs text-[#5A5A70] mt-0.5">
               Quota du jour : {quota.dailyTasksCompleted} / {quota.dailyTaskLimit} tâches •{" "}
-              1 seule action par publication • Crédit direct
+              Chronomètre 10s • Crédit direct immédiat
             </p>
           )}
         </div>
@@ -260,7 +341,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Filtres Chips (Style exact Taches.dc.html) */}
+      {/* Filtres Chips */}
       <div className="flex flex-wrap items-center gap-2.5 my-4">
         <button
           type="button"
@@ -338,16 +419,19 @@ export default function TasksPage() {
         </button>
       </div>
 
-      {/* Bandeau d'instruction Lavande (#EEEAFF / #D9D2FF - Style exact Taches.dc.html) */}
+      {/* Bandeau d'instruction Lavande (#EEEAFF / #D9D2FF) */}
       <div
         className="addme-card-static text-sm text-[#12122A] leading-relaxed"
         style={{ background: "#EEEAFF", borderColor: "#D9D2FF" }}
       >
         Ouvrez la publication, faites l’action vous-même, puis revenez valider.
-        Un chronomètre de 10 secondes s’affiche pendant la tâche et vos points
-        sont crédités <strong>immédiatement</strong> sur votre solde dès
-        validation. Chaque publication ne peut être effectuée qu’
-        <strong>une seule fois</strong>.
+        Un <strong>chronomètre de 10 secondes</strong> s’affiche pendant la
+        tâche et vos points sont crédités <strong>immédiatement</strong> sur
+        votre solde dès validation (ou automatiquement à votre retour sur la
+        page une fois les 10 secondes écoulées). Un <strong>Like</strong> ou un{" "}
+        <strong>Abonnement</strong> ne peut être fait qu’
+        <strong>une seule fois</strong> par publication/compte ; un{" "}
+        <strong>Commentaire</strong> peut être effectué plusieurs fois.
       </div>
 
       {/* Message de confirmation ou d'erreur */}
@@ -370,12 +454,18 @@ export default function TasksPage() {
 
       {/* PANNEAU DE TÂCHE EN COURS D'EXÉCUTION (Chrono 10s actif) */}
       {activeSession && (
-        <div className="addme-card-static border-2 border-[#5B3DF5] shadow-xl space-y-5 animate-up">
+        <div
+          ref={activeBannerRef}
+          className="addme-card-static border-2 border-[#5B3DF5] bg-white shadow-xl space-y-5 animate-up"
+        >
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E3E3EE] pb-4">
             <div>
               <span className="text-xs font-extrabold uppercase tracking-wider text-[#5B3DF5]">
                 Mission en cours • {formatPlatform(activeSession.platform)} ·{" "}
                 {formatAction(activeSession.actionType)}
+                {activeSession.targetHandle
+                  ? ` (@${activeSession.targetHandle})`
+                  : ""}
               </span>
               <h3 className="text-xl font-extrabold text-[#12122A] mt-0.5">
                 Effectuez l’action puis validez vos +{activeSession.rewardPoints}{" "}
@@ -383,24 +473,38 @@ export default function TasksPage() {
               </h3>
             </div>
 
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#EEEAFF] text-[#3A22C8] font-extrabold text-sm">
-              <Clock className="h-4 w-4 text-[#5B3DF5]" />
+            <div
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-sm ${
+                secondsRemaining > 0
+                  ? "bg-[#EEEAFF] text-[#3A22C8]"
+                  : "bg-emerald-50 border border-emerald-200 text-emerald-700"
+              }`}
+            >
+              <Clock
+                className={`h-4 w-4 ${
+                  secondsRemaining > 0
+                    ? "text-[#5B3DF5] animate-spin"
+                    : "text-emerald-600"
+                }`}
+              />
               {secondsRemaining > 0 ? (
                 <span>Chronomètre : {secondsRemaining}s restantes</span>
               ) : (
-                <span className="text-emerald-700">✓ Temps écoulé (Prêt)</span>
+                <span>✓ 10s écoulées — Prêt à créditer !</span>
               )}
             </div>
           </div>
 
           {/* Barre de progression du chronomètre */}
-          <div className="w-full h-2.5 rounded-full bg-[#E3E3EE] overflow-hidden">
+          <div className="w-full h-3 rounded-full bg-[#E3E3EE] overflow-hidden">
             <div
-              className="h-full bg-[#5B3DF5] transition-all duration-500"
+              className={`h-full transition-all duration-300 ${
+                secondsRemaining > 0 ? "bg-[#5B3DF5]" : "bg-emerald-500"
+              }`}
               style={{
                 width: `${Math.min(
                   100,
-                  ((10 - secondsRemaining) / 10) * 100
+                  Math.max(5, ((10 - secondsRemaining) / 10) * 100)
                 )}%`,
               }}
             />
@@ -470,21 +574,25 @@ export default function TasksPage() {
               className="addme-btn addme-btn-ghost text-xs"
             >
               <ExternalLink className="h-4 w-4 text-[#5B3DF5]" />
-              <span>Rouvrir la publication ({activeSession.platform})</span>
+              <span>
+                Rouvrir la publication ({formatPlatform(activeSession.platform)})
+              </span>
             </a>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setActiveSession(null)}
-                className="addme-btn addme-btn-ghost text-xs"
+                disabled={cancelling || submitting}
+                onClick={handleCancelTask}
+                className="addme-btn addme-btn-ghost text-xs text-rose-600 hover:bg-rose-50"
               >
-                Annuler
+                <XCircle className="h-4 w-4" />
+                <span>{cancelling ? "Annulation..." : "Annuler"}</span>
               </button>
               <button
                 type="button"
                 disabled={secondsRemaining > 0 || submitting}
-                onClick={handleSubmitTask}
+                onClick={() => handleSubmitTask()}
                 className="addme-btn addme-btn-primary disabled:opacity-50"
               >
                 {submitting ? (
@@ -506,14 +614,14 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* LISTE DES TÂCHES DISPONIBLES (1 seule carte par publication - Style exact Taches.dc.html) */}
+      {/* LISTE DES TÂCHES DISPONIBLES */}
       <div className="addme-card-static">
         {loading ? (
           <div className="py-12 text-center text-[#5A5A70] space-y-3">
             <div className="h-8 w-8 border-3 border-[#5B3DF5] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-sm">Chargement des publications disponibles...</p>
           </div>
-        ) : tasks.length === 0 ? (
+        ) : tasks.length === 0 && !activeSession ? (
           <div className="py-12 text-center space-y-2">
             <b className="text-base font-bold text-[#12122A] block">
               Aucune nouvelle publication à afficher
@@ -534,7 +642,10 @@ export default function TasksPage() {
                   ? "IG"
                   : "YT";
               const isStarting = startingTaskId === task.taskId;
-              const isCurrentlyActive = activeSession?.taskId === task.taskId;
+              const isCurrentlyActive =
+                activeSession?.taskId === task.taskId ||
+                (activeSession?.campaignId &&
+                  activeSession.campaignId === task.campaignId);
 
               return (
                 <div key={task.taskId} className="addme-row">
@@ -542,7 +653,7 @@ export default function TasksPage() {
 
                   <div className="flex-1 min-w-0">
                     <b className="block text-base font-bold text-[#12122A] truncate">
-                      Publication de {task.targetHandle || `@créateur`}
+                      Publication de @{task.targetHandle || `créateur`}
                     </b>
                     <div className="text-sm text-[#5A5A70] flex flex-wrap items-center gap-2 mt-0.5">
                       <span>
@@ -566,18 +677,31 @@ export default function TasksPage() {
                     +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
                   </span>
 
-                  <button
-                    type="button"
-                    disabled={isStarting || isCurrentlyActive}
-                    onClick={() => handleStartTask(task)}
-                    className="addme-btn addme-btn-primary text-sm disabled:opacity-50"
-                  >
-                    {isStarting
-                      ? "Ouverture..."
-                      : isCurrentlyActive
-                      ? "En cours..."
-                      : "Faire la tâche"}
-                  </button>
+                  {isCurrentlyActive ? (
+                    <button
+                      type="button"
+                      disabled={secondsRemaining > 0 || submitting}
+                      onClick={() => handleSubmitTask()}
+                      className="addme-btn addme-btn-primary text-sm disabled:opacity-60"
+                    >
+                      {submitting
+                        ? "Validation..."
+                        : secondsRemaining > 0
+                        ? `Chrono : ${secondsRemaining}s...`
+                        : `Valider (+${task.rewardPoints} pt${
+                            task.rewardPoints > 1 ? "s" : ""
+                          })`}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isStarting}
+                      onClick={() => handleStartTask(task)}
+                      className="addme-btn addme-btn-primary text-sm disabled:opacity-50"
+                    >
+                      {isStarting ? "Ouverture..." : "Faire la tâche"}
+                    </button>
+                  )}
                 </div>
               );
             })}

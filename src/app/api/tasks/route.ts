@@ -9,7 +9,11 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const platform = searchParams.get("platform") as "TIKTOK" | "YOUTUBE" | null;
+  const platform = searchParams.get("platform") as
+    | "TIKTOK"
+    | "YOUTUBE"
+    | "INSTAGRAM"
+    | null;
   const actionType = searchParams.get("actionType") as "LIKE" | "COMMENT" | "SUBSCRIBE" | null;
 
   try {

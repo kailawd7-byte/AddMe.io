@@ -4,37 +4,122 @@ import { checkUserTaskEligibility, adjustReputationScore } from "./reputation.ts
 import { SYSTEM_DEFAULTS } from "./constants.ts";
 
 export interface GetTasksFilter {
-  platform?: "TIKTOK" | "YOUTUBE";
+  platform?: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
   actionType?: "LIKE" | "COMMENT" | "SUBSCRIBE";
 }
 
 /**
  * Récupère les tâches disponibles pour un utilisateur, en excluant strictement ses propres publications,
- * les publications déjà effectuées et en respectant les plafonds quotidiens.
+ * les publications déjà effectuées (pour LIKE et SUBSCRIBE ; COMMENT autorisé plusieurs fois)
+ * et renvoie également toute session IN_PROGRESS active pour restaurer le chronomètre de 10s.
  */
 export async function getAvailableTasks(userId: string, filters: GetTasksFilter = {}) {
+  // 0. Nettoyer automatiquement les sessions abandonnées depuis plus de 15 minutes
+  await expireStaleTaskCompletions();
+
   // 1. Vérification de l'éligibilité de l'utilisateur
   const quota = await checkUserTaskEligibility(userId);
   if (!quota.isReputationHealthy) {
     throw new Error("Compte restreint : votre score de réputation est insuffisant (< 50) pour accomplir des tâches.");
   }
 
-  // 2. Recherche des campagnes dont l'utilisateur a déjà complété ou démarré une tâche
-  const userCompletions = await prisma.taskCompletion.findMany({
+  // 1b. Récupérer la session en cours (IN_PROGRESS) de l'utilisateur s'il en a une
+  const activeCompletion = await prisma.taskCompletion.findFirst({
     where: {
       workerUserId: userId,
-      status: { in: ["IN_PROGRESS", "PENDING_RETENTION", "APPROVED"] },
+      status: "IN_PROGRESS",
     },
-    select: {
+    orderBy: { startedAt: "desc" },
+    include: {
       task: {
-        select: { campaignId: true },
+        include: {
+          campaign: {
+            include: {
+              socialAccount: {
+                select: {
+                  platform: true,
+                  identifier: true,
+                },
+              },
+            },
+          },
+        },
       },
     },
   });
 
-  const alreadyParticipatedCampaignIds = userCompletions
-    .map((c) => c.task?.campaignId)
-    .filter(Boolean) as string[];
+  let activeSession = null;
+  if (activeCompletion && activeCompletion.task?.campaign) {
+    const elapsedSeconds = Math.floor(
+      (Date.now() - new Date(activeCompletion.startedAt).getTime()) / 1000
+    );
+    const secondsRemaining = Math.max(
+      0,
+      SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS - elapsedSeconds
+    );
+
+    activeSession = {
+      completionId: activeCompletion.id,
+      taskId: activeCompletion.taskId,
+      campaignId: activeCompletion.task.campaignId,
+      videoUrl: activeCompletion.task.campaign.videoUrl,
+      platform: activeCompletion.task.campaign.platform,
+      actionType: activeCompletion.task.campaign.actionType,
+      commentTemplate: activeCompletion.task.campaign.commentTemplate,
+      rewardPoints: activeCompletion.rewardPoints,
+      targetHandle: activeCompletion.task.campaign.socialAccount.identifier,
+      startedAt: activeCompletion.startedAt,
+      minDurationSeconds: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS,
+      secondsRemaining,
+      requiresScreenshot: activeCompletion.requiresScreenshot,
+    };
+  }
+
+  // 2. Recherche des campagnes déjà complétées par l'utilisateur
+  // - LIKE : 1 seule fois par publication (videoUrl / campaignId)
+  // - SUBSCRIBE : 1 seule fois par compte/campagne (socialAccountId / campaignId)
+  // - COMMENT : peut être effectué autant de fois qu'il reste des places disponibles
+  const userCompletions = await prisma.taskCompletion.findMany({
+    where: {
+      workerUserId: userId,
+      status: { in: ["PENDING_RETENTION", "APPROVED"] },
+    },
+    select: {
+      task: {
+        select: {
+          campaignId: true,
+          campaign: {
+            select: {
+              actionType: true,
+              videoUrl: true,
+              socialAccountId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const singleUseCampaignIds = new Set<string>();
+  const likedVideoUrls = new Set<string>();
+  const subscribedAccountIds = new Set<string>();
+
+  for (const c of userCompletions) {
+    const camp = c.task?.campaign;
+    const campId = c.task?.campaignId;
+    if (!camp || !campId) continue;
+
+    if (camp.actionType === "LIKE") {
+      singleUseCampaignIds.add(campId);
+      if (camp.videoUrl) likedVideoUrls.add(camp.videoUrl);
+    } else if (camp.actionType === "SUBSCRIBE") {
+      singleUseCampaignIds.add(campId);
+      if (camp.socialAccountId) subscribedAccountIds.add(camp.socialAccountId);
+    }
+    // Pour COMMENT : non ajouté à singleUseCampaignIds (peut être refait tant qu'il reste des places)
+  }
+
+  const alreadyParticipatedCampaignIds = Array.from(singleUseCampaignIds);
 
   // 3. Critères de sélection des tâches disponibles
   const whereClause: any = {
@@ -42,7 +127,9 @@ export async function getAvailableTasks(userId: string, filters: GetTasksFilter 
     campaign: {
       status: "ACTIVE",
       userId: { not: userId }, // Interdiction formelle d'interagir avec ses propres publications
-      id: { notIn: alreadyParticipatedCampaignIds }, // Pas deux fois la même publication
+      ...(alreadyParticipatedCampaignIds.length > 0
+        ? { id: { notIn: alreadyParticipatedCampaignIds } }
+        : {}),
     },
   };
 
@@ -73,9 +160,20 @@ export async function getAvailableTasks(userId: string, filters: GetTasksFilter 
   });
 
   // Filtrer celles dont le dailyCap de la campagne est déjà atteint aujourd'hui
-  const filteredTasks = availableTasks.filter(
-    (t) => t.campaign.deliveredToday < t.campaign.dailyCap
-  );
+  // et appliquer l'unicité par videoUrl (LIKE) et socialAccountId (SUBSCRIBE)
+  const filteredTasks = availableTasks.filter((t) => {
+    if (t.campaign.deliveredToday >= t.campaign.dailyCap) return false;
+    if (t.campaign.actionType === "LIKE" && likedVideoUrls.has(t.campaign.videoUrl)) {
+      return false;
+    }
+    if (
+      t.campaign.actionType === "SUBSCRIBE" &&
+      subscribedAccountIds.has(t.campaign.socialAccountId)
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   // Dédoublonner par campagne pour afficher UNE SEULE carte par vidéo/publication
   const campaignsMap = new Map<string, (typeof availableTasks)[0] & { totalAvailableSlots: number }>();
@@ -91,6 +189,7 @@ export async function getAvailableTasks(userId: string, filters: GetTasksFilter 
 
   return {
     quota,
+    activeSession,
     tasks: uniqueTasks.map((t) => ({
       taskId: t.id,
       campaignId: t.campaign.id,
@@ -109,13 +208,17 @@ export async function getAvailableTasks(userId: string, filters: GetTasksFilter 
 }
 
 /**
- * Démarre une tâche : réserve le slot, lance le chronomètre et détermine si un contrôle aléatoire (10%) avec capture s'applique.
+ * Démarre une tâche : réserve le slot, lance le chronomètre de 10 secondes.
+ * Si l'utilisateur avait déjà la même tâche en cours, lui renvoie sa session active au lieu de bloquer.
+ * S'il avait une autre tâche abandonnée en cours, libère l'ancienne et démarre la nouvelle.
  */
 export async function startTask(
   taskId: string,
   userId: string,
   clientInfo: { ip?: string; userAgent?: string } = {}
 ) {
+  await expireStaleTaskCompletions();
+
   const quota = await checkUserTaskEligibility(userId);
   if (!quota.canCompleteMoreTasks) {
     throw new Error(
@@ -123,55 +226,138 @@ export async function startTask(
     );
   }
 
-  // Empêcher l'accaparement de tâches multiples (1 seule tâche en cours à la fois par travailleur)
+  let requestedTask = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: {
+      campaign: {
+        include: {
+          socialAccount: {
+            select: { platform: true, identifier: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!requestedTask) {
+    throw new Error("Cette tâche est introuvable.");
+  }
+
+  if (requestedTask.campaign.userId === userId) {
+    throw new Error("Vous ne pouvez pas effectuer de tâche sur votre propre publication.");
+  }
+
+  if (requestedTask.campaign.status !== "ACTIVE") {
+    throw new Error("La campagne associée à cette tâche n'est pas active.");
+  }
+
+  // Vérifier si l'utilisateur a déjà une tâche IN_PROGRESS
   const existingActiveCompletion = await prisma.taskCompletion.findFirst({
     where: {
       workerUserId: userId,
       status: "IN_PROGRESS",
     },
+    include: {
+      task: {
+        include: {
+          campaign: {
+            include: {
+              socialAccount: {
+                select: { platform: true, identifier: true },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (existingActiveCompletion) {
-    throw new Error(
-      "Vous avez déjà une tâche en cours de visionnage. Veuillez la terminer ou attendre son expiration avant d'en entamer une autre."
-    );
+    // S'il reclique sur la même tâche ou la même campagne, on lui restaure directement son chronomètre !
+    if (
+      existingActiveCompletion.taskId === taskId ||
+      existingActiveCompletion.task?.campaignId === requestedTask.campaignId
+    ) {
+      const elapsedSeconds = Math.floor(
+        (Date.now() - new Date(existingActiveCompletion.startedAt).getTime()) / 1000
+      );
+      const secondsRemaining = Math.max(
+        0,
+        SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS - elapsedSeconds
+      );
+
+      return {
+        completionId: existingActiveCompletion.id,
+        taskId: existingActiveCompletion.taskId,
+        campaignId: existingActiveCompletion.task.campaignId,
+        videoUrl: existingActiveCompletion.task.campaign.videoUrl,
+        platform: existingActiveCompletion.task.campaign.platform,
+        actionType: existingActiveCompletion.task.campaign.actionType,
+        commentTemplate: existingActiveCompletion.task.campaign.commentTemplate,
+        rewardPoints: existingActiveCompletion.rewardPoints,
+        targetHandle: existingActiveCompletion.task.campaign.socialAccount.identifier,
+        startedAt: existingActiveCompletion.startedAt,
+        minDurationSeconds: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS,
+        secondsRemaining,
+        requiresScreenshot: existingActiveCompletion.requiresScreenshot,
+      };
+    }
+
+    // S'il démarre une autre tâche, on libère automatiquement l'ancienne tâche abandonnée
+    await prisma.$transaction(async (tx) => {
+      await tx.taskCompletion.update({
+        where: { id: existingActiveCompletion.id },
+        data: { status: "REJECTED" },
+      });
+      await tx.task.update({
+        where: { id: existingActiveCompletion.taskId },
+        data: { status: "AVAILABLE" },
+      });
+    });
   }
 
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    include: { campaign: true },
-  });
+  // Si le slot précis demandé a été pris entre-temps, chercher un autre slot disponible de la même campagne
+  if (requestedTask.status !== "AVAILABLE") {
+    const alternativeTask = await prisma.task.findFirst({
+      where: {
+        campaignId: requestedTask.campaignId,
+        status: "AVAILABLE",
+      },
+      include: {
+        campaign: {
+          include: {
+            socialAccount: {
+              select: { platform: true, identifier: true },
+            },
+          },
+        },
+      },
+    });
 
-  if (!task || task.status !== "AVAILABLE") {
-    throw new Error("Cette tâche n'est plus disponible.");
+    if (!alternativeTask) {
+      throw new Error("Cette tâche n'est plus disponible.");
+    }
+    requestedTask = alternativeTask;
   }
 
-  if (task.campaign.userId === userId) {
-    throw new Error("Vous ne pouvez pas effectuer de tâche sur votre propre publication.");
-  }
-
-  if (task.campaign.status !== "ACTIVE") {
-    throw new Error("La campagne associée à cette tâche n'est pas active.");
-  }
-
-  // Contrôle aléatoire : 10% des tâches requièrent une capture d'écran
-  const requiresScreenshot = Math.random() < SYSTEM_DEFAULTS.RANDOM_AUDIT_SAMPLE_RATE;
+  const targetTask = requestedTask;
+  const requiresScreenshot = false;
 
   // Création atomique de la completion et réservation de la tâche
   const completion = await prisma.$transaction(async (tx) => {
     await tx.task.update({
-      where: { id: taskId },
+      where: { id: targetTask.id },
       data: { status: "IN_PROGRESS" },
     });
 
     return tx.taskCompletion.create({
       data: {
-        taskId,
+        taskId: targetTask.id,
         workerUserId: userId,
         status: "IN_PROGRESS",
         startedAt: new Date(),
         requiresScreenshot,
-        rewardPoints: task.campaign.rewardPerUnit,
+        rewardPoints: targetTask.campaign.rewardPerUnit,
         ipAddress: clientInfo.ip || null,
         userAgent: clientInfo.userAgent?.slice(0, 255) || null,
       },
@@ -180,16 +366,49 @@ export async function startTask(
 
   return {
     completionId: completion.id,
-    taskId,
-    videoUrl: task.campaign.videoUrl,
-    platform: task.campaign.platform,
-    actionType: task.campaign.actionType,
-    commentTemplate: task.campaign.commentTemplate,
+    taskId: targetTask.id,
+    campaignId: targetTask.campaignId,
+    videoUrl: targetTask.campaign.videoUrl,
+    platform: targetTask.campaign.platform,
+    actionType: targetTask.campaign.actionType,
+    commentTemplate: targetTask.campaign.commentTemplate,
     rewardPoints: completion.rewardPoints,
+    targetHandle: targetTask.campaign.socialAccount.identifier,
     startedAt: completion.startedAt,
     minDurationSeconds: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS, // 10s
+    secondsRemaining: SYSTEM_DEFAULTS.MIN_TASK_DURATION_SECONDS,
     requiresScreenshot,
   };
+}
+
+/**
+ * Annule une tâche en cours (IN_PROGRESS) et remet le slot en statut AVAILABLE
+ */
+export async function cancelTaskCompletion(completionId: string, userId: string) {
+  const completion = await prisma.taskCompletion.findUnique({
+    where: { id: completionId },
+  });
+
+  if (!completion || completion.workerUserId !== userId) {
+    throw new Error("Session de tâche introuvable.");
+  }
+
+  if (completion.status !== "IN_PROGRESS") {
+    return { cancelled: true };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.taskCompletion.update({
+      where: { id: completionId },
+      data: { status: "REJECTED" },
+    });
+    await tx.task.update({
+      where: { id: completion.taskId },
+      data: { status: "AVAILABLE" },
+    });
+  });
+
+  return { cancelled: true };
 }
 
 /**

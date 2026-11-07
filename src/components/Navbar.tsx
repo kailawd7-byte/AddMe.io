@@ -83,6 +83,14 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
+    const onBalanceUpdate = () => {
+      fetchUser();
+    };
+    window.addEventListener("addme:balance-updated", onBalanceUpdate);
+    return () => window.removeEventListener("addme:balance-updated", onBalanceUpdate);
+  }, []);
+
+  useEffect(() => {
     if (!isLandingPage) return;
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", onScroll, { passive: true });
