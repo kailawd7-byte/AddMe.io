@@ -379,18 +379,18 @@ export default function HomePage() {
         <LiquidColorLake mode="dark" />
         <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
-        <div className="max-w-[1140px] mx-auto px-5 sm:px-8 relative z-10">
+        <div className="max-w-[1140px] mx-auto px-5 sm:px-6 relative z-10">
           <div className="flex flex-wrap items-center gap-12 lg:gap-14">
-            {/* Colonne Gauche (Centrée avec marges latérales confortables) */}
-            <div className="flex-[1_1_500px] animate-up text-center px-2 sm:px-4 lg:px-2 mx-auto">
-              <h1 className="text-[38px] sm:text-[56px] lg:text-[64px] font-extrabold leading-[1.06] tracking-[-0.03em] m-0 mb-5 mx-auto drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+            {/* Colonne Gauche : Centrée avec marges sur Mobile uniquement, alignée à gauche sur Desktop */}
+            <div className="flex-[1_1_500px] animate-up text-center md:text-left px-3 sm:px-5 md:px-0 mx-auto md:mx-0">
+              <h1 className="text-[36px] sm:text-[52px] lg:text-[64px] font-extrabold leading-[1.06] tracking-[-0.03em] m-0 mb-5 mx-auto md:mx-0 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
                 Donnez de l’attention.{" "}
-                <span className="block sm:inline bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold drop-shadow-[0_4px_24px_rgba(255,184,77,0.35)] mt-1 sm:mt-0">
+                <span className="block sm:inline bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-extrabold drop-shadow-[0_4px_24px_rgba(255,184,77,0.35)] mt-1 sm:mt-0">
                   Recevez-en.
                 </span>
               </h1>
 
-              <p className="text-[16px] sm:text-[18px] leading-[1.7] text-white/90 max-w-xl mx-auto m-0 px-2 sm:px-4 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              <p className="text-[15px] sm:text-[18px] leading-[1.7] text-white/90 max-w-xl mx-auto md:mx-0 m-0 px-2 sm:px-4 md:px-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
                 Propulsez vos contenus sur vos 8 réseaux favoris en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
@@ -398,7 +398,7 @@ export default function HomePage() {
               </p>
 
               {/* Actions selon le statut de connexion */}
-              <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-4 mt-8 px-1">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3.5 sm:gap-4 mt-8 px-1 md:px-0">
                 {isAuthenticated ? (
                   <>
                     <Link
@@ -441,7 +441,7 @@ export default function HomePage() {
               </div>
 
               {/* 3 Piliers */}
-              <div className="mt-9 pt-7 border-t border-white/15 grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto text-center text-xs text-white/85 px-1">
+              <div className="mt-9 pt-7 border-t border-white/15 grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto md:mx-0 text-center md:text-left text-xs text-white/85 px-1 md:px-0">
                 <div className="group">
                   <div className="font-extrabold text-white text-sm sm:text-base group-hover:text-[#FFB84D] transition-colors">
                     0 Bot
@@ -1114,7 +1114,7 @@ export default function HomePage() {
               </p>
               <h2 className="text-[32px] sm:text-[48px] font-extrabold leading-[1.1] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                 Nous nous concentrons sur :{" "}
-                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic">
+                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-extrabold">
                   l’engagement humain mutuel, unique et vérifié.
                 </span>
               </h2>
@@ -1400,7 +1400,7 @@ export default function HomePage() {
                 </div>
                 <h2 className="text-[30px] sm:text-[44px] font-extrabold leading-tight tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                   Prêt à faire décoller vos publications avec de{" "}
-                  <span className="text-[#FFB84D] font-serif-drama italic">
+                  <span className="text-[#FFB84D] font-extrabold">
                     vrais créateurs ?
                   </span>
                 </h2>
