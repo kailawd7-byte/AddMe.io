@@ -44,12 +44,11 @@ Construis systématiquement l'interface autour d'un dualisme **Obsidienne Profon
 }
 ```
 
-### B. Quatuor Typographique Haute Précision
-Associe toujours **4 familles typographiques complémentaires** chargées via Google Fonts (jamais de `Roboto Slab` ni d'`Inter` générique) :
-1. **Display & Grands Titres (`Outfit` — 500 à 900)** : Géométrique contemporaine racée pour tous les `h1`–`h6`, le logo `AddMe.io`, les grands compteurs et les titres de cartes (`letter-spacing: -0.025em`, `leading-[1.02]`).
-2. **Interface & Corps de Texte (`Plus Jakarta Sans` — 400 à 800)** : Sans-serif néo-humaniste ultra-sophistiquée pour l'ensemble du Dashboard, la navigation, les formulaires et les paragraphes (`font-feature-settings: "cv02", "cv03", "cv04", "cv11"`).
-3. **Serif Dramatique Italique (`Playfair Display` — 600i, 700i)** : Utilisée en contraste émotionnel sur les mots-clés stratégiques des grands titres (habillée d'un dégradé ambré `bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent`).
-4. **Monospace Technique (`JetBrains Mono` — 400 à 700)** : Compteurs temps réel, codes de bio (`ADDME-8F92A`), formules de calcul, badges de statut et métriques financières.
+### B. Triptyque Typographique Haute Précision
+Associe toujours **3 familles typographiques complémentaires** chargées via Google Fonts :
+1. **Sans-Serif Géométrique (`Inter` — 400 à 900)** : Structure principale, titres à fort impact (`tracking-[-0.03em]`, `leading-[1.02]`), corps de texte ultra-lisible.
+2. **Serif Dramatique Italique (`Playfair Display` — 600i, 700i)** : Utilisée en contraste émotionnel sur les mots-clés stratégiques des grands titres comme *« Recevez-en. »* (habillée d'un dégradé ambré `bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold`).
+3. **Monospace Technique (`JetBrains Mono` — 400, 500, 700)** : Compteurs temps réel, identifiants, formules de calcul, badges de statut et métriques financières.
 
 ---
 
