@@ -147,9 +147,10 @@ L'équipe AddMe.io`;
 }
 
 /**
- * Routeur d'envoi d'email :
- * 1. Si RESEND_API_KEY est présent : envoi réel via l'API Resend (compatible Vercel Serverless)
- * 2. Si non configuré : journalisation sécurisée côté serveur pour audit et logs
+ * Routeur d'envoi d'email multi-fournisseurs :
+ * 1. Resend API (si RESEND_API_KEY est défini) - Idéal Vercel & Edge
+ * 2. SMTP Universel (si SMTP_HOST, SMTP_USER, SMTP_PASS sont définis) - Gmail, OVH, Hostinger, Zoho
+ * 3. Mode Simulation / Logs (si aucun provider n'est configuré)
  */
 async function deliverEmail({
   toEmail,
@@ -165,6 +166,7 @@ async function deliverEmail({
   const resendApiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.EMAIL_FROM || "AddMe.io <support@addme.io>";
 
+  // 1. Fournisseur API Resend (Hautement recommandé pour Vercel)
   if (resendApiKey) {
     try {
       const res = await fetch("https://api.resend.com/emails", {
@@ -184,25 +186,65 @@ async function deliverEmail({
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.error("[EMAIL ERROR] Resend error:", errorData);
-        return { success: false, error: "Erreur lors de l'envoi de l'email" };
+        console.error("[EMAIL ERROR] Erreur Resend:", errorData);
+        return { success: false, error: "Erreur lors de l'envoi de l'email via Resend." };
       }
 
-      console.log(`[EMAIL DISPATCH] Email envoyé avec succès à ${toEmail} (${subject})`);
+      console.log(`[EMAIL DISPATCH] Email envoyé avec succès via Resend à ${toEmail} (${subject})`);
       return { success: true };
     } catch (err) {
-      console.error("[EMAIL ERROR] Exception réseau:", err);
-      return { success: false, error: "Erreur réseau d'envoi email" };
+      console.error("[EMAIL ERROR] Exception réseau Resend:", err);
+      return { success: false, error: "Erreur réseau lors de l'envoi de l'email." };
     }
   }
 
-  // Mode sécurisé serveur (Vercel Server Logs / Console d'administration)
-  console.log(`\n================== [ADDME EMAIL DISPATCH] ==================`);
+  // 2. Fournisseur SMTP Standard (Gmail, Zoho, Hostinger, OVH, Infomaniak, etc.)
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (smtpHost && smtpUser && smtpPass) {
+    try {
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: process.env.SMTP_SECURE === "true" || process.env.SMTP_PORT === "465",
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      await transporter.sendMail({
+        from: fromEmail,
+        to: toEmail,
+        subject,
+        text: textBody,
+        html: htmlBody,
+      });
+
+      console.log(`[EMAIL DISPATCH] Email envoyé avec succès via SMTP à ${toEmail} (${subject})`);
+      return { success: true };
+    } catch (err) {
+      console.error("[EMAIL ERROR] Exception SMTP:", err);
+      return { success: false, error: "Erreur lors de l'envoi de l'email via SMTP." };
+    }
+  }
+
+  // 3. Mode Journalisation Serveur (en l'absence de provider configuré)
+  console.warn(
+    `\n⚠️ [EMAIL NON LIVRÉ - AUCUN PROVIDER CONFIGURÉ]\n` +
+    `Pour envoyer de vrais emails vers les boîtes de réception (Gmail, Outlook, etc.),\n` +
+    `veuillez configurer soit RESEND_API_KEY soit SMTP_HOST/SMTP_USER/SMTP_PASS dans votre fichier .env et sur Vercel.\n`
+  );
+  console.log(`================== [ADDME EMAIL DISPATCH (SIMULATION)] ==================`);
   console.log(`À : ${toEmail}`);
+  console.log(`De : ${fromEmail}`);
   console.log(`Sujet : ${subject}`);
   console.log(`Date : ${new Date().toISOString()}`);
   console.log(`Contenu :\n${textBody}`);
-  console.log(`============================================================\n`);
+  console.log(`=========================================================================\n`);
 
   return { success: true };
 }
