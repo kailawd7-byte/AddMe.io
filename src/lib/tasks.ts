@@ -490,7 +490,7 @@ export async function submitTaskCompletion(
     );
   }
 
-  // 3. Vérification en temps réel par le Robot Anti-Fraude AddMe (comparaison des compteurs Avant / Après)
+  // 3. Vérification en temps réel par l'Agent IA & Robot Anti-Fraude AddMe (comparaison des compteurs Avant / Après + IA Vision)
   const baselineSnapshot = decodeSnapshotMetadata(completion.screenshotUrl);
   const botVerification = await verifyTaskActionWithBot({
     platform: completion.task.campaign.platform,
@@ -499,13 +499,46 @@ export async function submitTaskCompletion(
     targetHandle: completion.task.campaign.socialAccount.identifier,
     baselineSnapshot,
     externalTimeSpentSeconds: payload.externalTimeSpentSeconds,
+    proofScreenshot: payload.screenshotUrl,
   });
 
+  if (botVerification.updatedSnapshot) {
+    await prisma.taskCompletion.update({
+      where: { id: completionId },
+      data: {
+        screenshotUrl: encodeSnapshotMetadata(botVerification.updatedSnapshot),
+      },
+    });
+  }
+
+  // Contrôle anti-rejeu : interdire de réutiliser deux fois la même capture d'écran
+  if (
+    botVerification.verified &&
+    botVerification.source.startsWith("ai-proof-fingerprint-")
+  ) {
+    const duplicateProof = await prisma.taskCompletion.findFirst({
+      where: {
+        workerUserId: userId,
+        status: "APPROVED",
+        screenshotUrl: {
+          contains: botVerification.source,
+        },
+      },
+    });
+    if (duplicateProof) {
+      throw new Error(
+        "🤖 Agent IA Vision : Cette capture d'écran a déjà été utilisée pour valider une autre tâche. Veuillez importer une capture récente de cette action."
+      );
+    }
+  }
+
   if (!botVerification.verified) {
-    throw new Error(
+    const err: any = new Error(
       botVerification.reason ||
-        "🤖 Robot de vérification AddMe : Action non détectée sur la publication. Veuillez réellement effectuer l'action avant de valider."
+        "🤖 IA Sentinel Anti-Fraude : Action non détectée sur la publication. Veuillez réellement effectuer l'action avant de valider."
     );
+    err.requiresProofFallback = Boolean(botVerification.requiresProofFallback);
+    throw err;
   }
 
   // 4. Validation atomique et crédit direct en base de données
@@ -520,7 +553,7 @@ export async function submitTaskCompletion(
         referenceType: "TASK_COMPLETION",
         referenceId: completion.id,
         idempotencyKey,
-        description: `Récompense vérifiée par Robot : ${completion.task.campaign.actionType.toLowerCase()} sur ${completion.task.campaign.platform} (@${completion.task.campaign.socialAccount.identifier})`,
+        description: `Récompense vérifiée par IA Sentinel : ${completion.task.campaign.actionType.toLowerCase()} sur ${completion.task.campaign.platform} (@${completion.task.campaign.socialAccount.identifier})`,
       },
       tx
     );
@@ -532,9 +565,7 @@ export async function submitTaskCompletion(
         status: "APPROVED",
         submittedAt: new Date(),
         retentionEndsAt: new Date(),
-        screenshotUrl:
-          payload.screenshotUrl?.trim() ||
-          `VERIFIED:${botVerification.source}:${botVerification.beforeCount ?? "?"}->${botVerification.afterCount ?? "ok"}`,
+        screenshotUrl: `VERIFIED:${botVerification.source}:${botVerification.beforeCount ?? "?"}->${botVerification.afterCount ?? "ok"}`,
       },
     });
 

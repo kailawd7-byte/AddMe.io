@@ -34,7 +34,10 @@ export async function POST(
   } catch (error: any) {
     console.error("Erreur validation tâche:", error);
     return NextResponse.json(
-      { error: error.message || "Erreur lors de la validation de la tâche." },
+      {
+        error: error.message || "Erreur lors de la validation de la tâche.",
+        requiresProofFallback: Boolean(error.requiresProofFallback),
+      },
       { status: 400 }
     );
   }

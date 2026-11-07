@@ -76,6 +76,8 @@ export default function TasksPage() {
   );
   const [isTimerPaused, setIsTimerPaused] = useState<boolean>(false);
   const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [screenshotFileName, setScreenshotFileName] = useState("");
+  const [showProofFallback, setShowProofFallback] = useState(false);
   const [copiedTemplate, setCopiedTemplate] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -174,20 +176,26 @@ export default function TasksPage() {
         const data = await res.json();
 
         if (!res.ok) {
+          if (data.requiresProofFallback) {
+            setShowProofFallback(true);
+          }
           setFeedback({
             type: "error",
             text:
               data.error ||
-              "🤖 Robot de vérification AddMe : Action non détectée. Veuillez effectuer l'action sur la publication puis réessayer.",
+              "🤖 IA Sentinel Anti-Fraude : Action non détectée. Veuillez effectuer l'action sur la publication puis réessayer.",
           });
         } else {
           setFeedback({
             type: "success",
             text:
               data.message ||
-              `🤖 Action vérifiée par le robot ! +${targetSession.rewardPoints} points ont été crédités immédiatement à votre solde !`,
+              `🤖 Action vérifiée par l'IA Sentinel ! +${targetSession.rewardPoints} points ont été crédités immédiatement à votre solde !`,
           });
           setActiveSession(null);
+          setScreenshotUrl("");
+          setScreenshotFileName("");
+          setShowProofFallback(false);
           accumulatedExternalMsRef.current = 0;
           leftPageAtRef.current = null;
           await fetchBalanceAndTasks();
@@ -318,6 +326,8 @@ export default function TasksPage() {
         setIsTimerPaused(false);
         setActiveSession(sessionData);
         setScreenshotUrl("");
+        setScreenshotFileName("");
+        setShowProofFallback(false);
         setCopiedTemplate(false);
 
         // Ouverture automatique de la publication dans un nouvel onglet
@@ -358,6 +368,9 @@ export default function TasksPage() {
         body: JSON.stringify({ completionId: activeSession.completionId }),
       });
       setActiveSession(null);
+      setScreenshotUrl("");
+      setScreenshotFileName("");
+      setShowProofFallback(false);
       accumulatedExternalMsRef.current = 0;
       leftPageAtRef.current = null;
       await fetchBalanceAndTasks();
@@ -372,6 +385,20 @@ export default function TasksPage() {
     navigator.clipboard.writeText(text);
     setCopiedTemplate(true);
     setTimeout(() => setCopiedTemplate(false), 2000);
+  };
+
+  const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScreenshotFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setScreenshotUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const formatPlatform = (platform: string) => {
@@ -665,23 +692,45 @@ export default function TasksPage() {
               </div>
             )}
 
-          {/* Contrôle aléatoire de capture d'écran si demandé */}
-          {activeSession.requiresScreenshot && (
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
-                <Camera className="h-4 w-4 text-amber-600" />
-                <span>
-                  Contrôle de conformité : veuillez indiquer un lien de capture
-                  ou preuve d’action
+          {/* Module Agent IA Vision : Capture d'écran de preuve (affiché si le compteur public est masqué/retardé ou sur demande) */}
+          {(activeSession.requiresScreenshot || showProofFallback) && (
+            <div className="p-4 rounded-xl bg-[#EEEAFF] border border-[#D9D2FF] space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-extrabold text-[#3A22C8]">
+                  <Camera className="h-4 w-4 text-[#5B3DF5]" />
+                  <span>
+                    🤖 Agent IA Vision : Importez une capture d’écran prouvant votre{" "}
+                    {formatAction(activeSession.actionType).toLowerCase()} sur{" "}
+                    {formatPlatform(activeSession.platform)}
+                  </span>
+                </div>
+                {screenshotFileName && (
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
+                    ✓ {screenshotFileName}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="addme-btn addme-btn-primary py-2 px-4 text-xs cursor-pointer">
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>
+                    {screenshotFileName
+                      ? "Changer la capture d’écran"
+                      : "Choisir une capture d’écran (Téléphone / PC)"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleProofFileChange}
+                    className="hidden"
+                  />
+                </label>
+
+                <span className="text-xs text-[#5A5A70]">
+                  L’IA inspecte visuellement que le bouton d’action est bien activé avant de créditer vos points.
                 </span>
               </div>
-              <input
-                type="text"
-                value={screenshotUrl}
-                onChange={(e) => setScreenshotUrl(e.target.value)}
-                placeholder="Ex : https://imgur.com/... ou confirmation"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5]"
-              />
             </div>
           )}
 
