@@ -75,6 +75,110 @@ body {
   }
 }
 
+/* Nuances de couleurs animées (Aurora Mesh Gradient) */
+@keyframes auroraDrift1 {
+  0%, 100% {
+    transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(12%, -10%, 0) scale(1.15) rotate(12deg);
+  }
+  66% {
+    transform: translate3d(-10%, 12%, 0) scale(0.92) rotate(-8deg);
+  }
+}
+
+@keyframes auroraDrift2 {
+  0%, 100% {
+    transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-14%, 10%, 0) scale(1.18) rotate(-15deg);
+  }
+  66% {
+    transform: translate3d(10%, -12%, 0) scale(0.95) rotate(10deg);
+  }
+}
+
+@keyframes auroraDrift3 {
+  0%, 100% {
+    transform: translate3d(0%, 0%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8%, 14%, 0) scale(1.22);
+  }
+}
+
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
+}
+
+.aurora-orb-1 {
+  animation: auroraDrift1 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+.aurora-orb-2 {
+  animation: auroraDrift2 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.aurora-orb-3 {
+  animation: auroraDrift3 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Grille architecturale subtile façon Linear / Stripe */
+.cyber-grid-dark {
+  background-size: 48px 48px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 80%);
+}
+
+.cyber-grid-light {
+  background-size: 56px 56px;
+  background-image: 
+    linear-gradient(to right, rgba(91, 61, 245, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(91, 61, 245, 0.045) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 20%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 20%, transparent 85%);
+}
+
+/* Cartes sombres premium avec reflet au survol */
+.manifesto-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(30, 28, 46, 0.9) 0%, rgba(21, 20, 32, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.manifesto-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 184, 77, 0.5);
+  box-shadow: 0 24px 48px -18px rgba(91, 61, 245, 0.35), 0 0 25px -5px rgba(255, 184, 77, 0.15);
+}
+
 /* Bandeau d'annonce perpétuelle défilant de droite à gauche */
 @keyframes perpetualMarqueeScroll {
   0% {
@@ -151,16 +255,18 @@ body {
 }
 
 .addme-card {
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
   border: 1px solid #E3E3EE;
-  border-radius: 20px;
-  padding: 24px;
-  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  border-radius: 22px;
+  padding: 26px;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.35s ease;
 }
 
 .addme-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 26px 50px -24px rgba(18, 18, 42, 0.18);
+  transform: translateY(-6px);
+  border-color: rgba(91, 61, 245, 0.45);
+  box-shadow: 0 28px 56px -20px rgba(91, 61, 245, 0.16), 0 12px 24px -12px rgba(18, 18, 42, 0.08);
 }
 
 .addme-card-static {
