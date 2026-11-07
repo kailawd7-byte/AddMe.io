@@ -212,6 +212,7 @@ export async function cancelCampaign(campaignId: string, userId: string) {
       },
     });
 
+    const unconsumedCount = availableCount;
     const refundAmount = Number((availableCount * campaign.costPerUnit).toFixed(2));
     const refundIdempotencyKey = `campaign-refund-${campaignId}`;
 
