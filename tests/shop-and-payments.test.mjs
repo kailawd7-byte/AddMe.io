@@ -16,19 +16,19 @@ describe("Boutique de Points & Catalogue de Packs (Étape 5)", () => {
 
     const starter = getPackById("PACK_STARTER");
     assert.ok(starter);
-    assert.equal(starter.points, 100);
+    assert.equal(starter.points, 200);
     assert.equal(starter.priceInCents, 499);
     assert.equal(starter.priceFormatted, "4,99 €");
 
     const creator = getPackById("PACK_CREATOR");
     assert.ok(creator);
-    assert.equal(creator.points, 300);
+    assert.equal(creator.points, 600);
     assert.equal(creator.priceInCents, 1299);
     assert.equal(creator.popular, true);
 
     const pro = getPackById("PACK_PRO");
     assert.ok(pro);
-    assert.equal(pro.points, 1000);
+    assert.equal(pro.points, 2000);
     assert.equal(pro.priceInCents, 3499);
   });
 
@@ -70,7 +70,7 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
     const session = await createCheckoutSession(testUserId, "PACK_CREATOR");
     assert.ok(session.sessionId);
     assert.ok(session.paymentId);
-    assert.equal(session.pack.points, 300);
+    assert.equal(session.pack.points, 600);
 
     paymentSessionId = session.sessionId;
     paymentId = session.paymentId;
@@ -81,7 +81,7 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
     });
     assert.ok(paymentInDb);
     assert.equal(paymentInDb.status, "PENDING");
-    assert.equal(paymentInDb.pointsAmount, 300);
+    assert.equal(paymentInDb.pointsAmount, 600);
     assert.equal(paymentInDb.amountInCents, 1299);
 
     // Règle d'or : le solde ne doit PAS avoir augmenté avant la confirmation
@@ -109,11 +109,11 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
     );
   });
 
-  it("confirme le paiement via webhook et crédite atomiquement les 300 points au Ledger", async () => {
+  it("confirme le paiement via webhook et crédite atomiquement les 600 points au Ledger", async () => {
     const confirmResult = await completePaymentConfirmation(paymentSessionId, "pi_test_12345");
     assert.equal(confirmResult.success, true);
     assert.equal(confirmResult.alreadyProcessed, false);
-    assert.equal(confirmResult.pointsAmount, 300);
+    assert.equal(confirmResult.pointsAmount, 600);
 
     // Vérifier la mise à jour du Payment
     const paymentInDb = await prisma.payment.findUnique({
@@ -128,14 +128,14 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
       where: { id: paymentInDb.ledgerEntryId },
     });
     assert.ok(ledgerEntry);
-    assert.equal(ledgerEntry.amount, 300);
+    assert.equal(ledgerEntry.amount, 600);
     assert.equal(ledgerEntry.type, "PACK_PURCHASE");
     assert.equal(ledgerEntry.referenceType, "PAYMENT");
     assert.equal(ledgerEntry.referenceId, paymentId);
 
     // Vérifier le nouveau solde de l'utilisateur
     const updatedBalance = await getUserBalance(testUserId);
-    assert.equal(updatedBalance, 300.0);
+    assert.equal(updatedBalance, 600.0);
   });
 
   it("garantit l'idempotence absolue : rejeu du webhook sans double crédit", async () => {
@@ -144,9 +144,9 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
     assert.equal(duplicateResult.success, true);
     assert.equal(duplicateResult.alreadyProcessed, true);
 
-    // Le solde doit rester strictement à 300.0 (pas 600)
+    // Le solde doit rester strictement à 600.0 (pas 1200)
     const currentBalance = await getUserBalance(testUserId);
-    assert.equal(currentBalance, 300.0, "Le solde ne doit pas doubler lors de la réémission du webhook");
+    assert.equal(currentBalance, 600.0, "Le solde ne doit pas doubler lors de la réémission du webhook");
 
     // Il ne doit exister qu'une seule transaction pour cet achat
     const transactions = await prisma.ledgerEntry.findMany({
@@ -159,7 +159,7 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
   });
 
   it("traite un webhook Stripe simulant l'événement checkout.session.completed", async () => {
-    // Création d'une seconde session pour le Pack Starter (100 pts)
+    // Création d'une seconde session pour le Pack Starter (200 pts)
     const sessionStarter = await createCheckoutSession(testUserId, "PACK_STARTER");
 
     const mockStripeEvent = {
@@ -184,9 +184,9 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
     assert.equal(webhookResult.success, true);
     assert.equal(webhookResult.alreadyProcessed, false);
 
-    // Vérifier que le solde total est passé de 300 à 400 pts (300 + 100)
+    // Vérifier que le solde total est passé de 600 à 800 pts (600 + 200)
     const finalBalance = await getUserBalance(testUserId);
-    assert.equal(finalBalance, 400.0);
+    assert.equal(finalBalance, 800.0);
   });
 
   it("restitue l'historique complet et ordonné des commandes de l'utilisateur", async () => {
@@ -195,11 +195,11 @@ describe("Cycle de Paiement Stripe : Session, Webhook, Crédit Sécurisé et Ide
 
     // Le premier élément doit être le plus récent (tri desc)
     assert.equal(history[0].packId, "PACK_STARTER");
-    assert.equal(history[0].pointsAmount, 100);
+    assert.equal(history[0].pointsAmount, 200);
     assert.equal(history[0].status, "COMPLETED");
 
     assert.equal(history[1].packId, "PACK_CREATOR");
-    assert.equal(history[1].pointsAmount, 300);
+    assert.equal(history[1].pointsAmount, 600);
     assert.equal(history[1].status, "COMPLETED");
   });
 });
