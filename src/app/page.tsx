@@ -332,7 +332,7 @@ export default function HomePage() {
 
                 {/* Pièce d'or rotative */}
                 <div className="coin-spin-3d absolute -top-2 right-2 w-[76px] h-[76px] rounded-full bg-[#FFB84D] text-[#0E0D14] font-extrabold flex items-center justify-center text-[22px] shadow-2xl border-4 border-[#FFE0A3] select-none">
-                  pt
+                  pts
                 </div>
               </div>
             </div>
