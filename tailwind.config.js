@@ -7,12 +7,6 @@ module.exports = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        display: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        serif: ["'Plus Jakarta Sans'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        mono: ["'JetBrains Mono'", "monospace"],
-      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
