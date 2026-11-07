@@ -29,7 +29,6 @@ export async function GET() {
       authenticated: true,
       email: user.email,
       isEmailVerified: user.isEmailVerified,
-      activeCode: user.emailVerificationToken,
     });
   } catch (error) {
     console.error("Erreur vérification email status:", error);
@@ -46,23 +45,19 @@ export async function POST(req: NextRequest) {
     const rawToken = body.token || body.code;
     const sessionUser = await getCurrentUser();
 
-    let user = null;
-
-    // 1. Recherche par jeton ou code si fourni
-    if (rawToken && typeof rawToken === "string" && rawToken.trim().length > 0) {
-      user = await prisma.user.findFirst({
-        where: {
-          emailVerificationToken: rawToken.trim(),
-        },
-      });
+    if (!rawToken || typeof rawToken !== "string" || rawToken.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Veuillez fournir le code de vérification reçu par email." },
+        { status: 400 }
+      );
     }
 
-    // 2. Si pas trouvé par code mais utilisateur connecté, recherche directe de sa session
-    if (!user && sessionUser) {
-      user = await prisma.user.findUnique({
-        where: { id: sessionUser.id },
-      });
-    }
+    // Recherche stricte de l'utilisateur ayant ce jeton / code actif
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: rawToken.trim(),
+      },
+    });
 
     if (!user) {
       return NextResponse.json(

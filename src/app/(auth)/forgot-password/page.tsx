@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successInfo, setSuccessInfo] = useState<{ message: string; resetUrl?: string } | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +26,7 @@ export default function ForgotPasswordPage() {
       if (!res.ok) {
         setError(data.error || "Une erreur est survenue.");
       } else {
-        setSuccessInfo({
-          message: data.message,
-          resetUrl: data.resetUrl,
-        });
+        setSubmittedEmail(email);
       }
     } catch {
       setError("Impossible de joindre le serveur.");
@@ -55,26 +52,34 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        {successInfo ? (
+        {submittedEmail ? (
           <div className="p-6 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center space-y-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="h-6 w-6" />
+            <div className="h-14 w-14 rounded-2xl bg-[#5B3DF5]/20 text-[#FFB84D] border border-[#5B3DF5]/40 flex items-center justify-center mx-auto">
+              <Mail className="h-7 w-7" />
             </div>
-            <p className="text-sm text-slate-300">{successInfo.message}</p>
-            {successInfo.resetUrl && (
-              <div className="pt-2">
-                <Link
-                  href={successInfo.resetUrl}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md"
-                >
-                  Accéder directement au formulaire de réinitialisation
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            )}
-            <Link href="/login" className="block text-xs text-slate-400 hover:text-white pt-2">
-              Retour à la page de connexion
-            </Link>
+            <h3 className="text-lg font-bold text-white">Vérifiez votre boîte de réception</h3>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Si l'adresse <strong className="text-white">{submittedEmail}</strong> est associée à un compte AddMe.io, un email contenant votre lien de réinitialisation sécurisé vient de vous être envoyé.
+            </p>
+            <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-400 text-left">
+              🔒 <strong>Sécurité renforcée :</strong> Ce lien unique est valable pendant 60 minutes. Veuillez vérifier vos spams ou courriers indésirables si vous ne le voyez pas dans votre boîte de réception.
+            </div>
+            <div className="pt-2 flex flex-col gap-2">
+              <Link
+                href="/login"
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md"
+              >
+                Retour à la page de connexion
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSubmittedEmail(null)}
+                className="text-xs text-slate-400 hover:text-white py-1"
+              >
+                Renvoyer à une autre adresse
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">

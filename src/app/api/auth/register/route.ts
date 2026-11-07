@@ -4,6 +4,7 @@ import { hashPassword, setSessionCookie } from "@/lib/auth";
 import { signUpSchema } from "@/lib/validation";
 import { generateSecureToken } from "@/lib/security";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
+import { sendEmailVerificationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -110,19 +111,24 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       "http://localhost:3000";
 
+    const verificationUrl = `${origin}/verify-email?code=${emailVerificationToken}`;
+
+    // Envoi sécurisé de l'email de vérification avec le code à 6 chiffres
+    await sendEmailVerificationEmail({
+      toEmail: newUser.email,
+      verificationCode: emailVerificationToken,
+      verificationUrl,
+    });
+
     return NextResponse.json({
       success: true,
-      message: "Compte créé avec succès ! Vos 50 points de bienvenue ont été immédiatement crédités.",
+      message: "Compte créé avec succès ! Un email de confirmation contenant votre code à 6 chiffres vous a été envoyé.",
       user: {
         id: newUser.id,
         email: newUser.email,
         role: newUser.role,
         isEmailVerified: newUser.isEmailVerified,
       },
-      // Retourné pour faciliter les tests manuels et la validation directe
-      verificationCode: emailVerificationToken,
-      verificationToken: emailVerificationToken,
-      verificationUrl: `${origin}/verify-email?code=${emailVerificationToken}`,
     });
   } catch (error) {
     console.error("Erreur registration:", error);

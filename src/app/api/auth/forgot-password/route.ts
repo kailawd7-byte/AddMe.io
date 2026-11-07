@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { generateSecureToken } from "@/lib/security";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,12 +65,17 @@ export async function POST(req: NextRequest) {
 
     const resetUrl = `${origin}/reset-password?token=${resetToken}`;
 
+    // Envoi sécurisé par email
+    await sendPasswordResetEmail({
+      toEmail: user.email,
+      resetUrl,
+      resetToken,
+    });
+
+    // Réponse sécurisée sans aucune fuite de jeton ou d'URL de réinitialisation
     return NextResponse.json({
       success: true,
-      message: "Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.",
-      // Renvoyé pour faciliter les tests et la démonstration
-      resetToken,
-      resetUrl,
+      message: "Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé par email.",
     });
   } catch (error) {
     console.error("Erreur forgot-password:", error);

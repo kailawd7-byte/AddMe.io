@@ -24,9 +24,10 @@ function VerifyEmailContent() {
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [bonusPoints, setBonusPoints] = useState(10);
+  const [bonusPoints, setBonusPoints] = useState(50);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [demoCode, setDemoCode] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
 
   const executeVerification = async (codeToSubmit: string) => {
     setLoading(true);
@@ -77,9 +78,6 @@ function VerifyEmailContent() {
               setSuccessMessage(
                 "Votre adresse email est déjà pleinement vérifiée et active !"
               );
-            } else if (data.activeCode) {
-              setDemoCode(data.activeCode);
-              setInputCode(data.activeCode);
             }
           }
         }
@@ -102,8 +100,29 @@ function VerifyEmailContent() {
     executeVerification(inputCode.trim());
   };
 
-  const handleInstantVerification = () => {
-    executeVerification(demoCode || "DIRECT_AUTH");
+  const handleResendCode = async () => {
+    setResending(true);
+    setResendSuccess(null);
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/auth/verify-email/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResendSuccess(data.message || "Un nouveau code de vérification vous a été envoyé par email.");
+      } else {
+        setErrorMessage(data.error || "Impossible de renvoyer le code pour le moment.");
+      }
+    } catch {
+      setErrorMessage("Erreur de connexion lors du renvoi.");
+    } finally {
+      setResending(false);
+    }
   };
 
   if (checkingStatus) {
@@ -202,12 +221,10 @@ function VerifyEmailContent() {
               />
             </div>
 
-            {demoCode && (
-              <div className="p-3 rounded-xl bg-[#EEEAFF] border border-[#D9D2FF] text-xs text-[#12122A] flex items-center justify-between">
-                <span>Code de votre compte :</span>
-                <span className="font-mono font-extrabold text-[#3A22C8] px-2.5 py-0.5 rounded bg-white border border-[#CFCFE0]">
-                  {demoCode}
-                </span>
+            {resendSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 text-left">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span>{resendSuccess}</span>
               </div>
             )}
 
@@ -227,18 +244,16 @@ function VerifyEmailContent() {
             </button>
           </form>
 
-          {userEmail && (
-            <div className="pt-2 border-t border-[#E3E3EE]">
-              <button
-                type="button"
-                onClick={handleInstantVerification}
-                disabled={loading}
-                className="addme-btn addme-btn-ghost w-full text-xs py-2.5"
-              >
-                Activer mon compte en 1 clic
-              </button>
-            </div>
-          )}
+          <div className="pt-2 border-t border-[#E3E3EE] flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={resending}
+              className="addme-btn addme-btn-ghost w-full text-xs py-2.5"
+            >
+              {resending ? "Envoi du code en cours..." : "Renvoyer un code de vérification par email"}
+            </button>
+          </div>
 
           <div>
             <Link
