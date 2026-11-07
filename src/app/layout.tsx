@@ -20,11 +20,35 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window === 'undefined') return;
+                const origError = console.error;
+                console.error = function(...args) {
+                  const full = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                  if (
+                    full.includes('bis_skin_checked') ||
+                    full.includes('bis_register')
+                  ) {
+                    return;
+                  }
+                  origError.apply(console, args);
+                };
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         suppressHydrationWarning
         className="bg-[#F7F7FB] text-[#12122A] min-h-screen antialiased selection:bg-[#5B3DF5] selection:text-white"
       >
-        <Navbar>{children}</Navbar>
+        <div suppressHydrationWarning className="min-h-screen flex flex-col">
+          <Navbar>{children}</Navbar>
+        </div>
       </body>
     </html>
   );
