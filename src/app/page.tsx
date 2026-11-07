@@ -379,23 +379,18 @@ export default function HomePage() {
         <LiquidColorLake mode="dark" />
         <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
-        <div className="max-w-[1140px] mx-auto px-6 relative z-10">
+        <div className="max-w-[1140px] mx-auto px-5 sm:px-8 relative z-10">
           <div className="flex flex-wrap items-center gap-12 lg:gap-14">
-            {/* Colonne Gauche */}
-            <div className="flex-[1_1_500px] animate-up">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#151324]/80 backdrop-blur-xl border border-white/15 text-xs font-semibold text-white mb-6 shadow-[0_0_30px_rgba(91,61,245,0.4)]">
-                <Sparkles className="h-3.5 w-3.5 text-[#FFB84D] animate-pulse" />
-                <span>Plateforme P2P Éthique · Engagement 100% Réel & Vérifié</span>
-              </div>
-
-              <h1 className="text-[44px] sm:text-[60px] lg:text-[68px] font-extrabold leading-[1.02] tracking-[-0.03em] m-0 mb-5 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+            {/* Colonne Gauche (Centrée avec marges latérales confortables) */}
+            <div className="flex-[1_1_500px] animate-up text-center px-2 sm:px-4 lg:px-2 mx-auto">
+              <h1 className="text-[38px] sm:text-[56px] lg:text-[64px] font-extrabold leading-[1.06] tracking-[-0.03em] m-0 mb-5 mx-auto drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
                 Donnez de l’attention.{" "}
-                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold drop-shadow-[0_4px_24px_rgba(255,184,77,0.35)]">
+                <span className="block sm:inline bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold drop-shadow-[0_4px_24px_rgba(255,184,77,0.35)] mt-1 sm:mt-0">
                   Recevez-en.
                 </span>
               </h1>
 
-              <p className="text-lg sm:text-[19px] leading-[1.65] text-white/90 max-w-xl m-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              <p className="text-[16px] sm:text-[18px] leading-[1.7] text-white/90 max-w-xl mx-auto m-0 px-2 sm:px-4 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
                 Propulsez vos contenus sur vos 8 réseaux favoris en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
@@ -403,12 +398,12 @@ export default function HomePage() {
               </p>
 
               {/* Actions selon le statut de connexion */}
-              <div className="flex flex-wrap items-center gap-4 mt-8">
+              <div className="flex flex-wrap items-center justify-center gap-3.5 sm:gap-4 mt-8 px-1">
                 {isAuthenticated ? (
                   <>
                     <Link
                       href="/dashboard"
-                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
+                      className="addme-btn addme-btn-primary text-sm sm:text-base px-6 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
                     >
                       <span>
                         Accéder à mon Dashboard (
@@ -421,7 +416,7 @@ export default function HomePage() {
                     </Link>
                     <Link
                       href="/tasks"
-                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-[#FFB84D] hover:bg-black/50 px-6 py-4"
+                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-[#FFB84D] hover:bg-black/50 text-sm sm:text-base px-5 sm:px-6 py-3.5 sm:py-4"
                     >
                       Gagner des points
                     </Link>
@@ -430,14 +425,14 @@ export default function HomePage() {
                   <>
                     <Link
                       href="/register"
-                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
+                      className="addme-btn addme-btn-primary text-sm sm:text-base px-6 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
                     >
                       <span>Créer mon compte · 50 points offerts</span>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <a
                       href="#how"
-                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-white hover:bg-black/50 px-6 py-4"
+                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-white hover:bg-black/50 text-sm sm:text-base px-5 sm:px-6 py-3.5 sm:py-4"
                     >
                       Voir comment ça marche
                     </a>
@@ -446,21 +441,21 @@ export default function HomePage() {
               </div>
 
               {/* 3 Piliers */}
-              <div className="mt-9 pt-7 border-t border-white/15 grid grid-cols-3 gap-4 max-w-lg text-xs text-white/85">
+              <div className="mt-9 pt-7 border-t border-white/15 grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto text-center text-xs text-white/85 px-1">
                 <div className="group">
-                  <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
+                  <div className="font-extrabold text-white text-sm sm:text-base group-hover:text-[#FFB84D] transition-colors">
                     0 Bot
                   </div>
                   <div className="opacity-80">100% interactions réelles</div>
                 </div>
                 <div className="group">
-                  <div className="font-extrabold text-[#FFB84D] text-base">
+                  <div className="font-extrabold text-[#FFB84D] text-sm sm:text-base">
                     Immédiat
                   </div>
                   <div className="opacity-80">Crédit direct sans attente</div>
                 </div>
                 <div className="group">
-                  <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
+                  <div className="font-extrabold text-white text-sm sm:text-base group-hover:text-[#FFB84D] transition-colors">
                     8 Réseaux
                   </div>
                   <div className="opacity-80">TikTok, IG, YT, X, FB, SC...</div>

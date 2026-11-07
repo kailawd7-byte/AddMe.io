@@ -126,15 +126,15 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               filter: "blur(8px)",
             }}
           />
-          <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-between gap-4 relative z-10">
+          <div className="max-w-[1140px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4 sm:gap-6 relative z-10">
             {/* Logo officiel AddMe.io */}
-            <Link href="/" className="flex items-center gap-2.5 group">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
               <img
                 src="/icon.svg"
                 alt="Logo AddMe.io"
-                className="h-8 w-8 rounded-xl shadow-md group-hover:scale-105 transition-transform"
+                className="h-6 w-6 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl shadow-md group-hover:scale-105 transition-transform"
               />
-              <span className="text-2xl font-extrabold tracking-tight text-white">
+              <span className="text-[19px] sm:text-2xl font-extrabold tracking-tight text-white whitespace-nowrap">
                 AddMe<span className="text-[#FFB84D]">.io</span>
               </span>
             </Link>
@@ -159,11 +159,11 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
             </nav>
 
             {/* Action droite : Si connecté = profil + bouton Dashboard (AUCUN bouton connexion/commencer) */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 ml-3 sm:ml-6">
               {loading ? (
-                <div className="h-10 w-28 rounded-xl bg-white/10 animate-pulse" />
+                <div className="h-9 sm:h-10 w-24 sm:w-28 rounded-xl bg-white/10 animate-pulse" />
               ) : user ? (
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 sm:gap-2.5">
                   <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1B1A26] border border-[#2E2C40] text-xs font-semibold text-white">
                     <User className="h-3.5 w-3.5 text-[#5B3DF5]" />
                     <span className="truncate max-w-[120px]">{userDisplayName}</span>
@@ -174,24 +174,24 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
                   <Link
                     href="/dashboard"
-                    className="addme-btn addme-btn-primary text-xs sm:text-sm py-2 px-4 sm:px-5"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#5B3DF5] hover:bg-[#4B2DE5] text-white font-semibold text-xs sm:text-sm py-2 px-3.5 sm:py-2.5 sm:px-5 shadow-[0_10px_24px_-8px_rgba(91,61,245,0.55)] transition-all whitespace-nowrap"
                   >
                     <span>Mon Dashboard</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Link>
                 </div>
               ) : (
                 /* Non connecté */
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-5">
                   <Link
                     href="/login"
-                    className="text-sm font-semibold text-white/90 hover:text-[#FFB84D] transition-colors"
+                    className="text-xs sm:text-sm font-semibold text-white/95 hover:text-[#FFB84D] transition-colors px-2 py-1.5 whitespace-nowrap"
                   >
                     Connexion
                   </Link>
                   <Link
                     href="/register"
-                    className="addme-btn addme-btn-primary text-sm py-2.5 px-4"
+                    className="inline-flex items-center justify-center rounded-xl bg-[#5B3DF5] hover:bg-[#4B2DE5] text-white font-semibold text-xs sm:text-sm py-2 px-3.5 sm:py-2.5 sm:px-5 shadow-[0_10px_24px_-8px_rgba(91,61,245,0.55)] transition-all whitespace-nowrap"
                   >
                     Commencer
                   </Link>
@@ -491,33 +491,36 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
       <header className="w-full bg-white border-b border-[#E3E3EE]">
-        <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link
             href="/"
             title="Retour à l'accueil"
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2 sm:gap-2.5 shrink-0"
           >
-            <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
-            <span className="text-2xl font-extrabold tracking-tight text-[#12122A]">
+            <img src="/icon.svg" alt="AddMe.io" className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg" />
+            <span className="text-[19px] sm:text-2xl font-extrabold tracking-tight text-[#12122A] whitespace-nowrap">
               AddMe<span className="text-[#5B3DF5]">.io</span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 ml-2">
             {user ? (
-              <Link href="/dashboard" className="addme-btn addme-btn-primary text-xs">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center rounded-xl bg-[#5B3DF5] hover:bg-[#4B2DE5] text-white font-semibold text-xs sm:text-sm py-2 px-3.5 sm:py-2.5 sm:px-4 shadow-[0_10px_24px_-8px_rgba(91,61,245,0.5)] transition-all whitespace-nowrap"
+              >
                 Mon Tableau de bord
               </Link>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="text-sm font-semibold text-[#5A5A70] hover:text-[#12122A] px-3 py-2"
+                  className="text-xs sm:text-sm font-semibold text-[#5A5A70] hover:text-[#12122A] px-2 py-1.5 whitespace-nowrap"
                 >
                   Connexion
                 </Link>
                 <Link
                   href="/register"
-                  className="addme-btn addme-btn-primary text-xs py-2.5 px-4"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#5B3DF5] hover:bg-[#4B2DE5] text-white font-semibold text-xs py-2 px-3 sm:py-2.5 sm:px-4 shadow-[0_10px_24px_-8px_rgba(91,61,245,0.5)] transition-all whitespace-nowrap"
                 >
                   Créer un compte (+50 pts)
                 </Link>
