@@ -149,15 +149,15 @@ export default function DashboardPage() {
             <AlertTriangle className="h-5 w-5 text-[#5B3DF5] shrink-0" />
             <div className="text-sm text-[#12122A]">
               <strong className="font-bold">Email non vérifié :</strong> Validez
-              votre compte avec votre code à 6 chiffres pour débloquer
-              immédiatement vos <strong>+10 points de bienvenue</strong>.
+              votre compte avec votre code à 6 chiffres pour sécuriser
+              votre profil et confirmer vos <strong>+50 points offerts</strong>.
             </div>
           </div>
           <Link
             href="/verify-email"
             className="addme-btn addme-btn-primary text-xs py-2.5 px-4 shrink-0"
           >
-            Débloquer mes +10 pts
+            Valider mon adresse email
           </Link>
         </div>
       )}

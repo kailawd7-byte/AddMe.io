@@ -165,7 +165,7 @@ export default function LoginPage() {
             href="/register"
             className="font-bold text-[#5B3DF5] hover:underline"
           >
-            Créer un compte (+10 points offerts)
+            Créer un compte (+50 points offerts)
           </Link>
         </div>
       </div>

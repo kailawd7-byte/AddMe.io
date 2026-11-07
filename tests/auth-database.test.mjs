@@ -28,7 +28,7 @@ describe("Workflow Intégration Base de Données : Auth & Liaison Sociale", () =
     assert.equal(user.isEmailVerified, false);
   });
 
-  it("2. Valide l'email et crédite atomiquement le bonus de 10 points au ledger", async () => {
+  it("2. Valide l'email et crédite atomiquement le bonus de 50 points au ledger", async () => {
     const idempotencyKey = `welcome-bonus-${createdUserId}`;
 
     await prisma.$transaction(async (tx) => {
@@ -40,12 +40,12 @@ describe("Workflow Intégration Base de Données : Auth & Liaison Sociale", () =
       await tx.ledgerEntry.create({
         data: {
           userId: createdUserId,
-          amount: 10.0,
+          amount: 50.0,
           type: "WELCOME_BONUS",
           referenceType: "SYSTEM",
           referenceId: createdUserId,
           idempotencyKey,
-          description: "Bonus de bienvenue : +10 points",
+          description: "Bonus de bienvenue : +50 points",
         },
       });
     });
@@ -55,7 +55,7 @@ describe("Workflow Intégration Base de Données : Auth & Liaison Sociale", () =
       _sum: { amount: true },
     });
 
-    assert.equal(aggregate._sum.amount, 10.0);
+    assert.equal(aggregate._sum.amount, 50.0);
   });
 
   it("3. Garantit l'idempotence : impossible de doubler le bonus de bienvenue", async () => {
@@ -67,7 +67,7 @@ describe("Workflow Intégration Base de Données : Auth & Liaison Sociale", () =
       await prisma.ledgerEntry.create({
         data: {
           userId: createdUserId,
-          amount: 10.0,
+          amount: 50.0,
           type: "WELCOME_BONUS",
           referenceType: "SYSTEM",
           referenceId: createdUserId,

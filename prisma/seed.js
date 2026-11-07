@@ -18,7 +18,7 @@ async function main() {
 
   // 1. Initialisation des paramètres système
   const defaultSettings = [
-    { key: "welcome_bonus", value: "10.0", description: "Points offerts à la vérification d'email" },
+    { key: "welcome_bonus", value: "50.0", description: "Points offerts à l'inscription" },
     { key: "cost_like", value: "1.3", description: "Coût d'un like prélevé au créateur" },
     { key: "reward_like", value: "1.0", description: "Récompense d'un like créditée au travailleur" },
     { key: "cost_comment", value: "1.8", description: "Coût d'un commentaire prélevé au créateur" },

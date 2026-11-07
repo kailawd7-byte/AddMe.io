@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword, setSessionCookie } from "@/lib/auth";
 import { signUpSchema } from "@/lib/validation";
 import { generateSecureToken } from "@/lib/security";
-import { SYSTEM_DEFAULTS } from "@/lib/constants";
+import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,6 +91,19 @@ export async function POST(req: NextRequest) {
       role: newUser.role,
     });
 
+    // Crédit immédiat des 50 points offerts à l'inscription dans le Ledger
+    await prisma.ledgerEntry.create({
+      data: {
+        userId: newUser.id,
+        amount: SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS,
+        type: LEDGER_TYPES.WELCOME_BONUS,
+        referenceType: "SYSTEM",
+        referenceId: newUser.id,
+        idempotencyKey: `welcome-bonus-${newUser.id}`,
+        description: `Bonus de bienvenue offert dès l'inscription (+${SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS} points)`,
+      },
+    });
+
     const origin =
       req.nextUrl.origin ||
       req.headers.get("origin") ||
@@ -99,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Compte créé avec succès ! Veuillez vérifier votre email pour débloquer votre bonus de 10 points.",
+      message: "Compte créé avec succès ! Vos 50 points de bienvenue ont été immédiatement crédités.",
       user: {
         id: newUser.id,
         email: newUser.email,

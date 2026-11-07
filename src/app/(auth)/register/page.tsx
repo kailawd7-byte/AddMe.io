@@ -69,7 +69,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] text-[#3A22C8] text-xs font-extrabold mb-3">
             <Sparkles className="h-3.5 w-3.5 text-[#5B3DF5]" />
-            +10 points offerts à l’inscription
+            +50 points offerts à l’inscription
           </div>
           <h1 className="text-[28px] font-extrabold text-[#12122A] tracking-tight">
             Créer un compte
@@ -96,8 +96,7 @@ export default function RegisterPage() {
               Compte créé avec succès !
             </h3>
             <p className="text-xs text-[#5A5A70] leading-relaxed">
-              Voici votre code de vérification à 6 chiffres pour débloquer
-              immédiatement vos <strong>+10 points de bienvenue</strong> :
+              Vos <strong>+50 points de bienvenue</strong> ont été crédités ! Voici votre code de vérification pour sécuriser votre compte :
             </p>
             <div className="py-2.5 px-5 rounded-xl bg-white border border-[#CFCFE0] inline-block font-mono text-xl font-extrabold tracking-widest text-[#3A22C8]">
               {successData.verificationCode}
@@ -107,7 +106,7 @@ export default function RegisterPage() {
                 href={`/verify-email?code=${successData.verificationToken}`}
                 className="addme-btn addme-btn-primary w-full"
               >
-                <span>Valider mon code maintenant (+10 pts)</span>
+                <span>Confirmer mon adresse email</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
@@ -202,7 +201,7 @@ export default function RegisterPage() {
                 <span>Création en cours...</span>
               ) : (
                 <>
-                  <span>Créer mon compte · 10 pts offerts</span>
+                  <span>Créer mon compte · 50 pts offerts</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}

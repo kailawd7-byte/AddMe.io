@@ -56,7 +56,7 @@ export const LEDGER_TYPES = {
 } as const;
 
 export const SYSTEM_DEFAULTS = {
-  WELCOME_BONUS_POINTS: 10.0,
+  WELCOME_BONUS_POINTS: 50.0, // 50 points offerts à l'inscription
   DEFAULT_REWARD_PER_TASK: 1.0,
   DEFAULT_COST_PER_TASK: 1.3,
   CAMPAIGN_DAILY_DURATION_FEE: 0.5, // 0.5 point par jour de diffusion

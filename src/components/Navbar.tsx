@@ -417,7 +417,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                     className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold hover:bg-amber-100 transition-colors"
                   >
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                    <span>Vérifier email (+10 pts)</span>
+                    <span>Vérifier email</span>
                   </Link>
                 )}
                 <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE]">
@@ -504,7 +504,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   href="/register"
                   className="addme-btn addme-btn-primary text-xs py-2.5 px-4"
                 >
-                  Créer un compte (+10 pts)
+                  Créer un compte (+50 pts)
                 </Link>
               </>
             )}

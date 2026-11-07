@@ -162,7 +162,7 @@ function VerifyEmailContent() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] text-[#3A22C8] text-xs font-extrabold mb-2">
               <Sparkles className="h-3.5 w-3.5 text-[#5B3DF5]" />
-              Bonus de +10 points à la validation
+              Bonus de +50 points à l'inscription
             </div>
             <h2 className="text-2xl font-extrabold text-[#12122A]">
               Vérification de l’email
@@ -221,7 +221,7 @@ function VerifyEmailContent() {
               ) : (
                 <>
                   <ShieldCheck className="h-4 w-4" />
-                  <span>Valider mon code (+10 pts)</span>
+                  <span>Valider mon code (+50 pts)</span>
                 </>
               )}
             </button>

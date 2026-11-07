@@ -149,7 +149,7 @@ export default function HomePage() {
                       href="/register"
                       className="addme-btn addme-btn-primary text-base px-7 py-4"
                     >
-                      <span>Créer mon compte · 10 points offerts</span>
+                      <span>Créer mon compte · 50 points offerts</span>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <a
@@ -755,7 +755,7 @@ export default function HomePage() {
                 <span>
                   {isAuthenticated
                     ? "Lancer cette campagne maintenant"
-                    : "Créer mon compte et lancer (+10 pts offerts)"}
+                    : "Créer mon compte et lancer (+50 pts offerts)"}
                 </span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
