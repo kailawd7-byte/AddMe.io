@@ -86,7 +86,7 @@ export default function HomePage() {
     },
     {
       q: "Puis-je recharger mes points par Mobile Money en Afrique ?",
-      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs ont été doublés (100, 300 et 1 000 points) au même prix.",
+      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs (100, 300 et 1 500 points) au même prix.",
     },
     {
       q: "Dois-je donner le mot de passe de mon compte TikTok, Instagram ou YouTube ?",
