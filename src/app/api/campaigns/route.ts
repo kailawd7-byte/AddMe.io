@@ -57,9 +57,9 @@ export async function POST(req: NextRequest) {
     }
 
     const quantityNum = parseInt(totalQuantity, 10);
-    if (isNaN(quantityNum) || quantityNum < 1) {
+    if (isNaN(quantityNum) || quantityNum < 1 || quantityNum > 500) {
       return NextResponse.json(
-        { error: "Le nombre de personnes souhaitées doit être un nombre supérieur ou égal à 1." },
+        { error: "Le nombre de personnes souhaitées doit être compris entre 1 et 500 par campagne." },
         { status: 400 }
       );
     }

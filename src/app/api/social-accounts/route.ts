@@ -46,6 +46,17 @@ export async function POST(req: NextRequest) {
     const { platform, identifier } = parseResult.data;
     const normalizedId = normalizeSocialIdentifier(platform, identifier);
 
+    // Limitation anti-spam : maximum 5 comptes sociaux par utilisateur
+    const userAccountCount = await prisma.socialAccount.count({
+      where: { userId: user.id },
+    });
+    if (userAccountCount >= 5) {
+      return NextResponse.json(
+        { error: "Limite atteinte : vous pouvez lier au maximum 5 comptes sociaux à votre profil." },
+        { status: 400 }
+      );
+    }
+
     // Règle d'or : 1 compte social = 1 seul utilisateur sur la plateforme
     const existingGlobal = await prisma.socialAccount.findUnique({
       where: {

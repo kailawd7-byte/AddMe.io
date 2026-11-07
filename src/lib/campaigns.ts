@@ -21,9 +21,12 @@ export interface CreateCampaignInput {
 export async function createCampaign(input: CreateCampaignInput) {
   const { userId, socialAccountId, actionType, videoUrl, commentTemplate, totalQuantity } = input;
 
-  // 1. Quantité minimale requise
+  // 1. Quantité requise (entre 1 et 500 personnes max par campagne)
   if (!totalQuantity || totalQuantity < 1) {
     throw new Error("Le nombre de personnes souhaitées doit être d'au moins 1.");
+  }
+  if (totalQuantity > 500) {
+    throw new Error("Le volume maximal par campagne est de 500 personnes pour garantir une répartition fluide.");
   }
 
   // 2. Vérification du compte social associé
@@ -200,13 +203,19 @@ export async function cancelCampaign(campaignId: string, userId: string) {
     throw new Error("Cette campagne est déjà terminée, aucun remboursement possible.");
   }
 
-  // Calcul des tâches non consommées à rembourser
-  const unconsumedCount = campaign.totalQuantity - campaign.completedQuantity;
-  const refundAmount = Number((Math.max(0, unconsumedCount) * campaign.costPerUnit).toFixed(2));
-  const refundIdempotencyKey = `campaign-refund-${campaignId}`;
-
   return prisma.$transaction(async (tx) => {
-    // 1. Annulation de toutes les tâches disponibles restantes
+    // 1. Compter et annuler strictement les tâches réellement disponibles (non engagées auprès d'un travailleur)
+    const availableCount = await tx.task.count({
+      where: {
+        campaignId,
+        status: "AVAILABLE",
+      },
+    });
+
+    const refundAmount = Number((availableCount * campaign.costPerUnit).toFixed(2));
+    const refundIdempotencyKey = `campaign-refund-${campaignId}`;
+
+    // Annulation des tâches disponibles
     await tx.task.updateMany({
       where: {
         campaignId,
@@ -236,7 +245,7 @@ export async function cancelCampaign(campaignId: string, userId: string) {
           referenceType: "CAMPAIGN",
           referenceId: campaignId,
           idempotencyKey: refundIdempotencyKey,
-          description: `Remboursement de campagne annulée : ${unconsumedCount} action(s) non consommée(s) (${refundAmount} pts)`,
+          description: `Remboursement de campagne annulée : ${availableCount} action(s) non consommée(s) (${refundAmount} pts)`,
         },
         tx
       );

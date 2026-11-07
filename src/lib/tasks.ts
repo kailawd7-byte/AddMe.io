@@ -123,6 +123,20 @@ export async function startTask(
     );
   }
 
+  // Empêcher l'accaparement de tâches multiples (1 seule tâche en cours à la fois par travailleur)
+  const existingActiveCompletion = await prisma.taskCompletion.findFirst({
+    where: {
+      workerUserId: userId,
+      status: "IN_PROGRESS",
+    },
+  });
+
+  if (existingActiveCompletion) {
+    throw new Error(
+      "Vous avez déjà une tâche en cours de visionnage. Veuillez la terminer ou attendre son expiration avant d'en entamer une autre."
+    );
+  }
+
   const task = await prisma.task.findUnique({
     where: { id: taskId },
     include: { campaign: true },
