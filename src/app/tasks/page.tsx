@@ -390,13 +390,77 @@ export default function TasksPage() {
   const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setScreenshotFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setScreenshotUrl(reader.result);
-      }
+      const rawDataUrl = reader.result;
+      if (typeof rawDataUrl !== "string") return;
+
+      const img = new Image();
+      img.onload = () => {
+        if (img.width < 180 || img.height < 180) {
+          setFeedback({
+            type: "error",
+            text: "🤖 Agent IA Vision : Cette image est trop petite pour être une capture d'écran valide (minimum 180×180 px).",
+          });
+          return;
+        }
+
+        const maxDim = 1200;
+        let targetW = img.width;
+        let targetH = img.height;
+        if (targetW > maxDim || targetH > maxDim) {
+          if (targetW > targetH) {
+            targetH = Math.round((targetH * maxDim) / targetW);
+            targetW = maxDim;
+          } else {
+            targetW = Math.round((targetW * maxDim) / targetH);
+            targetH = maxDim;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          setScreenshotFileName(file.name);
+          setScreenshotUrl(rawDataUrl);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        // Vérification anti-image unie / vierge par échantillonnage de pixels
+        const sample = ctx.getImageData(
+          0,
+          0,
+          Math.min(targetW, 80),
+          Math.min(targetH, 80)
+        ).data;
+        let minLum = 255;
+        let maxLum = 0;
+        for (let i = 0; i < sample.length; i += 16) {
+          const lum =
+            0.299 * sample[i] + 0.587 * sample[i + 1] + 0.114 * sample[i + 2];
+          if (lum < minLum) minLum = lum;
+          if (lum > maxLum) maxLum = lum;
+        }
+
+        if (maxLum - minLum < 12) {
+          setFeedback({
+            type: "error",
+            text: "🤖 Agent IA Vision : Image monochrome ou vierge détectée. Veuillez importer une véritable capture d'écran de la publication.",
+          });
+          return;
+        }
+
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        setScreenshotFileName(file.name);
+        setScreenshotUrl(compressedDataUrl);
+        setFeedback(null);
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
