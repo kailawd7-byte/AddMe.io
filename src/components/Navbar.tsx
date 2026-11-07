@@ -110,13 +110,23 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
     return (
       <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
         <header
-          className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+          className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 overflow-hidden ${
             scrolled
-              ? "bg-[#0E0D14]/95 backdrop-blur-xl border-b border-[#2E2C40] py-3.5 shadow-2xl"
+              ? "bg-[#0B0A14]/90 backdrop-blur-xl border-b border-white/15 py-3.5 shadow-[0_12px_40px_rgba(91,61,245,0.28)]"
               : "bg-transparent py-5"
           }`}
         >
-          <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-between gap-4">
+          {/* Nuance liquide animée ("Lac de Couleurs") intégrée au Header */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-65 animate-lake-flow"
+            style={{
+              background:
+                "linear-gradient(115deg, rgba(91,61,245,0.42) 0%, rgba(236,72,153,0.34) 28%, rgba(255,184,77,0.30) 56%, rgba(6,182,212,0.34) 82%, rgba(139,92,246,0.42) 100%)",
+              backgroundSize: "300% 300%",
+              filter: "blur(8px)",
+            }}
+          />
+          <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-between gap-4 relative z-10">
             {/* Logo officiel AddMe.io */}
             <Link href="/" className="flex items-center gap-2.5 group">
               <img

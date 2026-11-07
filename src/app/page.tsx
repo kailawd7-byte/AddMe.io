@@ -25,8 +25,176 @@ import {
 import { POINT_PACKS } from "@/lib/constants";
 
 /**
+ * Moteur Graphique Canvas 60 FPS : "Lac de Couleurs Vivant" (Liquid Color Lake)
+ * Génère un arrière-plan vidéo fluide où plusieurs nappes et vagues de couleurs
+ * se mélangent, ondulent et évoluent continuellement.
+ */
+function LiquidColorLake({
+  mode = "dark",
+  className = "",
+}: {
+  mode?: "dark" | "light";
+  className?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let time = Math.random() * 50;
+
+    const width = 600;
+    const height = 380;
+    canvas.width = width;
+    canvas.height = height;
+
+    const darkOrbs = [
+      { r: 91, g: 61, b: 245, radius: 250, speedX: 0.75, speedY: 0.55, phaseX: 0, phaseY: 1.0 },     // Violet AddMe (#5B3DF5)
+      { r: 236, g: 72, b: 153, radius: 220, speedX: -0.65, speedY: 0.85, phaseX: 2.1, phaseY: 0.5 }, // Magenta Néon (#EC4899)
+      { r: 255, g: 184, b: 77, radius: 215, speedX: 0.85, speedY: -0.65, phaseX: 4.2, phaseY: 2.5 }, // Or Ambré (#FFB84D)
+      { r: 6, g: 182, b: 212, radius: 235, speedX: -0.55, speedY: -0.75, phaseX: 1.5, phaseY: 3.8 }, // Cyan Liquide (#06B6D4)
+      { r: 139, g: 92, b: 246, radius: 260, speedX: 0.5, speedY: 0.9, phaseX: 3.2, phaseY: 5.1 },    // Pourpre Profond (#8B5CF6)
+      { r: 244, g: 63, b: 94, radius: 195, speedX: -0.9, speedY: 0.45, phaseX: 5.0, phaseY: 1.8 },   // Rose Corail (#F43F5E)
+    ];
+
+    const lightOrbs = [
+      { r: 124, g: 58, b: 237, radius: 265, speedX: 0.7, speedY: 0.55, phaseX: 0, phaseY: 1.0 },     // Violet Lavande
+      { r: 245, g: 158, b: 11, radius: 235, speedX: -0.6, speedY: 0.8, phaseX: 2.2, phaseY: 0.4 },   // Or Solaire
+      { r: 236, g: 72, b: 153, radius: 245, speedX: 0.8, speedY: -0.6, phaseX: 4.1, phaseY: 2.7 },   // Rose Aquarelle
+      { r: 14, g: 165, b: 233, radius: 250, speedX: -0.55, speedY: -0.7, phaseX: 1.3, phaseY: 3.9 }, // Bleu Azur
+      { r: 168, g: 85, b: 247, radius: 270, speedX: 0.5, speedY: 0.85, phaseX: 3.5, phaseY: 4.8 },   // Mauve Irisé
+    ];
+
+    const orbs = mode === "dark" ? darkOrbs : lightOrbs;
+
+    const render = () => {
+      time += 0.016;
+
+      // 1. Fond de base
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = mode === "dark" ? "#0B0A14" : "#F3F0FF";
+      ctx.fillRect(0, 0, width, height);
+
+      // 2. Courants circulaires de couleurs qui se fondent comme un lac liquide
+      ctx.globalCompositeOperation = mode === "dark" ? "screen" : "source-over";
+
+      orbs.forEach((orb, idx) => {
+        const x =
+          width * 0.5 +
+          Math.sin(time * orb.speedX + orb.phaseX) * (width * 0.38) +
+          Math.cos(time * 0.45 + idx) * (width * 0.12);
+        const y =
+          height * 0.5 +
+          Math.cos(time * orb.speedY + orb.phaseY) * (height * 0.36) +
+          Math.sin(time * 0.55 + idx) * (height * 0.12);
+
+        const dynamicRadius =
+          orb.radius * (1 + 0.25 * Math.sin(time * 1.2 + idx * 1.6));
+
+        // Évolution chromatique continue (changement doux des nuances au fil du temps)
+        const shiftR = Math.min(255, Math.max(0, Math.round(orb.r + Math.sin(time * 0.9 + idx) * 35)));
+        const shiftG = Math.min(255, Math.max(0, Math.round(orb.g + Math.cos(time * 0.7 + idx) * 35)));
+        const shiftB = Math.min(255, Math.max(0, Math.round(orb.b + Math.sin(time * 1.1 + idx * 2) * 35)));
+
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, dynamicRadius);
+        if (mode === "dark") {
+          gradient.addColorStop(0, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.78)`);
+          gradient.addColorStop(0.45, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.38)`);
+          gradient.addColorStop(1, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0)`);
+        } else {
+          gradient.addColorStop(0, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.42)`);
+          gradient.addColorStop(0.55, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.18)`);
+          gradient.addColorStop(1, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0)`);
+        }
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, dynamicRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 3. Ondes fluides de surface (vagues de couleurs qui s'entrelacent)
+      ctx.globalCompositeOperation = "source-over";
+      for (let w = 0; w < 3; w++) {
+        ctx.beginPath();
+        const waveYBase = height * (0.25 + w * 0.25);
+        ctx.moveTo(0, height);
+        for (let x = 0; x <= width; x += 15) {
+          const y =
+            waveYBase +
+            Math.sin(x * 0.013 + time * (1.3 + w * 0.35) + w * 2) * 42 +
+            Math.cos(x * 0.009 - time * 1.0 + w) * 28;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(width, height);
+        ctx.closePath();
+
+        const waveGrad = ctx.createLinearGradient(0, waveYBase - 50, width, height);
+        if (mode === "dark") {
+          if (w === 0) {
+            waveGrad.addColorStop(0, "rgba(91, 61, 245, 0.30)");
+            waveGrad.addColorStop(0.5, "rgba(236, 72, 153, 0.24)");
+            waveGrad.addColorStop(1, "rgba(11, 10, 20, 0.35)");
+          } else if (w === 1) {
+            waveGrad.addColorStop(0, "rgba(255, 184, 77, 0.22)");
+            waveGrad.addColorStop(0.5, "rgba(91, 61, 245, 0.28)");
+            waveGrad.addColorStop(1, "rgba(11, 10, 20, 0.45)");
+          } else {
+            waveGrad.addColorStop(0, "rgba(6, 182, 212, 0.20)");
+            waveGrad.addColorStop(0.5, "rgba(139, 92, 246, 0.25)");
+            waveGrad.addColorStop(1, "rgba(11, 10, 20, 0.65)");
+          }
+        } else {
+          if (w === 0) {
+            waveGrad.addColorStop(0, "rgba(139, 92, 246, 0.18)");
+            waveGrad.addColorStop(0.5, "rgba(236, 72, 153, 0.15)");
+            waveGrad.addColorStop(1, "rgba(247, 247, 251, 0.25)");
+          } else if (w === 1) {
+            waveGrad.addColorStop(0, "rgba(255, 184, 77, 0.18)");
+            waveGrad.addColorStop(0.5, "rgba(91, 61, 245, 0.16)");
+            waveGrad.addColorStop(1, "rgba(247, 247, 251, 0.35)");
+          } else {
+            waveGrad.addColorStop(0, "rgba(14, 165, 233, 0.15)");
+            waveGrad.addColorStop(0.5, "rgba(168, 85, 247, 0.16)");
+            waveGrad.addColorStop(1, "rgba(247, 247, 251, 0.55)");
+          }
+        }
+        ctx.fillStyle = waveGrad;
+        ctx.fill();
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [mode]);
+
+  return (
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full object-cover scale-110"
+        style={{
+          filter:
+            mode === "dark"
+              ? "blur(24px) saturate(175%) contrast(115%)"
+              : "blur(26px) saturate(160%)",
+        }}
+      />
+    </div>
+  );
+}
+
+/**
  * Composant d'animation au défilement bidirectionnel (Haut -> Bas et Bas -> Haut)
- * Révèle progressivement chaque section, carte ou conteneur avec fluidité 60fps
  */
 function ScrollReveal({
   children,
@@ -54,7 +222,6 @@ function ScrollReveal({
           if (entry.isIntersecting) {
             setIsVisible(true);
           } else {
-            // Se réarme hors de l'écran pour rejouer l'animation lors du défilement inverse (bas -> haut ou haut -> bas)
             setIsVisible(false);
           }
         });
@@ -138,7 +305,6 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // Suivi fluide de la progression du scroll pour la barre lumineuse supérieure
   useEffect(() => {
     const handleScroll = () => {
       const totalScroll =
@@ -200,40 +366,36 @@ export default function HomePage() {
       {/* Barre de progression lumineuse du scroll tout en haut */}
       <div className="fixed top-0 left-0 right-0 h-[3px] z-50 pointer-events-none bg-transparent">
         <div
-          className="h-full bg-gradient-to-r from-[#5B3DF5] via-[#FFB84D] to-[#8B5CF6] shadow-[0_0_12px_rgba(255,184,77,0.8)] transition-[width] duration-150 ease-out"
+          className="h-full bg-gradient-to-r from-[#5B3DF5] via-[#EC4899] to-[#FFB84D] shadow-[0_0_14px_rgba(255,184,77,0.9)] transition-[width] duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
       {/* =====================================================================
-          SECTION 1 : HERO CINÉMATOGRAPHIQUE AVEC NUANCES AURORA EN MOUVEMENT
+          SECTION 1 : HEADER & HERO CINÉMATOGRAPHIQUE — LAC DE COULEURS VIVANT
          ===================================================================== */}
-      <section className="bg-[#0E0D14] text-white overflow-hidden pt-28 pb-16 md:pt-36 md:pb-28 relative">
-        {/* Nuances de couleurs animées (Aurora Mesh) */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="aurora-orb-1 absolute -top-24 left-1/4 w-[620px] h-[440px] bg-gradient-to-tr from-[#5B3DF5]/35 via-[#7C3AED]/25 to-transparent blur-[120px] rounded-full" />
-          <div className="aurora-orb-2 absolute top-1/3 -right-20 w-[520px] h-[420px] bg-gradient-to-bl from-[#FFB84D]/20 via-[#F59E0B]/15 to-transparent blur-[130px] rounded-full" />
-          <div className="aurora-orb-3 absolute -bottom-32 left-10 w-[550px] h-[380px] bg-gradient-to-tr from-[#3B82F6]/20 via-[#5B3DF5]/25 to-transparent blur-[125px] rounded-full" />
-          <div className="cyber-grid-dark absolute inset-0" />
-        </div>
+      <section className="bg-[#0B0A14] text-white overflow-hidden pt-28 pb-16 md:pt-36 md:pb-28 relative">
+        {/* Lac de couleurs animé façon vidéo 60fps */}
+        <LiquidColorLake mode="dark" />
+        <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
         <div className="max-w-[1140px] mx-auto px-6 relative z-10">
           <div className="flex flex-wrap items-center gap-12 lg:gap-14">
             {/* Colonne Gauche */}
             <div className="flex-[1_1_500px] animate-up">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1B1A26]/90 backdrop-blur-md border border-[#3E3B5B] text-xs font-semibold text-[#E2E0F5] mb-6 shadow-[0_0_25px_rgba(91,61,245,0.25)]">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#151324]/80 backdrop-blur-xl border border-white/15 text-xs font-semibold text-white mb-6 shadow-[0_0_30px_rgba(91,61,245,0.4)]">
                 <Sparkles className="h-3.5 w-3.5 text-[#FFB84D] animate-pulse" />
                 <span>Plateforme P2P Éthique · Engagement 100% Réel & Vérifié</span>
               </div>
 
-              <h1 className="text-[44px] sm:text-[60px] lg:text-[68px] font-extrabold leading-[1.02] tracking-[-0.03em] m-0 mb-5">
+              <h1 className="text-[44px] sm:text-[60px] lg:text-[68px] font-extrabold leading-[1.02] tracking-[-0.03em] m-0 mb-5 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
                 Donnez de l’attention.{" "}
-                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFD285] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold drop-shadow-[0_4px_24px_rgba(255,184,77,0.25)]">
+                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold drop-shadow-[0_4px_24px_rgba(255,184,77,0.35)]">
                   Recevez-en.
                 </span>
               </h1>
 
-              <p className="text-lg sm:text-[19px] leading-[1.65] text-[#C9C6DB] max-w-xl m-0">
+              <p className="text-lg sm:text-[19px] leading-[1.65] text-white/90 max-w-xl m-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
                 Propulsez vos contenus sur vos 8 réseaux favoris en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
@@ -246,7 +408,7 @@ export default function HomePage() {
                   <>
                     <Link
                       href="/dashboard"
-                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_12px_32px_-8px_rgba(91,61,245,0.65)]"
+                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
                     >
                       <span>
                         Accéder à mon Dashboard (
@@ -259,7 +421,7 @@ export default function HomePage() {
                     </Link>
                     <Link
                       href="/tasks"
-                      className="addme-btn text-white bg-white/5 backdrop-blur-md border border-[#4A4760] hover:border-[#FFB84D] hover:bg-white/10 px-6 py-4"
+                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-[#FFB84D] hover:bg-black/50 px-6 py-4"
                     >
                       Gagner des points
                     </Link>
@@ -268,14 +430,14 @@ export default function HomePage() {
                   <>
                     <Link
                       href="/register"
-                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_12px_32px_-8px_rgba(91,61,245,0.65)]"
+                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
                     >
                       <span>Créer mon compte · 50 points offerts</span>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <a
                       href="#how"
-                      className="addme-btn text-white bg-white/5 backdrop-blur-md border border-[#4A4760] hover:border-white hover:bg-white/10 px-6 py-4"
+                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-white hover:bg-black/50 px-6 py-4"
                     >
                       Voir comment ça marche
                     </a>
@@ -284,24 +446,24 @@ export default function HomePage() {
               </div>
 
               {/* 3 Piliers */}
-              <div className="mt-9 pt-7 border-t border-[#2E2C40]/80 grid grid-cols-3 gap-4 max-w-lg text-xs text-[#C9C6DB]">
+              <div className="mt-9 pt-7 border-t border-white/15 grid grid-cols-3 gap-4 max-w-lg text-xs text-white/85">
                 <div className="group">
                   <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
                     0 Bot
                   </div>
-                  <div className="opacity-75">100% interactions réelles</div>
+                  <div className="opacity-80">100% interactions réelles</div>
                 </div>
                 <div className="group">
                   <div className="font-extrabold text-[#FFB84D] text-base">
                     Immédiat
                   </div>
-                  <div className="opacity-75">Crédit direct sans attente</div>
+                  <div className="opacity-80">Crédit direct sans attente</div>
                 </div>
                 <div className="group">
                   <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
                     8 Réseaux
                   </div>
-                  <div className="opacity-75">TikTok, IG, YT, X, FB, SC...</div>
+                  <div className="opacity-80">TikTok, IG, YT, X, FB, SC...</div>
                 </div>
               </div>
             </div>
@@ -311,9 +473,6 @@ export default function HomePage() {
               className="flex-[1_1_400px] relative h-[440px] sm:h-[460px] w-full max-w-[480px] mx-auto"
               style={{ perspective: "1200px" }}
             >
-              {/* Halo lumineux derrière les cartes 3D */}
-              <div className="pointer-events-none absolute inset-10 rounded-full bg-gradient-to-tr from-[#5B3DF5]/35 via-[#FFB84D]/15 to-transparent blur-3xl animate-pulse" />
-
               <div
                 className="relative h-full w-full"
                 style={{ transformStyle: "preserve-3d" }}
@@ -321,7 +480,7 @@ export default function HomePage() {
                 {/* Panel 1 : TikTok · Like */}
                 <div
                   onClick={() => handlePanelClick("tiktok")}
-                  className={`floating-3d-card group bg-[#1B1A26]/95 backdrop-blur-xl border border-[#2E2C40] ${
+                  className={`floating-3d-card group bg-[#141222]/90 backdrop-blur-2xl border border-white/15 ${
                     clickedPanels["tiktok"] ? "!border-[#FFB84D] !scale-105" : ""
                   }`}
                   style={
@@ -367,7 +526,7 @@ export default function HomePage() {
                 {/* Panel 2 : Instagram · Abonnement */}
                 <div
                   onClick={() => handlePanelClick("instagram")}
-                  className={`floating-3d-card group bg-gradient-to-r from-[#5B3DF5] to-[#4A2BE3] border border-[#7C63F8] ${
+                  className={`floating-3d-card group bg-gradient-to-r from-[#5B3DF5]/95 to-[#7C3AED]/95 backdrop-blur-2xl border border-white/25 ${
                     clickedPanels["instagram"] ? "!border-[#FFB84D] !scale-105" : ""
                   }`}
                   style={
@@ -411,7 +570,7 @@ export default function HomePage() {
                 {/* Panel 3 : YouTube · Commentaire */}
                 <div
                   onClick={() => handlePanelClick("youtube")}
-                  className={`floating-3d-card group bg-[#1B1A26]/95 backdrop-blur-xl border border-[#2E2C40] ${
+                  className={`floating-3d-card group bg-[#141222]/90 backdrop-blur-2xl border border-white/15 ${
                     clickedPanels["youtube"] ? "!border-[#FFB84D] !scale-105" : ""
                   }`}
                   style={
@@ -455,7 +614,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Pièce d'or rotative */}
-                <div className="coin-spin-3d absolute -top-2 right-2 w-[76px] h-[76px] rounded-full bg-gradient-to-br from-[#FFD479] via-[#FFB84D] to-[#E5941A] text-[#0E0D14] font-extrabold flex items-center justify-center text-[22px] shadow-[0_10px_30px_rgba(255,184,77,0.45)] border-4 border-[#FFE0A3] select-none">
+                <div className="coin-spin-3d absolute -top-2 right-2 w-[76px] h-[76px] rounded-full bg-gradient-to-br from-[#FFD479] via-[#FFB84D] to-[#E5941A] text-[#0E0D14] font-extrabold flex items-center justify-center text-[22px] shadow-[0_10px_30px_rgba(255,184,77,0.55)] border-4 border-[#FFE0A3] select-none">
                   pts
                 </div>
               </div>
@@ -467,7 +626,7 @@ export default function HomePage() {
       {/* =====================================================================
           BANDEAU TICKER DÉFILANT CONTINU (De Droite à Gauche - Annonce Perpétuelle)
          ===================================================================== */}
-      <div className="relative w-full overflow-hidden bg-gradient-to-r from-[#4B2DE5] via-[#5B3DF5] to-[#4B2DE5] text-white py-3.5 shadow-lg flex select-none pointer-events-none z-20">
+      <div className="relative w-full overflow-hidden bg-gradient-to-r from-[#4B2DE5] via-[#7C3AED] to-[#4B2DE5] text-white py-3.5 shadow-lg flex select-none pointer-events-none z-20 border-y border-white/15">
         <div className="perpetual-marquee-track">
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
             TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
@@ -487,13 +646,12 @@ export default function HomePage() {
       </div>
 
       {/* =====================================================================
-          SECTION PARTENAIRES RÉSEAUX SOCIAUX (Style Sponsors Monochrome façon Notion)
+          SECTION PARTENAIRES RÉSEAUX SOCIAUX (Style Sponsors Monochrome)
          ===================================================================== */}
       <section
         id="ecosystem"
-        className="bg-[#0E0D14] text-white py-14 sm:py-16 border-b border-[#2E2C40] relative overflow-hidden"
+        className="bg-[#0E0D16] text-white py-14 sm:py-16 border-b border-[#2E2C40] relative overflow-hidden"
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#5B3DF5]/8 via-transparent to-transparent" />
         <div className="max-w-[1140px] mx-auto px-6 text-center relative z-10">
           <ScrollReveal variant="fade-up">
             <p className="text-xs sm:text-[13px] uppercase tracking-[0.2em] text-[#FFB84D] font-bold mb-2.5">
@@ -593,17 +751,12 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          ZONE CLAIRE AVEC NUANCES DE COULEURS ANIMÉES EN ARRIÈRE-PLAN
+          ZONE CLAIRE : LAC DE COULEURS AQUARELLE EN MOUVEMENT
           (Comment ça marche + Simulateur de campagne)
          ===================================================================== */}
       <div className="relative overflow-hidden">
-        {/* Nuances de couleurs pastel animées en fond */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="aurora-orb-1 absolute top-12 -left-24 w-[560px] h-[560px] bg-gradient-to-br from-[#5B3DF5]/12 via-[#8B5CF6]/10 to-transparent blur-[110px] rounded-full" />
-          <div className="aurora-orb-2 absolute top-1/3 -right-24 w-[520px] h-[520px] bg-gradient-to-tl from-[#FFB84D]/18 via-[#F59E0B]/10 to-transparent blur-[115px] rounded-full" />
-          <div className="aurora-orb-3 absolute bottom-10 left-1/3 w-[600px] h-[440px] bg-gradient-to-tr from-[#3B82F6]/10 via-[#5B3DF5]/12 to-transparent blur-[120px] rounded-full" />
-          <div className="cyber-grid-light absolute inset-0" />
-        </div>
+        <LiquidColorLake mode="light" />
+        <div className="cyber-grid-light pointer-events-none absolute inset-0" />
 
         {/* ===================================================================
             SECTION 2 : COMMENT ÇA MARCHE (Révélation en cascade au défilement)
@@ -611,14 +764,14 @@ export default function HomePage() {
         <section id="how" className="max-w-[1140px] mx-auto px-6 py-20 md:py-28 relative z-10">
           <ScrollReveal variant="fade-up">
             <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/85 backdrop-blur-md border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5] shadow-xs">
                 <Sparkles className="h-3.5 w-3.5" />
                 Cycle d&apos;échange équitable
               </span>
               <h2 className="text-[34px] sm:text-[44px] font-extrabold tracking-tight text-[#12122A] mt-3 mb-3">
                 Comment ça marche
               </h2>
-              <p className="text-[#5A5A70] text-base sm:text-lg leading-relaxed">
+              <p className="text-[#3A3A52] text-base sm:text-lg leading-relaxed font-medium">
                 Un système d&apos;interaction transparent où chaque action provient d&apos;un
                 vrai créateur et où vous maîtrisez l&apos;ensemble de vos paramètres.
               </p>
@@ -629,7 +782,7 @@ export default function HomePage() {
             {/* Étape 1 */}
             <ScrollReveal variant="fade-up" delay={0} className="h-full">
               <div className="addme-card h-full flex flex-col justify-between group relative overflow-hidden">
-                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/8 blur-2xl group-hover:bg-[#5B3DF5]/20 transition-all duration-500" />
+                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/10 blur-2xl group-hover:bg-[#5B3DF5]/25 transition-all duration-500" />
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
@@ -659,7 +812,7 @@ export default function HomePage() {
             {/* Étape 2 */}
             <ScrollReveal variant="fade-up" delay={140} className="h-full">
               <div className="addme-card h-full flex flex-col justify-between group relative overflow-hidden border-[#D9D2FF]">
-                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#FFB84D]/15 blur-2xl group-hover:bg-[#FFB84D]/30 transition-all duration-500" />
+                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#FFB84D]/20 blur-2xl group-hover:bg-[#FFB84D]/35 transition-all duration-500" />
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
@@ -690,7 +843,7 @@ export default function HomePage() {
             {/* Étape 3 */}
             <ScrollReveal variant="fade-up" delay={280} className="h-full">
               <div className="addme-card h-full flex flex-col justify-between group relative overflow-hidden">
-                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/8 blur-2xl group-hover:bg-[#5B3DF5]/20 transition-all duration-500" />
+                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/10 blur-2xl group-hover:bg-[#5B3DF5]/25 transition-all duration-500" />
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
@@ -725,10 +878,7 @@ export default function HomePage() {
            =================================================================== */}
         <section id="simulateur" className="max-w-[1140px] mx-auto px-6 pb-24 md:pb-28 relative z-10">
           <ScrollReveal variant="zoom-in">
-            <div className="addme-card-static p-6 sm:p-10 bg-white/95 backdrop-blur-xl border-2 border-[#D9D2FF] shadow-[0_32px_70px_-24px_rgba(91,61,245,0.18)] relative overflow-hidden">
-              {/* Reflet décoratif en coin */}
-              <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-gradient-to-bl from-[#5B3DF5]/12 via-[#FFB84D]/10 to-transparent blur-3xl" />
-
+            <div className="addme-card-static p-6 sm:p-10 bg-white/90 backdrop-blur-2xl border-2 border-[#D9D2FF] shadow-[0_32px_70px_-24px_rgba(91,61,245,0.22)] relative overflow-hidden">
               <div className="max-w-2xl mb-8 relative z-10">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
                   <Flame className="h-3.5 w-3.5 text-[#FFB84D]" />
@@ -895,7 +1045,7 @@ export default function HomePage() {
                 {/* Résumé Droite */}
                 <ScrollReveal variant="fade-right" delay={200} className="lg:col-span-5">
                   <div className="bg-[#0E0D14] text-white p-7 rounded-2xl border border-[#2E2C40] space-y-5 relative overflow-hidden shadow-2xl">
-                    <div className="pointer-events-none absolute -top-16 -right-16 w-44 h-44 rounded-full bg-[#5B3DF5]/25 blur-3xl" />
+                    <div className="pointer-events-none absolute -top-16 -right-16 w-44 h-44 rounded-full bg-[#5B3DF5]/35 blur-3xl" />
 
                     <div className="flex items-center justify-between border-b border-[#2E2C40] pb-4 relative z-10">
                       <div>
@@ -948,33 +1098,28 @@ export default function HomePage() {
       </div>
 
       {/* =====================================================================
-          SECTION 4 : LE MANIFESTE SOMBRE (Contraste Bots vs Humain)
-          Avec Nuances Aurora en mouvement & 3 Panels animés au défilement
+          SECTION 4 : LE MANIFESTE SOMBRE — LAC DE COULEURS VIVANT & 3 PANELS
          ===================================================================== */}
-      <section className="bg-[#0E0D14] text-white py-24 md:py-32 relative overflow-hidden">
-        {/* Nuances de couleurs animées en arrière-plan */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="aurora-orb-2 absolute -top-28 left-1/3 w-[580px] h-[420px] bg-gradient-to-r from-[#5B3DF5]/30 via-[#8B5CF6]/20 to-transparent blur-[130px] rounded-full" />
-          <div className="aurora-orb-1 absolute -bottom-24 right-1/4 w-[500px] h-[380px] bg-gradient-to-tl from-[#FFB84D]/20 via-[#F59E0B]/12 to-transparent blur-[120px] rounded-full" />
-          <div className="cyber-grid-dark absolute inset-0" />
-        </div>
+      <section className="bg-[#0B0A14] text-white py-24 md:py-32 relative overflow-hidden">
+        <LiquidColorLake mode="dark" />
+        <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
         <div className="max-w-[1140px] mx-auto px-6 relative z-10">
           <ScrollReveal variant="fade-up">
             <div className="max-w-3xl space-y-4">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-[#FFB84D] uppercase tracking-widest">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-black/35 backdrop-blur-md border border-white/15 text-xs font-bold text-[#FFB84D] uppercase tracking-widest">
                 <Award className="h-3.5 w-3.5" />
                 Philosophie Anti-Bot & Authenticité
               </div>
-              <p className="text-lg sm:text-xl text-[#C9C6DB]">
+              <p className="text-lg sm:text-xl text-white/85">
                 La plupart des services de boost se concentrent sur :{" "}
-                <span className="line-through opacity-65 decoration-rose-500/80">
+                <span className="line-through opacity-70 decoration-rose-500/80">
                   des fermes de faux robots qui pénalisent vos comptes sociaux.
                 </span>
               </p>
-              <h2 className="text-[32px] sm:text-[48px] font-extrabold leading-[1.1] tracking-tight">
+              <h2 className="text-[32px] sm:text-[48px] font-extrabold leading-[1.1] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                 Nous nous concentrons sur :{" "}
-                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFD285] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic">
+                <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic">
                   l’engagement humain mutuel, unique et vérifié.
                 </span>
               </h2>
@@ -984,25 +1129,25 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-7 mt-14">
             {/* Panel 1 : Zéro mot de passe requis */}
             <ScrollReveal variant="fade-up" delay={0} className="h-full">
-              <div className="manifesto-card p-7 h-full flex flex-col justify-between group">
+              <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group">
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <div className="w-13 h-13 rounded-2xl bg-[#5B3DF5]/20 border border-[#5B3DF5]/40 flex items-center justify-center text-[#FFB84D] group-hover:scale-110 group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300">
+                    <div className="w-13 h-13 rounded-2xl bg-[#5B3DF5]/25 border border-[#5B3DF5]/50 flex items-center justify-center text-[#FFB84D] group-hover:scale-110 group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300">
                       <ShieldCheck className="h-7 w-7" />
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 text-[11px] font-bold">
                       <Lock className="h-3 w-3" /> Sécurité 100%
                     </span>
                   </div>
                   <h3 className="text-xl font-extrabold text-white group-hover:text-[#FFB84D] transition-colors">
                     Zéro mot de passe requis
                   </h3>
-                  <p className="text-sm text-[#C9C6DB] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#D6D3E9] mt-2 leading-relaxed">
                     Vos comptes sociaux restent strictement sous votre contrôle. La
                     vérification se fait uniquement via un code temporaire dans votre bio.
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-white/10 text-xs font-semibold text-[#8E8CA0] group-hover:text-white transition-colors">
+                <div className="mt-6 pt-4 border-t border-white/10 text-xs font-semibold text-[#A5A2BA] group-hover:text-white transition-colors">
                   Protection intégrale de vos accès
                 </div>
               </div>
@@ -1010,25 +1155,25 @@ export default function HomePage() {
 
             {/* Panel 2 : 1 Membre = 1 Seule Action */}
             <ScrollReveal variant="fade-up" delay={150} className="h-full">
-              <div className="manifesto-card p-7 h-full flex flex-col justify-between group">
+              <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group">
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <div className="w-13 h-13 rounded-2xl bg-[#FFB84D]/15 border border-[#FFB84D]/40 flex items-center justify-center text-[#FFB84D] group-hover:scale-110 group-hover:bg-[#FFB84D] group-hover:text-[#0E0D14] transition-all duration-300">
+                    <div className="w-13 h-13 rounded-2xl bg-[#FFB84D]/20 border border-[#FFB84D]/50 flex items-center justify-center text-[#FFB84D] group-hover:scale-110 group-hover:bg-[#FFB84D] group-hover:text-[#0E0D14] transition-all duration-300">
                       <Users className="h-7 w-7" />
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#5B3DF5]/25 text-indigo-200 border border-[#5B3DF5]/40 text-[11px] font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#5B3DF5]/30 text-indigo-200 border border-[#5B3DF5]/45 text-[11px] font-bold">
                       Anti-doublon
                     </span>
                   </div>
                   <h3 className="text-xl font-extrabold text-white group-hover:text-[#FFB84D] transition-colors">
                     1 Membre = 1 Seule Action
                   </h3>
-                  <p className="text-sm text-[#C9C6DB] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#D6D3E9] mt-2 leading-relaxed">
                     Chaque publication ne peut être accomplie qu&apos;une seule fois par
                     utilisateur. Vous ne recevez jamais de spams répétitifs.
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-white/10 text-xs font-semibold text-[#8E8CA0] group-hover:text-white transition-colors">
+                <div className="mt-6 pt-4 border-t border-white/10 text-xs font-semibold text-[#A5A2BA] group-hover:text-white transition-colors">
                   Croissance algorithmique naturelle
                 </div>
               </div>
@@ -1036,25 +1181,25 @@ export default function HomePage() {
 
             {/* Panel 3 : Points doublés & Mobile Money */}
             <ScrollReveal variant="fade-up" delay={300} className="h-full">
-              <div className="manifesto-card p-7 h-full flex flex-col justify-between group">
+              <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group">
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <div className="w-13 h-13 rounded-2xl bg-[#5B3DF5]/20 border border-[#5B3DF5]/40 flex items-center justify-center text-[#FFB84D] group-hover:scale-110 group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300">
+                    <div className="w-13 h-13 rounded-2xl bg-[#5B3DF5]/25 border border-[#5B3DF5]/50 flex items-center justify-center text-[#FFB84D] group-hover:scale-110 group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300">
                       <Zap className="h-7 w-7" />
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/35 text-[11px] font-bold">
                       FCFA & EUR
                     </span>
                   </div>
                   <h3 className="text-xl font-extrabold text-white group-hover:text-[#FFB84D] transition-colors">
                     Points doublés & Mobile Money
                   </h3>
-                  <p className="text-sm text-[#C9C6DB] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#D6D3E9] mt-2 leading-relaxed">
                     Rechargez vos points en toute simplicité en FCFA via Mobile Money
                     (Orange, MTN, Wave, Moov) ou Carte Bancaire.
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-white/10 text-xs font-semibold text-[#8E8CA0] group-hover:text-white transition-colors">
+                <div className="mt-6 pt-4 border-t border-white/10 text-xs font-semibold text-[#A5A2BA] group-hover:text-white transition-colors">
                   Activation instantanée du solde
                 </div>
               </div>
@@ -1064,15 +1209,11 @@ export default function HomePage() {
       </section>
 
       {/* =====================================================================
-          SECTIONS 5 & 6 : TARIFS + FAQ AVEC FOND NUANCÉ ANIMÉ
+          SECTIONS 5 & 6 : TARIFS + FAQ AVEC LAC DE COULEURS AQUARELLE
          ===================================================================== */}
       <div className="relative overflow-hidden">
-        {/* Nuances de couleurs pastel en mouvement */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="aurora-orb-3 absolute top-20 right-10 w-[550px] h-[480px] bg-gradient-to-bl from-[#5B3DF5]/12 via-[#8B5CF6]/8 to-transparent blur-[120px] rounded-full" />
-          <div className="aurora-orb-1 absolute bottom-20 left-10 w-[520px] h-[450px] bg-gradient-to-tr from-[#FFB84D]/16 via-[#F59E0B]/8 to-transparent blur-[115px] rounded-full" />
-          <div className="cyber-grid-light absolute inset-0" />
-        </div>
+        <LiquidColorLake mode="light" />
+        <div className="cyber-grid-light pointer-events-none absolute inset-0" />
 
         {/* ===================================================================
             SECTION 5 : TARIFS & PACKS DE POINTS DOUBLÉS (Mobile Money en FCFA)
@@ -1081,24 +1222,24 @@ export default function HomePage() {
           <ScrollReveal variant="fade-up">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
               <div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/85 backdrop-blur-md border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
                   Boutique de Points · Volume Doublé
                 </span>
                 <h2 className="text-[34px] sm:text-[44px] font-extrabold text-[#12122A] mt-2 mb-1">
                   Tarifs
                 </h2>
-                <p className="text-[#5A5A70] text-base">
+                <p className="text-[#3A3A52] text-base font-medium">
                   Packs de points doublés (100, 300 et 1 500 pts), sans abonnement obligatoire. Paiement
                   Mobile Money (FCFA) & Carte Bancaire (EUR).
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30 shadow-2xs">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30 shadow-2xs backdrop-blur-md">
                   <Smartphone className="h-3.5 w-3.5 text-amber-600" />
                   Mobile Money : Orange · MTN · Wave · Moov
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-[#E3E3EE] text-[#12122A] shadow-2xs">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/90 border border-[#E3E3EE] text-[#12122A] shadow-2xs backdrop-blur-md">
                   <CreditCard className="h-3.5 w-3.5 text-[#5B3DF5]" />
                   Carte : Visa · Mastercard
                 </span>
@@ -1195,13 +1336,13 @@ export default function HomePage() {
         <section id="faq" className="max-w-[900px] mx-auto px-6 pb-24 relative z-10">
           <ScrollReveal variant="fade-up">
             <div className="text-center mb-12">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5] mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/85 border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5] mb-2">
                 Réponses Claires
               </span>
               <h2 className="text-[32px] sm:text-[40px] font-extrabold text-[#12122A]">
                 Questions fréquentes
               </h2>
-              <p className="text-sm sm:text-base text-[#5A5A70] mt-1">
+              <p className="text-sm sm:text-base text-[#3A3A52] mt-1 font-medium">
                 Tout savoir sur le fonctionnement des campagnes, des points et de la
                 sécurité.
               </p>
@@ -1218,9 +1359,9 @@ export default function HomePage() {
                   delay={idx * 70}
                 >
                   <div
-                    className={`bg-white/95 backdrop-blur-md border rounded-2xl overflow-hidden transition-all duration-300 ${
+                    className={`bg-white/90 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
                       isOpen
-                        ? "border-[#5B3DF5] shadow-[0_14px_34px_-15px_rgba(91,61,245,0.2)]"
+                        ? "border-[#5B3DF5] shadow-[0_14px_34px_-15px_rgba(91,61,245,0.22)]"
                         : "border-[#E3E3EE] hover:border-[#5B3DF5]/50"
                     }`}
                   >
@@ -1253,29 +1394,29 @@ export default function HomePage() {
            =================================================================== */}
         <section className="max-w-[1140px] mx-auto px-6 pb-20 relative z-10">
           <ScrollReveal variant="zoom-in">
-            <div className="rounded-3xl bg-[#0E0D14] text-white p-8 sm:p-14 border border-[#2E2C40] relative overflow-hidden shadow-2xl text-center">
-              <div className="aurora-orb-1 pointer-events-none absolute -top-24 left-1/4 w-96 h-96 rounded-full bg-[#5B3DF5]/35 blur-[100px]" />
-              <div className="aurora-orb-2 pointer-events-none absolute -bottom-24 right-1/4 w-96 h-96 rounded-full bg-[#FFB84D]/20 blur-[100px]" />
+            <div className="rounded-3xl bg-[#0B0A14] text-white p-8 sm:p-14 border border-white/15 relative overflow-hidden shadow-2xl text-center">
+              <LiquidColorLake mode="dark" />
+              <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
               <div className="relative z-10 max-w-2xl mx-auto space-y-5">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-bold text-[#FFB84D]">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-xs font-bold text-[#FFB84D]">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Bonus de bienvenue immédiat : +50 points offerts</span>
                 </div>
-                <h2 className="text-[30px] sm:text-[44px] font-extrabold leading-tight tracking-tight">
+                <h2 className="text-[30px] sm:text-[44px] font-extrabold leading-tight tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                   Prêt à faire décoller vos publications avec de{" "}
                   <span className="text-[#FFB84D] font-serif-drama italic">
                     vrais créateurs ?
                   </span>
                 </h2>
-                <p className="text-sm sm:text-base text-[#C9C6DB] leading-relaxed">
+                <p className="text-sm sm:text-base text-white/90 leading-relaxed">
                   Rejoignez la communauté AddMe.io en 30 secondes. Aucun mot de passe
                   de réseau social demandé, aucun abonnement imposé.
                 </p>
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
                   <Link
                     href={isAuthenticated ? "/dashboard" : "/register"}
-                    className="addme-btn addme-btn-primary text-base px-8 py-4 shadow-[0_12px_32px_-8px_rgba(91,61,245,0.7)]"
+                    className="addme-btn addme-btn-primary text-base px-8 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
                   >
                     <span>
                       {isAuthenticated
@@ -1294,7 +1435,7 @@ export default function HomePage() {
       {/* =====================================================================
           PIED DE PAGE SOMBRE
          ===================================================================== */}
-      <footer className="bg-[#0E0D14] text-white py-10 mt-auto border-t border-[#2E2C40]">
+      <footer className="bg-[#0B0A14] text-white py-10 mt-auto border-t border-[#2E2C40]">
         <div className="max-w-[1140px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
