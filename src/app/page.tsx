@@ -67,6 +67,10 @@ export default function HomePage() {
 
   const faqs = [
     {
+      q: "Combien de points reçois-je à l'inscription ?",
+      a: "Vous recevez immédiatement 50 points gratuits dès la création de votre compte, ce qui vous permet de tester immédiatement la plateforme ou de lancer votre première campagne sans frais.",
+    },
+    {
       q: "Pourquoi mes points sont-ils crédités immédiatement sans attendre 24h ?",
       a: "Nous avons supprimé la rétention de 24 heures pour fluidifier vos échanges. Dès que vous visionnez une publication pendant au moins 10 secondes et validez votre action, vos points sont crédités directement sur votre solde disponible et la tâche disparaît définitivement de votre flux.",
     },
