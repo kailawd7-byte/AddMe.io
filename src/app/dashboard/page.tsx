@@ -40,7 +40,8 @@ interface CampaignItem {
   videoUrl: string;
   totalQuantity: number;
   completedQuantity: number;
-  rewardPerTask: number;
+  rewardPerUnit?: number;
+  rewardPerTask?: number;
   status: string;
 }
 
@@ -334,7 +335,7 @@ export default function DashboardPage() {
                         </span>
                         <span>•</span>
                         <span className="font-semibold text-[#5B3DF5]">
-                          {camp.rewardPerTask} pt/pers.
+                          {camp.rewardPerUnit ?? camp.rewardPerTask ?? 1} pt/pers.
                         </span>
                       </div>
                     </div>

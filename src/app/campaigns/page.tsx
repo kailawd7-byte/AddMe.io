@@ -17,6 +17,13 @@ import {
 interface CompletionDetail {
   id: string;
   workerUserId: string;
+  workerName?: string;
+  workerEmailMasked?: string | null;
+  workerHandle?: string | null;
+  workerReputation?: number;
+  rewardPoints?: number;
+  actionType?: string;
+  platform?: string;
   status: string;
   startedAt: string;
   submittedAt: string | null;
@@ -155,7 +162,10 @@ export default function CampaignsPage() {
       const res = await fetch(`/api/campaigns/${campaignId}`);
       if (res.ok) {
         const data = await res.json();
-        setInspectCompletions(data.completions || []);
+        const extractedCompletions =
+          data.completions ||
+          (data.campaign?.tasks || []).flatMap((t: any) => t.completions || []);
+        setInspectCompletions(extractedCompletions);
       }
     } catch (err) {
       console.error(err);
@@ -424,59 +434,141 @@ export default function CampaignsPage() {
       {/* Modal d'inspection des exécutions */}
       {inspectCampaignId && (
         <div className="fixed inset-0 z-50 bg-[#12122A]/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="addme-card-static max-w-xl w-full space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#E3E3EE] pb-3">
-              <b className="text-lg font-extrabold text-[#12122A]">
-                Historique des interactions reçues
-              </b>
-              <button
-                type="button"
-                onClick={() => setInspectCampaignId(null)}
-                className="p-1.5 rounded-lg hover:bg-[#F7F7FB]"
-              >
-                <X className="h-5 w-5 text-[#5A5A70]" />
-              </button>
-            </div>
+          <div className="addme-card-static max-w-2xl w-full space-y-4 max-h-[85vh] overflow-y-auto">
+            {(() => {
+              const inspectedCamp = campaigns.find(
+                (c) => c.id === inspectCampaignId
+              );
+              return (
+                <div className="flex items-start justify-between border-b border-[#E3E3EE] pb-3 gap-3">
+                  <div>
+                    <b className="text-lg font-extrabold text-[#12122A] block">
+                      Historique des interactions reçues
+                    </b>
+                    {inspectedCamp && (
+                      <span className="text-xs text-[#5A5A70]">
+                        {inspectedCamp.platform} ·{" "}
+                        {formatAction(inspectedCamp.actionType)} (@
+                        {inspectedCamp.socialAccount?.identifier || "profil"}) •{" "}
+                        <strong className="text-[#5B3DF5]">
+                          {inspectedCamp.completedQuantity} /{" "}
+                          {inspectedCamp.totalQuantity} action
+                          {inspectedCamp.totalQuantity > 1 ? "s" : ""} réalisée
+                          {inspectedCamp.completedQuantity > 1 ? "s" : ""}
+                        </strong>
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInspectCampaignId(null);
+                      setReportingCompletionId(null);
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-[#F7F7FB]"
+                  >
+                    <X className="h-5 w-5 text-[#5A5A70]" />
+                  </button>
+                </div>
+              );
+            })()}
 
             {inspectLoading ? (
               <div className="py-8 text-center text-sm text-[#5A5A70]">
-                Chargement...
+                Chargement de l’historique des interactions...
               </div>
             ) : inspectCompletions.length === 0 ? (
               <div className="py-8 text-center text-sm text-[#5A5A70]">
                 Aucune exécution enregistrée pour le moment.
               </div>
             ) : (
-              <div className="space-y-2">
-                {inspectCompletions.map((comp) => (
-                  <div
-                    key={comp.id}
-                    className="p-3.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE] flex items-center justify-between gap-3"
-                  >
-                    <div className="text-xs">
-                      <div className="font-bold text-[#12122A]">
-                        Membre #{comp.workerUserId.slice(0, 6)} •{" "}
-                        <span className="text-emerald-600">{comp.status}</span>
-                      </div>
-                      <div className="text-[#5A5A70] mt-0.5">
-                        Validé le{" "}
-                        {new Date(
-                          comp.submittedAt || comp.startedAt
-                        ).toLocaleString("fr-FR")}
-                      </div>
-                    </div>
+              <div className="space-y-2.5">
+                {inspectCompletions.map((comp, index) => {
+                  const inspectedCamp = campaigns.find(
+                    (c) => c.id === inspectCampaignId
+                  );
+                  const pts =
+                    comp.rewardPoints ?? inspectedCamp?.rewardPerUnit ?? 1;
+                  const statusLabel =
+                    comp.status === "APPROVED" ||
+                    comp.status === "PENDING_RETENTION"
+                      ? "✓ Validé · Points crédités"
+                      : comp.status === "IN_PROGRESS"
+                      ? "⏳ En cours d’exécution"
+                      : comp.status === "FLAGGED"
+                      ? "⚠️ Litige signalé"
+                      : comp.status;
 
-                    {comp.status !== "FLAGGED" && (
-                      <button
-                        type="button"
-                        onClick={() => setReportingCompletionId(comp.id)}
-                        className="text-xs font-bold text-rose-600 hover:underline"
-                      >
-                        Signaler un litige
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  const statusStyle =
+                    comp.status === "APPROVED" ||
+                    comp.status === "PENDING_RETENTION"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : comp.status === "IN_PROGRESS"
+                      ? "bg-[#EEEAFF] text-[#3A22C8] border-[#D9D2FF]"
+                      : "bg-rose-50 text-rose-700 border-rose-200";
+
+                  return (
+                    <div
+                      key={comp.id}
+                      className="p-4 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE] flex flex-wrap items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-9 w-9 rounded-full bg-[#EEEAFF] text-[#5B3DF5] font-extrabold text-xs flex items-center justify-center shrink-0 border border-[#D9D2FF]">
+                          #{index + 1}
+                        </div>
+
+                        <div className="text-xs min-w-0">
+                          <div className="font-bold text-[#12122A] flex flex-wrap items-center gap-2">
+                            <span>
+                              {comp.workerHandle
+                                ? `@${comp.workerHandle}`
+                                : comp.workerName ||
+                                  `Membre #${comp.workerUserId.slice(0, 6)}`}
+                            </span>
+                            {comp.workerEmailMasked && (
+                              <span className="text-[11px] font-normal text-[#5A5A70]">
+                                ({comp.workerEmailMasked})
+                              </span>
+                            )}
+                            <span
+                              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${statusStyle}`}
+                            >
+                              {statusLabel}
+                            </span>
+                          </div>
+
+                          <div className="text-[#5A5A70] mt-1 flex flex-wrap items-center gap-2">
+                            <span>
+                              {comp.submittedAt
+                                ? `Validé le ${new Date(
+                                    comp.submittedAt
+                                  ).toLocaleString("fr-FR")}`
+                                : `Démarré le ${new Date(
+                                    comp.startedAt
+                                  ).toLocaleString("fr-FR")}`}
+                            </span>
+                            <span>•</span>
+                            <span className="font-extrabold text-[#5B3DF5]">
+                              +{pts} pt{pts > 1 ? "s" : ""} reçu
+                              {pts > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {comp.status !== "FLAGGED" &&
+                        comp.status !== "IN_PROGRESS" && (
+                          <button
+                            type="button"
+                            onClick={() => setReportingCompletionId(comp.id)}
+                            className="text-xs font-bold text-rose-600 hover:underline shrink-0"
+                          >
+                            Signaler un litige
+                          </button>
+                        )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 

@@ -3,6 +3,13 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toggleCampaignStatus } from "@/lib/campaigns";
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return email;
+  if (local.length <= 2) return `${local[0]}***@${domain}`;
+  return `${local.slice(0, 2)}***${local.slice(-1)}@${domain}`;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -20,14 +27,24 @@ export async function GET(
       tasks: {
         include: {
           completions: {
-            select: {
-              id: true,
-              workerUserId: true,
-              status: true,
-              startedAt: true,
-              submittedAt: true,
-              retentionEndsAt: true,
-              screenshotUrl: true,
+            include: {
+              workerUser: {
+                select: {
+                  id: true,
+                  email: true,
+                  reputationScore: true,
+                  socialAccounts: {
+                    select: {
+                      platform: true,
+                      identifier: true,
+                      status: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
             },
           },
         },
@@ -39,7 +56,58 @@ export async function GET(
     return NextResponse.json({ error: "Campagne introuvable." }, { status: 404 });
   }
 
-  return NextResponse.json({ campaign });
+  // Extraire et formater l'historique complet des interactions reçues sur cette campagne
+  const allCompletions = campaign.tasks
+    .flatMap((t) => t.completions)
+    .filter(
+      (c) =>
+        c.status === "APPROVED" ||
+        c.status === "PENDING_RETENTION" ||
+        c.status === "FLAGGED" ||
+        c.status === "IN_PROGRESS"
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.submittedAt || a.startedAt).getTime();
+      const dateB = new Date(b.submittedAt || b.startedAt).getTime();
+      return dateB - dateA;
+    })
+    .map((c) => {
+      const matchingSocial =
+        c.workerUser?.socialAccounts?.find(
+          (sa) => sa.platform === campaign.platform
+        ) || c.workerUser?.socialAccounts?.[0];
+
+      const rawName = c.workerUser?.email
+        ? c.workerUser.email.split("@")[0]
+        : `Membre_${c.workerUserId.slice(0, 6)}`;
+
+      return {
+        id: c.id,
+        taskId: c.taskId,
+        workerUserId: c.workerUserId,
+        workerName: rawName,
+        workerEmailMasked: c.workerUser?.email
+          ? maskEmail(c.workerUser.email)
+          : null,
+        workerHandle: matchingSocial?.identifier
+          ? matchingSocial.identifier.replace(/^@/, "")
+          : null,
+        workerReputation: c.workerUser?.reputationScore ?? 100,
+        rewardPoints: c.rewardPoints ?? campaign.rewardPerUnit,
+        actionType: campaign.actionType,
+        platform: campaign.platform,
+        status: c.status,
+        startedAt: c.startedAt,
+        submittedAt: c.submittedAt,
+        retentionEndsAt: c.retentionEndsAt,
+        screenshotUrl: c.screenshotUrl,
+      };
+    });
+
+  return NextResponse.json({
+    campaign,
+    completions: allCompletions,
+  });
 }
 
 export async function PATCH(
@@ -74,4 +142,3 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }
-
