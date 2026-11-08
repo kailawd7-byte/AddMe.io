@@ -82,10 +82,10 @@ export default function NewCampaignPage() {
   const selectedPlatform = selectedAccount?.platform || "TIKTOK";
   const urlValidation = videoUrl
     ? validateVideoPublicationUrl(
-        selectedPlatform,
-        videoUrl,
-        selectedAccount?.identifier
-      )
+      selectedPlatform,
+      videoUrl,
+      selectedAccount?.identifier
+    )
     : null;
 
   // Calculs transparents :
@@ -232,11 +232,10 @@ export default function NewCampaignPage() {
                         key={acc.id}
                         type="button"
                         onClick={() => setSelectedAccountId(acc.id)}
-                        className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between ${
-                          isSelected
+                        className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between ${isSelected
                             ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8]"
                             : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] hover:border-[#5B3DF5]"
-                        }`}
+                          }`}
                       >
                         <div>
                           <div className="font-bold text-sm">@{acc.identifier}</div>
@@ -264,16 +263,15 @@ export default function NewCampaignPage() {
                     selectedPlatform === "TIKTOK"
                       ? "https://www.tiktok.com/@pseudo/video/1234567890"
                       : selectedPlatform === "INSTAGRAM"
-                      ? "https://www.instagram.com/reel/Cxyz123/"
-                      : "https://www.youtube.com/watch?v=... ou /shorts/..."
+                        ? "https://www.instagram.com/reel/Cxyz123/"
+                        : "https://www.youtube.com/watch?v=... ou /shorts/..."
                   }
                   className="w-full px-4 py-3 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5] focus:bg-white"
                 />
                 {urlValidation && (
                   <p
-                    className={`text-xs mt-1.5 font-semibold ${
-                      urlValidation.valid ? "text-emerald-600" : "text-rose-600"
-                    }`}
+                    className={`text-xs mt-1.5 font-semibold ${urlValidation.valid ? "text-emerald-600" : "text-rose-600"
+                      }`}
                   >
                     {urlValidation.valid
                       ? "✓ Lien de publication valide"
@@ -303,11 +301,10 @@ export default function NewCampaignPage() {
                       onClick={() =>
                         setActionType(item.id as "LIKE" | "COMMENT" | "SUBSCRIBE")
                       }
-                      className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${
-                        active
+                      className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${active
                           ? "bg-[#5B3DF5] border-[#5B3DF5] text-white shadow-md"
                           : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] hover:border-[#5B3DF5]"
-                      }`}
+                        }`}
                     >
                       <Icon className="h-5 w-5" />
                       <span className="font-bold text-sm">{item.label}</span>
@@ -359,11 +356,10 @@ export default function NewCampaignPage() {
                       key={val}
                       type="button"
                       onClick={() => setRewardPerWorker(val)}
-                      className={`py-2.5 px-2 rounded-xl border text-xs font-extrabold transition-all ${
-                        rewardPerWorker === val
+                      className={`py-2.5 px-2 rounded-xl border text-xs font-extrabold transition-all ${rewardPerWorker === val
                           ? "bg-[#12122A] border-[#12122A] text-white"
                           : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] hover:border-[#5B3DF5]"
-                      }`}
+                        }`}
                     >
                       {val} pt{val > 1 ? "s" : ""}
                     </button>
@@ -430,11 +426,10 @@ export default function NewCampaignPage() {
                       key={d}
                       type="button"
                       onClick={() => setDurationDays(d)}
-                      className={`py-2 rounded-xl border text-xs font-bold transition-all ${
-                        durationDays === d
+                      className={`py-2 rounded-xl border text-xs font-bold transition-all ${durationDays === d
                           ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8]"
                           : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]"
-                      }`}
+                        }`}
                     >
                       {d} j ({d * 0.5} pt)
                     </button>
