@@ -408,7 +408,109 @@ body {
 }
 
 /* =====================================================================
+   CARTE SOLDE DU DASHBOARD : TOUJOURS VIOLETTE (#5B3DF5)
+   La carte solde conserve son violet électrique iconique et son texte blanc
+   en mode clair comme en mode sombre (exactement comme dans la sidebar).
+   ===================================================================== */
+.addme-card-solde,
+html.dark .addme-card-solde,
+html.dark .app-workspace .addme-card-solde {
+  background: #5B3DF5 !important;
+  border-color: #5B3DF5 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 16px 36px -8px rgba(91, 61, 245, 0.55) !important;
+}
+
+.addme-card-solde *,
+html.dark .addme-card-solde *,
+html.dark .app-workspace .addme-card-solde * {
+  color: #FFFFFF !important;
+}
+
+.addme-card-solde .btn-solde-shop,
+html.dark .addme-card-solde .btn-solde-shop,
+html.dark .app-workspace .addme-card-solde .btn-solde-shop {
+  background: #FFFFFF !important;
+  color: #3A22C8 !important;
+  border-color: #FFFFFF !important;
+}
+
+.addme-card-solde .btn-solde-shop:hover,
+html.dark .addme-card-solde .btn-solde-shop:hover,
+html.dark .app-workspace .addme-card-solde .btn-solde-shop:hover {
+  background: #F7F7FB !important;
+  color: #2611A3 !important;
+}
+
+/* =====================================================================
+   PROTECTION ABSOLUE DE LA LANDING PAGE
+   La Landing Page conserve son identité visuelle d'origine (Obsidienne & Porcelaine).
+   Ses sections claires (#F7F7FB, lac clair, cartes blanches, FAQ, tarifs)
+   gardent systématiquement leurs polices sombres (#12122A, #3A3A52, #5A5A70).
+   ===================================================================== */
+.landing-page,
+html.dark .landing-page {
+  background-color: #F7F7FB;
+  color: #12122A;
+}
+
+.landing-page .text-\[\#12122A\],
+html.dark .landing-page .text-\[\#12122A\] {
+  color: #12122A !important;
+}
+
+.landing-page .text-\[\#3A3A52\],
+html.dark .landing-page .text-\[\#3A3A52\] {
+  color: #3A3A52 !important;
+}
+
+.landing-page .text-\[\#5A5A70\],
+html.dark .landing-page .text-\[\#5A5A70\] {
+  color: #5A5A70 !important;
+}
+
+.landing-page .addme-card,
+html.dark .landing-page .addme-card {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: #E3E3EE !important;
+  color: #12122A !important;
+  box-shadow: 0 28px 56px -20px rgba(91, 61, 245, 0.16), 0 12px 24px -12px rgba(18, 18, 42, 0.08) !important;
+}
+
+.landing-page .addme-card-static,
+html.dark .landing-page .addme-card-static {
+  background: #FFFFFF !important;
+  border-color: #E3E3EE !important;
+  color: #12122A !important;
+}
+
+.landing-page .faq-card,
+html.dark .landing-page .faq-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: #E3E3EE !important;
+  color: #12122A !important;
+}
+
+.landing-page .faq-card button,
+html.dark .landing-page .faq-card button {
+  color: #12122A !important;
+}
+
+.landing-page .faq-card .faq-answer,
+html.dark .landing-page .faq-card .faq-answer {
+  color: #5A5A70 !important;
+}
+
+.landing-page .payment-pill-card,
+html.dark .landing-page .payment-pill-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: #E3E3EE !important;
+  color: #12122A !important;
+}
+
+/* =====================================================================
    THEME SOMBRE DU DASHBOARD (Obsidienne & Verre Profond)
+   Strictement réservé à l'espace applicatif (.app-workspace)
    ===================================================================== */
 html.dark {
   --surface-light: #0B0A14;
@@ -425,100 +527,105 @@ html.dark body {
   color: #F4F3FA;
 }
 
-html.dark aside {
+html.dark .app-workspace {
+  background-color: #0B0A14 !important;
+  color: #F4F3FA !important;
+}
+
+html.dark .app-workspace aside {
   background: #111020 !important;
   border-color: #26243A !important;
 }
 
-html.dark .addme-card {
+html.dark .app-workspace .addme-card:not(.addme-card-solde) {
   background: rgba(21, 20, 38, 0.94) !important;
   border-color: #2A2742 !important;
   color: #F4F3FA !important;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7) !important;
 }
 
-html.dark .addme-card-static {
+html.dark .app-workspace .addme-card-static {
   background: #151426 !important;
   border-color: #2A2742 !important;
   color: #F4F3FA !important;
 }
 
-html.dark .addme-btn-ghost {
+html.dark .app-workspace .addme-btn-ghost {
   background: #1C1B2E !important;
   color: #F4F3FA !important;
   border-color: #383556 !important;
 }
 
-html.dark .addme-btn-ghost:hover:not(:disabled) {
+html.dark .app-workspace .addme-btn-ghost:hover:not(:disabled) {
   background: #25243C !important;
   border-color: #5B3DF5 !important;
 }
 
-html.dark .addme-chip {
+html.dark .app-workspace .addme-chip {
   background: #1C1B2E !important;
   border-color: #383556 !important;
   color: #C9C7E0 !important;
 }
 
-html.dark .addme-chip:hover {
+html.dark .app-workspace .addme-chip:hover {
   border-color: #5B3DF5 !important;
   color: #FFFFFF !important;
 }
 
-html.dark .addme-chip.on {
+html.dark .app-workspace .addme-chip.on {
   background: #5B3DF5 !important;
   border-color: #5B3DF5 !important;
   color: #FFFFFF !important;
 }
 
-html.dark .addme-row {
+html.dark .app-workspace .addme-row {
   border-color: #26243A !important;
 }
 
-html.dark .addme-thumb {
+html.dark .app-workspace .addme-thumb {
   background: #25214C !important;
   color: #A38EFF !important;
 }
 
-html.dark input[type="text"],
-html.dark input[type="password"],
-html.dark input[type="email"],
-html.dark input[type="number"],
-html.dark textarea,
-html.dark select {
+html.dark .app-workspace input[type="text"],
+html.dark .app-workspace input[type="password"],
+html.dark .app-workspace input[type="email"],
+html.dark .app-workspace input[type="number"],
+html.dark .app-workspace textarea,
+html.dark .app-workspace select {
   background-color: #17162A !important;
   border-color: #383556 !important;
   color: #F4F3FA !important;
 }
 
-html.dark input:focus,
-html.dark textarea:focus,
-html.dark select:focus {
+html.dark .app-workspace input:focus,
+html.dark .app-workspace textarea:focus,
+html.dark .app-workspace select:focus {
   border-color: #5B3DF5 !important;
   background-color: #1C1B32 !important;
 }
 
-html.dark .text-\[\#12122A\] {
+html.dark .app-workspace .text-\[\#12122A\] {
   color: #F4F3FA !important;
 }
 
-html.dark .text-\[\#5A5A70\] {
+html.dark .app-workspace .text-\[\#5A5A70\] {
   color: #A3A1BD !important;
 }
 
-html.dark .text-\[\#3A3A52\] {
+html.dark .app-workspace .text-\[\#3A3A52\] {
   color: #D2D0E6 !important;
 }
 
-html.dark .bg-\[\#F7F7FB\] {
+html.dark .app-workspace .bg-\[\#F7F7FB\] {
   background-color: #151426 !important;
 }
 
-html.dark .border-\[\#E3E3EE\] {
+html.dark .app-workspace .border-\[\#E3E3EE\] {
   border-color: #2A2742 !important;
 }
 
-html.dark .border-\[\#CFCFE0\] {
+html.dark .app-workspace .border-\[\#CFCFE0\] {
   border-color: #383556 !important;
 }
 

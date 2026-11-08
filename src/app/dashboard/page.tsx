@@ -212,20 +212,20 @@ export default function DashboardPage() {
 
       {/* 4 Cartes de Statistiques (Style exact Dashboard.dc.html) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-        {/* Carte 1 : Solde (#5B3DF5) */}
+        {/* Carte 1 : Solde (#5B3DF5 - Reste TOUJOURS Violet en clair comme en sombre) */}
         <div
-          className="addme-card animate-up flex flex-col justify-between"
-          style={{ background: "#5B3DF5", borderColor: "#5B3DF5", color: "#fff" }}
+          className="addme-card addme-card-solde animate-up flex flex-col justify-between"
+          style={{ background: "#5B3DF5", borderColor: "#5B3DF5", color: "#FFFFFF" }}
         >
           <div>
-            <div className="text-sm font-medium opacity-90">Solde</div>
-            <div className="text-[42px] font-extrabold leading-tight my-1.5">
+            <div className="text-sm font-medium opacity-90 text-white">Solde disponible</div>
+            <div className="text-[42px] font-extrabold leading-tight my-1.5 text-white">
               {profile.balance.toFixed(1)} pts
             </div>
           </div>
           <Link
             href="/shop"
-            className="addme-btn bg-white text-[#3A22C8] hover:bg-[#F7F7FB] text-xs py-2.5 px-4 w-fit mt-2"
+            className="btn-solde-shop addme-btn bg-white text-[#3A22C8] hover:bg-[#F7F7FB] text-xs py-2.5 px-4 w-fit mt-2 font-bold shadow-xs"
           >
             Acheter des points
           </Link>

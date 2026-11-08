@@ -81,6 +81,27 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   useEffect(() => {
     fetchUser();
     setMobileMenuOpen(false);
+
+    // Protection Thème : La Landing Page ("/") conserve strictement son design artistique fixe
+    // et ne subit jamais l'inversion chromatique du mode sombre.
+    if (pathname === "/") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      try {
+        const saved = localStorage.getItem("addme-theme");
+        const isDark =
+          saved === "dark" ||
+          ((!saved || saved === "system") &&
+            typeof window !== "undefined" &&
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      } catch {}
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -209,7 +230,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 flex flex-col">{children}</main>
+        <main className="flex-1 flex flex-col landing-page">{children}</main>
       </div>
     );
   }
@@ -267,7 +288,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
     }
 
     return (
-      <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F7FB] text-[#12122A]">
+      <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F7FB] text-[#12122A] app-workspace">
         {/* Topbar Mobile : Redirection logo vers la Landing Page "/" */}
         <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#E3E3EE]">
           <Link href="/" className="flex items-center gap-2">
@@ -500,7 +521,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   // 3. PAGES AUTH & LEGALES (/login, /register, /verify-email...)
   // =========================================================================
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A]">
+    <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A] app-workspace">
       <header className="w-full bg-white border-b border-[#E3E3EE]">
         <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
           <Link

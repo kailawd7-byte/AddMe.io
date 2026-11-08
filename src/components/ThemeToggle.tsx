@@ -63,49 +63,49 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
 
   return (
     <div
-      className={`p-1 rounded-xl bg-[#F0F0F7] dark:bg-[#1A192E] border border-[#E3E3EE] dark:border-[#2E2C48] flex items-center justify-between gap-1 text-xs select-none transition-colors ${className}`}
-      title="Thème du dashboard (Clair, Sombre ou Automatique)"
+      className={`p-1 rounded-xl bg-[#F0F0F7] dark:bg-[#1A192E] border border-[#E3E3EE] dark:border-[#2E2C48] flex items-center justify-between gap-1 select-none transition-colors ${className}`}
+      title="Thème du tableau de bord"
     >
       <button
         type="button"
         onClick={() => handleSelect("light")}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg font-bold transition-all ${
+        className={`flex-1 flex items-center justify-center p-2 rounded-lg transition-all ${
           theme === "light"
             ? "bg-white text-[#12122A] shadow-xs"
             : "text-[#5A5A70] dark:text-[#A3A1BD] hover:text-[#12122A] dark:hover:text-white"
         }`}
+        title="Mode Clair"
         aria-label="Mode Clair"
       >
-        <Sun className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-        <span className="hidden sm:inline">Clair</span>
+        <Sun className="h-4 w-4 text-amber-500 shrink-0" />
       </button>
 
       <button
         type="button"
         onClick={() => handleSelect("dark")}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg font-bold transition-all ${
+        className={`flex-1 flex items-center justify-center p-2 rounded-lg transition-all ${
           theme === "dark"
             ? "bg-[#5B3DF5] text-white shadow-xs"
             : "text-[#5A5A70] dark:text-[#A3A1BD] hover:text-[#12122A] dark:hover:text-white"
         }`}
+        title="Mode Sombre"
         aria-label="Mode Sombre"
       >
-        <Moon className="h-3.5 w-3.5 text-indigo-300 shrink-0" />
-        <span className="hidden sm:inline">Sombre</span>
+        <Moon className="h-4 w-4 text-indigo-300 shrink-0" />
       </button>
 
       <button
         type="button"
         onClick={() => handleSelect("system")}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg font-bold transition-all ${
+        className={`flex-1 flex items-center justify-center p-2 rounded-lg transition-all ${
           theme === "system"
             ? "bg-white dark:bg-[#2A2744] text-[#12122A] dark:text-white shadow-xs"
             : "text-[#5A5A70] dark:text-[#A3A1BD] hover:text-[#12122A] dark:hover:text-white"
         }`}
-        aria-label="Mode Automatique Système"
+        title="Mode Automatique (Système)"
+        aria-label="Mode Automatique (Système)"
       >
-        <Laptop className="h-3.5 w-3.5 text-[#5B3DF5] dark:text-[#A38EFF] shrink-0" />
-        <span className="hidden sm:inline">Auto</span>
+        <Laptop className="h-4 w-4 text-[#5B3DF5] dark:text-[#A38EFF] shrink-0" />
       </button>
     </div>
   );

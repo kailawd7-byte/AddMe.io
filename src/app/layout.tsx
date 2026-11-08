@@ -26,12 +26,17 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const saved = localStorage.getItem('addme-theme');
-                  const isDark = saved === 'dark' || ((!saved || saved === 'system') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                  if (isDark) {
-                    document.documentElement.classList.add('dark');
-                  } else {
+                  const isLanding = window.location.pathname === '/' || window.location.pathname === '';
+                  if (isLanding) {
                     document.documentElement.classList.remove('dark');
+                  } else {
+                    const saved = localStorage.getItem('addme-theme');
+                    const isDark = saved === 'dark' || ((!saved || saved === 'system') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (isDark) {
+                      document.documentElement.classList.add('dark');
+                    } else {
+                      document.documentElement.classList.remove('dark');
+                    }
                   }
                 } catch(e) {}
                 if (typeof window === 'undefined') return;

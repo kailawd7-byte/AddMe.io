@@ -362,7 +362,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A] relative selection:bg-[#5B3DF5] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A] landing-page relative selection:bg-[#5B3DF5] selection:text-white">
       {/* Barre de progression lumineuse du scroll tout en haut */}
       <div className="fixed top-0 left-0 right-0 h-[3px] z-50 pointer-events-none bg-transparent">
         <div
@@ -1225,13 +1225,13 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/85 backdrop-blur-md border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
-                  Boutique de Points · Volume Doublé
+                  Boutique de Points · 150, 500 & 2 000 pts
                 </span>
                 <h2 className="text-[34px] sm:text-[44px] font-extrabold text-[#12122A] mt-2 mb-1">
                   Tarifs
                 </h2>
                 <p className="text-[#3A3A52] text-base font-medium">
-                  Packs de points doublés (100, 300 et 1 500 pts), sans abonnement obligatoire. Paiement
+                  Packs de points (150, 500 et 2 000 pts), sans abonnement obligatoire. Paiement
                   Mobile Money (FCFA) & Carte Bancaire (EUR).
                 </p>
               </div>
@@ -1241,7 +1241,7 @@ export default function HomePage() {
                   <Smartphone className="h-3.5 w-3.5 text-amber-600" />
                   Mobile Money : Orange · MTN · Wave · Moov
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/90 border border-[#E3E3EE] text-[#12122A] shadow-2xs backdrop-blur-md">
+                <span className="payment-pill-card inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/95 border border-[#E3E3EE] text-[#12122A] shadow-2xs backdrop-blur-md font-bold">
                   <CreditCard className="h-3.5 w-3.5 text-[#5B3DF5]" />
                   Carte : Visa · Mastercard
                 </span>
@@ -1361,7 +1361,7 @@ export default function HomePage() {
                   delay={idx * 70}
                 >
                   <div
-                    className={`bg-white/90 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
+                    className={`faq-card bg-white/95 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
                       isOpen
                         ? "border-[#5B3DF5] shadow-[0_14px_34px_-15px_rgba(91,61,245,0.22)]"
                         : "border-[#E3E3EE] hover:border-[#5B3DF5]/50"
@@ -1372,7 +1372,7 @@ export default function HomePage() {
                       onClick={() => setOpenFaq(isOpen ? null : idx)}
                       className="w-full px-6 py-4.5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-[#12122A] hover:bg-[#F7F7FB]/80 transition-colors"
                     >
-                      <span>{item.q}</span>
+                      <span className="text-[#12122A]">{item.q}</span>
                       <ChevronDown
                         className={`h-5 w-5 text-[#5B3DF5] shrink-0 transition-transform duration-300 ${
                           isOpen ? "rotate-180" : ""
@@ -1380,7 +1380,7 @@ export default function HomePage() {
                       />
                     </button>
                     {isOpen && (
-                      <div className="px-6 pb-5 text-sm text-[#5A5A70] leading-relaxed border-t border-[#E3E3EE] pt-3.5">
+                      <div className="faq-answer px-6 pb-5 text-sm text-[#5A5A70] leading-relaxed border-t border-[#E3E3EE] pt-3.5">
                         {item.a}
                       </div>
                     )}
