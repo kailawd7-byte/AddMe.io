@@ -550,14 +550,67 @@ html.dark .mobile-drawer {
   color: #F4F3FA !important;
 }
 
-html.dark .app-workspace aside nav a:hover,
-html.dark .mobile-drawer nav a:hover {
-  background-color: #1E1C33 !important;
+/* Liens de navigation Sidebar & Mobile Drawer */
+.sidebar-nav-link {
+  color: #3A3A52;
+  background-color: transparent;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-link svg {
+  color: #5A5A70;
+  transition: color 0.2s ease;
+}
+
+.sidebar-nav-link:hover {
+  background-color: rgba(91, 61, 245, 0.08) !important;
+  color: #12122A !important;
+}
+
+.sidebar-nav-link:hover svg {
+  color: #5B3DF5 !important;
+}
+
+.sidebar-nav-link.active {
+  background-color: #EEEAFF !important;
+  color: #3A22C8 !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(91, 61, 245, 0.12);
+}
+
+.sidebar-nav-link.active svg {
+  color: #5B3DF5 !important;
+}
+
+/* Sidebar Nav Links - Mode Sombre (Contraste 100% garanti) */
+html.dark .sidebar-nav-link {
+  color: #C9C7E0 !important;
+  background-color: transparent !important;
+}
+
+html.dark .sidebar-nav-link svg {
+  color: #A3A1BD !important;
+}
+
+html.dark .sidebar-nav-link:hover {
+  background-color: #221F3A !important;
   color: #FFFFFF !important;
 }
 
-html.dark .app-workspace aside nav a:hover svg,
-html.dark .mobile-drawer nav a:hover svg {
+html.dark .sidebar-nav-link:hover svg {
+  color: #A38EFF !important;
+}
+
+html.dark .sidebar-nav-link.active {
+  background-color: rgba(91, 61, 245, 0.28) !important;
+  border: 1px solid rgba(91, 61, 245, 0.45) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(91, 61, 245, 0.25);
+}
+
+html.dark .sidebar-nav-link.active svg {
   color: #A38EFF !important;
 }
 

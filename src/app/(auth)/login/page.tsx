@@ -12,6 +12,7 @@ import {
   Lock,
   ShieldAlert,
 } from "lucide-react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -84,6 +85,18 @@ export default function LoginPage() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Bouton de Connexion Google 1-Clic */}
+        <div className="space-y-4">
+          <GoogleAuthButton mode="login" />
+
+          <div className="relative flex items-center justify-center my-4">
+            <div className="border-t border-[#E3E3EE] dark:border-[#26243A] w-full" />
+            <span className="bg-white dark:bg-[#151426] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD] absolute">
+              ou avec votre email
+            </span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

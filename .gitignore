@@ -37,6 +37,7 @@ secrets/
 *.db-shm
 dev.db
 prisma/dev.db
+prisma/support_tickets.json
 
 # OS files
 .DS_Store

@@ -12,6 +12,7 @@ import {
   Mail,
   Lock,
 } from "lucide-react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -118,7 +119,18 @@ export default function RegisterPage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
+            {/* Bouton Inscription Google 1-Clic */}
+            <GoogleAuthButton mode="register" />
+
+            <div className="relative flex items-center justify-center my-4">
+              <div className="border-t border-[#E3E3EE] dark:border-[#26243A] w-full" />
+              <span className="bg-white dark:bg-[#151426] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD] absolute">
+                ou avec votre email
+              </span>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-1.5">
                 Adresse Email
@@ -207,7 +219,8 @@ export default function RegisterPage() {
               )}
             </button>
           </form>
-        )}
+        </div>
+      )}
 
         <div className="text-center text-xs text-[#5A5A70] pt-2 border-t border-[#E3E3EE]">
           Déjà inscrit ?{" "}
