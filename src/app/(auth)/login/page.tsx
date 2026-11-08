@@ -86,18 +86,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Bouton de Connexion Google 1-Clic */}
-        <div className="space-y-4">
-          <GoogleAuthButton mode="login" />
-
-          <div className="relative flex items-center justify-center my-4">
-            <div className="border-t border-[#E3E3EE] dark:border-[#26243A] w-full" />
-            <span className="bg-white dark:bg-[#151426] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD] absolute">
-              ou avec votre email
-            </span>
-          </div>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-1.5">
@@ -171,6 +159,18 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        {/* Option Google placée sous le bouton Se connecter */}
+        <div className="space-y-4 pt-1">
+          <div className="relative flex items-center justify-center my-3">
+            <div className="border-t border-[#E3E3EE] dark:border-[#26243A] w-full" />
+            <span className="bg-white dark:bg-[#151426] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD] absolute">
+              ou
+            </span>
+          </div>
+
+          <GoogleAuthButton mode="login" />
+        </div>
 
         <div className="text-center text-xs text-[#5A5A70] pt-2 border-t border-[#E3E3EE]">
           Pas encore de compte ?{" "}

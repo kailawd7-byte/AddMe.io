@@ -120,16 +120,6 @@ export default function RegisterPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Bouton Inscription Google 1-Clic */}
-            <GoogleAuthButton mode="register" />
-
-            <div className="relative flex items-center justify-center my-4">
-              <div className="border-t border-[#E3E3EE] dark:border-[#26243A] w-full" />
-              <span className="bg-white dark:bg-[#151426] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD] absolute">
-                ou avec votre email
-              </span>
-            </div>
-
             <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-1.5">
@@ -219,6 +209,18 @@ export default function RegisterPage() {
               )}
             </button>
           </form>
+
+          {/* Option Google placée sous le bouton Créer mon compte */}
+          <div className="space-y-4 pt-1">
+            <div className="relative flex items-center justify-center my-3">
+              <div className="border-t border-[#E3E3EE] dark:border-[#26243A] w-full" />
+              <span className="bg-white dark:bg-[#151426] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD] absolute">
+                ou
+              </span>
+            </div>
+
+            <GoogleAuthButton mode="register" />
+          </div>
         </div>
       )}
 

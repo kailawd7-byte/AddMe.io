@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   MessageSquare,
   X,
@@ -26,6 +27,7 @@ const CATEGORIES = [
 ] as const;
 
 export default function SupportWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"NEW" | "HISTORY">("NEW");
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -42,6 +44,11 @@ export default function SupportWidget() {
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
+
+  // Le support client est exclusivement destiné aux usagers, masqué sur le panel admin
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   const fetchTickets = async () => {
     try {
@@ -129,25 +136,29 @@ export default function SupportWidget() {
 
   return (
     <>
-      {/* Bouton Flottant en bas à droite (uniquement dashboard) */}
+      {/* Bouton Flottant : Icône seule au repos / Révèle le texte au survol sur PC / Icône seule sur mobile */}
       <aside aria-label="Support client" className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="group relative flex items-center gap-2.5 px-4 py-3 sm:px-5 sm:py-3.5 rounded-full bg-gradient-to-r from-[#5B3DF5] to-[#7B5EFA] text-white shadow-xl shadow-[#5B3DF5]/35 hover:shadow-2xl hover:shadow-[#5B3DF5]/50 hover:scale-105 active:scale-95 transition-all duration-200"
+          className="group relative flex items-center justify-center h-12 w-12 sm:h-auto sm:w-auto sm:min-h-[48px] sm:min-w-[48px] p-0 sm:py-3 sm:px-3.5 sm:hover:px-4 rounded-full bg-gradient-to-r from-[#5B3DF5] to-[#7B5EFA] text-white shadow-xl shadow-[#5B3DF5]/35 hover:shadow-2xl hover:shadow-[#5B3DF5]/50 hover:scale-105 active:scale-95 transition-all duration-300"
           aria-label="Ouvrir le support client"
+          title="Support client"
         >
-          <div className="relative">
-            <MessageSquare className="h-5 w-5 sm:h-5 sm:w-5" />
+          <div className="relative shrink-0 flex items-center justify-center">
+            <MessageSquare className="h-5 w-5" />
             {answeredCount > 0 && (
               <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white animate-pulse" />
             )}
           </div>
-          <span className="text-xs sm:text-sm font-extrabold tracking-tight">
+
+          {/* Sur Desktop (PC) : Révèle le texte 'Support client' uniquement au hover de la souris */}
+          <span className="hidden sm:inline-block max-w-0 opacity-0 overflow-hidden group-hover:max-w-[120px] group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-out text-xs font-extrabold tracking-tight whitespace-nowrap">
             Support client
           </span>
+
           {answeredCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-[10px] font-black text-white ml-0.5">
+            <span className="hidden sm:group-hover:inline-block px-1.5 py-0.2 rounded-full bg-emerald-500 text-[10px] font-black text-white ml-1.5">
               {answeredCount}
             </span>
           )}

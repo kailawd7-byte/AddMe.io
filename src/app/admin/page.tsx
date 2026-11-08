@@ -253,7 +253,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleAdminReply = async (ticketId: string, markResolved: boolean = false) => {
+  const handleAdminReply = async (ticketId: string) => {
     if (!adminReplyText.trim()) {
       alert("Veuillez saisir votre message de réponse.");
       return;
@@ -266,7 +266,7 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: adminReplyText.trim(),
-          newStatus: markResolved ? "RESOLVED" : "ANSWERED",
+          newStatus: "ANSWERED",
         }),
       });
 
@@ -275,6 +275,41 @@ export default function AdminPage() {
         alert(data.error || "Erreur lors de l'envoi de la réponse.");
       } else {
         setFeedback({ type: "success", text: "Réponse envoyée avec succès à l'usager !" });
+        setAdminReplyText("");
+        await fetchSupportTickets();
+      }
+    } catch {
+      alert("Erreur réseau.");
+    } finally {
+      setAdminReplySubmitting(false);
+    }
+  };
+
+  const handleMarkResolved = async (ticketId: string) => {
+    setAdminReplySubmitting(true);
+    try {
+      // Si l'administrateur a saisi une note spécifique, on l'envoie, sinon un message standardisé de résolution
+      const contentToSend =
+        adminReplyText.trim() ||
+        "✓ Votre demande a été traitée et résolue par notre équipe support. N'hésitez pas à nous recontacter si vous avez d'autres questions !";
+
+      const res = await fetch(`/api/admin/support/${ticketId}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: contentToSend,
+          newStatus: "RESOLVED",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erreur lors de la clôture du ticket.");
+      } else {
+        setFeedback({
+          type: "success",
+          text: "Demande marquée comme résolue et notification transmise à l'usager !",
+        });
         setAdminReplyText("");
         await fetchSupportTickets();
       }
@@ -1362,8 +1397,9 @@ export default function AdminPage() {
                         <button
                           type="button"
                           disabled={adminReplySubmitting || !adminReplyText.trim()}
-                          onClick={() => handleAdminReply(selectedTicket.id, false)}
+                          onClick={() => handleAdminReply(selectedTicket.id)}
                           className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                          title="Envoyer la réponse personnalisée rédigée ci-dessus"
                         >
                           <Send className="w-3.5 h-3.5" />
                           <span>{adminReplySubmitting ? "Envoi..." : "Envoyer la réponse"}</span>
@@ -1371,12 +1407,17 @@ export default function AdminPage() {
 
                         <button
                           type="button"
-                          disabled={adminReplySubmitting || !adminReplyText.trim()}
-                          onClick={() => handleAdminReply(selectedTicket.id, true)}
+                          disabled={adminReplySubmitting || selectedTicket.status === "RESOLVED"}
+                          onClick={() => handleMarkResolved(selectedTicket.id)}
                           className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                          title="Clôturer le ticket et notifier l'usager que son problème a été résolu"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Envoyer & Marquer comme Résolu</span>
+                          <span>
+                            {selectedTicket.status === "RESOLVED"
+                              ? "✓ Déjà résolu"
+                              : "Marquer comme résolu"}
+                          </span>
                         </button>
                       </div>
                     </div>
