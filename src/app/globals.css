@@ -179,20 +179,30 @@ body {
   -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 20%, transparent 85%);
 }
 
-/* Cartes sombres premium avec reflet au survol */
-.manifesto-card {
+/* Cartes sombres premium avec reflet au survol (Utilisées sur les box sombres de la Landing Page) */
+.manifesto-card,
+.landing-page .manifesto-card,
+html.dark .landing-page .manifesto-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(145deg, rgba(30, 28, 46, 0.9) 0%, rgba(21, 20, 32, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(145deg, rgba(30, 28, 46, 0.94) 0%, rgba(21, 20, 32, 0.98) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 22px;
+  color: #FFFFFF !important;
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-.manifesto-card:hover {
+.manifesto-card:hover,
+.landing-page .manifesto-card:hover,
+html.dark .landing-page .manifesto-card:hover {
   transform: translateY(-6px);
-  border-color: rgba(255, 184, 77, 0.5);
-  box-shadow: 0 24px 48px -18px rgba(91, 61, 245, 0.35), 0 0 25px -5px rgba(255, 184, 77, 0.15);
+  border-color: rgba(255, 184, 77, 0.5) !important;
+  box-shadow: 0 24px 48px -18px rgba(91, 61, 245, 0.35), 0 0 25px -5px rgba(255, 184, 77, 0.15) !important;
+}
+
+.manifesto-card .text-white,
+.landing-page .manifesto-card .text-white {
+  color: #FFFFFF !important;
 }
 
 /* Bandeau d'annonce perpétuelle défilant de droite à gauche */

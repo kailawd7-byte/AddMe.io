@@ -781,28 +781,28 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-14">
             {/* Étape 1 */}
             <ScrollReveal variant="fade-up" delay={0} className="h-full">
-              <div className="addme-card h-full flex flex-col justify-between group relative overflow-hidden">
-                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/10 blur-2xl group-hover:bg-[#5B3DF5]/25 transition-all duration-500" />
+              <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group relative overflow-hidden">
+                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/20 blur-2xl group-hover:bg-[#5B3DF5]/35 transition-all duration-500" />
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
+                    <div className="w-14 h-14 rounded-2xl bg-[#5B3DF5]/25 border border-[#5B3DF5]/50 text-[#FFB84D] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
                       <Link2 className="h-7 w-7" />
                     </div>
-                    <span className="px-3.5 py-1 rounded-full bg-[#12122A] text-white text-xs font-extrabold tracking-wide">
+                    <span className="px-3.5 py-1 rounded-full bg-white/10 text-white border border-white/15 text-xs font-extrabold tracking-wide">
                       Étape 01
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-[#12122A] mb-2.5 group-hover:text-[#5B3DF5] transition-colors">
+                  <h3 className="text-xl font-extrabold text-white mb-2.5 group-hover:text-[#FFB84D] transition-colors">
                     Ajoutez une publication
                   </h3>
-                  <p className="text-[#5A5A70] text-sm leading-relaxed">
+                  <p className="text-[#D6D3E9] text-sm leading-relaxed">
                     Collez le lien de votre vidéo TikTok, Reel Instagram ou Short
                     YouTube. Fixez vous-même les points offerts par interaction (1,
                     2, 3 pts...) et la durée de diffusion (0,5 pt/j).
                   </p>
                 </div>
-                <div className="pt-4 mt-6 border-t border-[#E3E3EE] text-xs font-bold text-[#5B3DF5] flex items-center gap-1.5">
+                <div className="pt-4 mt-6 border-t border-white/10 text-xs font-bold text-[#FFB84D] flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   <span>Paramètres 100% libres</span>
                 </div>
@@ -811,11 +811,11 @@ export default function HomePage() {
 
             {/* Étape 2 */}
             <ScrollReveal variant="fade-up" delay={140} className="h-full">
-              <div className="addme-card h-full flex flex-col justify-between group relative overflow-hidden border-[#D9D2FF]">
-                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#FFB84D]/20 blur-2xl group-hover:bg-[#FFB84D]/35 transition-all duration-500" />
+              <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group relative overflow-hidden !border-[#5B3DF5]/50 shadow-[0_20px_40px_-15px_rgba(91,61,245,0.35)]">
+                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#FFB84D]/25 blur-2xl group-hover:bg-[#FFB84D]/40 transition-all duration-500" />
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
+                    <div className="w-14 h-14 rounded-2xl bg-[#5B3DF5]/25 border border-[#5B3DF5]/50 text-[#FFB84D] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
                       <Play className="h-7 w-7" />
                     </div>
                     <span className="px-3.5 py-1 rounded-full bg-[#5B3DF5] text-white text-xs font-extrabold tracking-wide shadow-sm">
@@ -823,19 +823,19 @@ export default function HomePage() {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-[#12122A] mb-2.5 group-hover:text-[#5B3DF5] transition-colors">
+                  <h3 className="text-xl font-extrabold text-white mb-2.5 group-hover:text-[#FFB84D] transition-colors">
                     Gagnez des points sans délai
                   </h3>
-                  <p className="text-[#5A5A70] text-sm leading-relaxed">
+                  <p className="text-[#D6D3E9] text-sm leading-relaxed">
                     Likez, commentez ou abonnez-vous depuis les publications des
                     autres. Après 20 secondes de visionnage effectif, notre robot
                     de vérification anti-fraude contrôle votre action en direct. Vos
                     points sont crédités{" "}
-                    <strong className="text-[#12122A]">immédiatement</strong> sur
+                    <strong className="text-white font-bold">immédiatement</strong> sur
                     votre solde et la tâche disparaît.
                   </p>
                 </div>
-                <div className="pt-4 mt-6 border-t border-[#E3E3EE] text-xs font-bold text-emerald-600 flex items-center gap-1.5">
+                <div className="pt-4 mt-6 border-t border-white/10 text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   <span>Chrono 20s · Contrôle Anti-Fraude · Crédit direct</span>
                 </div>
@@ -844,29 +844,29 @@ export default function HomePage() {
 
             {/* Étape 3 */}
             <ScrollReveal variant="fade-up" delay={280} className="h-full">
-              <div className="addme-card h-full flex flex-col justify-between group relative overflow-hidden">
-                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/10 blur-2xl group-hover:bg-[#5B3DF5]/25 transition-all duration-500" />
+              <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group relative overflow-hidden">
+                <div className="pointer-events-none absolute -top-16 -right-16 w-36 h-36 rounded-full bg-[#5B3DF5]/20 blur-2xl group-hover:bg-[#5B3DF5]/35 transition-all duration-500" />
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#EEEAFF] text-[#5B3DF5] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
+                    <div className="w-14 h-14 rounded-2xl bg-[#5B3DF5]/25 border border-[#5B3DF5]/50 text-[#FFB84D] group-hover:bg-[#5B3DF5] group-hover:text-white transition-all duration-300 flex items-center justify-center font-extrabold text-xl shadow-sm">
                       <TrendingUp className="h-7 w-7" />
                     </div>
-                    <span className="px-3.5 py-1 rounded-full bg-[#12122A] text-white text-xs font-extrabold tracking-wide">
+                    <span className="px-3.5 py-1 rounded-full bg-white/10 text-white border border-white/15 text-xs font-extrabold tracking-wide">
                       Étape 03
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-[#12122A] mb-2.5 group-hover:text-[#5B3DF5] transition-colors">
+                  <h3 className="text-xl font-extrabold text-white mb-2.5 group-hover:text-[#FFB84D] transition-colors">
                     Recevez un engagement unique
                   </h3>
-                  <p className="text-[#5A5A70] text-sm leading-relaxed">
+                  <p className="text-[#D6D3E9] text-sm leading-relaxed">
                     Chaque membre ne peut interagir avec votre publication qu’
-                    <strong className="text-[#12122A]">une seule fois</strong>. Vos
+                    <strong className="text-white font-bold">une seule fois</strong>. Vos
                     interactions proviennent toutes d&apos;utilisateurs distincts pour
                     déclencher naturellement les algorithmes.
                   </p>
                 </div>
-                <div className="pt-4 mt-6 border-t border-[#E3E3EE] text-xs font-bold text-[#5B3DF5] flex items-center gap-1.5">
+                <div className="pt-4 mt-6 border-t border-white/10 text-xs font-bold text-[#FFB84D] flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                   <span>Règle anti-spam 1x stricte</span>
                 </div>
@@ -880,16 +880,16 @@ export default function HomePage() {
            =================================================================== */}
         <section id="simulateur" className="max-w-[1140px] mx-auto px-6 pb-24 md:pb-28 relative z-10">
           <ScrollReveal variant="zoom-in">
-            <div className="addme-card-static p-6 sm:p-10 bg-white/90 backdrop-blur-2xl border-2 border-[#D9D2FF] shadow-[0_32px_70px_-24px_rgba(91,61,245,0.22)] relative overflow-hidden">
+            <div className="manifesto-card p-6 sm:p-10 backdrop-blur-2xl border border-white/15 shadow-[0_32px_70px_-24px_rgba(0,0,0,0.85)] relative overflow-hidden">
               <div className="max-w-2xl mb-8 relative z-10">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEAFF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-extrabold uppercase tracking-widest text-[#FFB84D]">
                   <Flame className="h-3.5 w-3.5 text-[#FFB84D]" />
                   Transparence Totale
                 </span>
-                <h2 className="text-[28px] sm:text-[38px] font-extrabold text-[#12122A] mt-2">
+                <h2 className="text-[28px] sm:text-[38px] font-extrabold text-white mt-2">
                   Simulez votre prochaine campagne
                 </h2>
-                <p className="text-sm sm:text-base text-[#5A5A70] mt-1">
+                <p className="text-sm sm:text-base text-[#D6D3E9] mt-1">
                   Sur AddMe.io, aucun tarif imposé : vous décidez combien de points
                   vous offrez par action et combien de jours dure votre diffusion.
                 </p>
@@ -901,7 +901,7 @@ export default function HomePage() {
                   {/* Choix du Réseau & Action */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#A5A2BA] mb-2">
                         1. Réseau social
                       </label>
                       <div className="grid grid-cols-4 gap-2">
@@ -933,8 +933,8 @@ export default function HomePage() {
                             }
                             className={`py-2 px-1.5 rounded-xl text-[11px] font-bold border transition-all truncate text-center ${
                               simPlatform === net.id
-                                ? "bg-[#12122A] text-white border-[#12122A] shadow-md scale-[1.03]"
-                                : "bg-[#F7F7FB] text-[#5A5A70] border-[#E3E3EE] hover:border-[#5B3DF5]"
+                                ? "bg-[#5B3DF5] text-white border-[#5B3DF5] shadow-md scale-[1.03]"
+                                : "bg-[#181726] text-[#D6D3E9] border-white/10 hover:border-[#5B3DF5] hover:text-white"
                             }`}
                           >
                             {net.label}
@@ -944,7 +944,7 @@ export default function HomePage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#A5A2BA] mb-2">
                         2. Action souhaitée
                       </label>
                       <div className="grid grid-cols-3 gap-2">
@@ -962,7 +962,7 @@ export default function HomePage() {
                             className={`py-2.5 px-2 rounded-xl text-xs font-bold border transition-all ${
                               simAction === act.id
                                 ? "bg-[#5B3DF5] text-white border-[#5B3DF5] shadow-md scale-[1.03]"
-                                : "bg-[#F7F7FB] text-[#5A5A70] border-[#E3E3EE] hover:border-[#5B3DF5]"
+                                : "bg-[#181726] text-[#D6D3E9] border-white/10 hover:border-[#5B3DF5] hover:text-white"
                             }`}
                           >
                             {act.label}
@@ -975,10 +975,10 @@ export default function HomePage() {
                   {/* Points offerts par personne */}
                   <div>
                     <div className="flex justify-between text-xs font-bold mb-2">
-                      <span className="uppercase tracking-wider text-[#5A5A70]">
+                      <span className="uppercase tracking-wider text-[#A5A2BA]">
                         3. Points offerts à chaque personne qui fait l&apos;action
                       </span>
-                      <span className="text-[#5B3DF5] font-extrabold">
+                      <span className="text-[#FFB84D] font-extrabold">
                         {simReward} pt{simReward > 1 ? "s" : ""} / personne
                       </span>
                     </div>
@@ -990,8 +990,8 @@ export default function HomePage() {
                           onClick={() => setSimReward(pt)}
                           className={`py-2.5 rounded-xl text-xs font-extrabold border transition-all ${
                             simReward === pt
-                              ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8] shadow-xs scale-[1.02]"
-                              : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]/50"
+                              ? "bg-[#5B3DF5]/30 border-[#5B3DF5] text-white shadow-xs scale-[1.02]"
+                              : "bg-[#181726] border-white/10 text-[#D6D3E9] hover:border-[#5B3DF5]/50 hover:text-white"
                           }`}
                         >
                           {pt} point{pt > 1 ? "s" : ""}{" "}
@@ -1004,10 +1004,10 @@ export default function HomePage() {
                   {/* Nombre de personnes souhaitées */}
                   <div>
                     <div className="flex justify-between text-xs font-bold mb-2">
-                      <span className="uppercase tracking-wider text-[#5A5A70]">
+                      <span className="uppercase tracking-wider text-[#A5A2BA]">
                         4. Nombre de personnes souhaitées (Utilisateurs uniques)
                       </span>
-                      <span className="text-[#12122A] font-extrabold">
+                      <span className="text-white font-extrabold">
                         {simQuantity} personnes
                       </span>
                     </div>
@@ -1025,10 +1025,10 @@ export default function HomePage() {
                   {/* Durée en jours */}
                   <div>
                     <div className="flex justify-between text-xs font-bold mb-2">
-                      <span className="uppercase tracking-wider text-[#5A5A70]">
+                      <span className="uppercase tracking-wider text-[#A5A2BA]">
                         5. Durée de la campagne (0,5 pt / jour)
                       </span>
-                      <span className="text-[#12122A] font-extrabold">
+                      <span className="text-white font-extrabold">
                         {simDays} jour{simDays > 1 ? "s" : ""} (+{simDurationFee} pts)
                       </span>
                     </div>
@@ -1260,19 +1260,19 @@ export default function HomePage() {
                   className="h-full"
                 >
                   <div
-                    className={`addme-card h-full flex flex-col justify-between relative overflow-hidden ${
+                    className={`manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between relative overflow-hidden group ${
                       isPopular
-                        ? "!border-2 !border-[#5B3DF5] shadow-[0_28px_60px_-20px_rgba(91,61,245,0.28)]"
+                        ? "!border-2 !border-[#5B3DF5] shadow-[0_28px_60px_-20px_rgba(91,61,245,0.45)]"
                         : ""
                     }`}
                   >
                     {isPopular && (
-                      <div className="pointer-events-none absolute -top-20 -right-20 w-44 h-44 rounded-full bg-[#5B3DF5]/15 blur-2xl" />
+                      <div className="pointer-events-none absolute -top-20 -right-20 w-44 h-44 rounded-full bg-[#5B3DF5]/30 blur-2xl" />
                     )}
 
                     <div>
                       <div className="flex items-center justify-between gap-2">
-                        <b className="text-lg font-extrabold text-[#12122A]">
+                        <b className="text-lg font-extrabold text-white group-hover:text-[#FFB84D] transition-colors">
                           {pack.name} {isPopular ? "· Populaire" : ""}
                         </b>
                         {isPopular && (
@@ -1283,24 +1283,24 @@ export default function HomePage() {
                       </div>
 
                       <div className="mt-5 mb-2 flex items-baseline gap-2">
-                        <span className="text-[38px] font-extrabold text-[#12122A] tracking-tight">
+                        <span className="text-[38px] font-extrabold text-white tracking-tight">
                           {pack.priceFcfaFormatted}
                         </span>
-                        <span className="text-sm font-bold text-[#5B3DF5]">
+                        <span className="text-sm font-bold text-[#FFB84D]">
                           ({pack.priceFormatted})
                         </span>
                       </div>
 
-                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#EEEAFF] border border-[#D9D2FF] text-[#3A22C8] font-extrabold text-sm mb-4">
-                        <Sparkles className="h-3.5 w-3.5 text-[#5B3DF5]" />
+                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#5B3DF5]/20 border border-[#5B3DF5]/40 text-[#FFB84D] font-extrabold text-sm mb-4">
+                        <Sparkles className="h-3.5 w-3.5 text-[#FFB84D]" />
                         <span>+{pack.points} points crédités</span>
                       </div>
 
-                      <p className="text-sm text-[#5A5A70] leading-relaxed mb-6">
+                      <p className="text-sm text-[#D6D3E9] leading-relaxed mb-6">
                         {pack.description}
                       </p>
 
-                      <ul className="space-y-2.5 text-xs text-[#3A3A52] mb-6 pt-4 border-t border-[#E3E3EE]">
+                      <ul className="space-y-2.5 text-xs text-[#E2DFFA] mb-6 pt-4 border-t border-white/10">
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
                           <span>Jusqu&apos;à {pack.points} actions uniques</span>
@@ -1319,7 +1319,9 @@ export default function HomePage() {
                     <Link
                       href={isAuthenticated ? "/shop" : "/register"}
                       className={`addme-btn w-full ${
-                        isPopular ? "addme-btn-primary" : "addme-btn-ghost"
+                        isPopular
+                          ? "addme-btn-primary"
+                          : "bg-white/10 hover:bg-white/20 text-white border border-white/15"
                       }`}
                     >
                       <span>Choisir ce pack ({pack.points} pts)</span>
