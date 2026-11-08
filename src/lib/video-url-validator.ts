@@ -11,7 +11,7 @@ export interface VideoUrlValidationResult {
  * Vérifie également la concordance avec le pseudo vérifié lorsque possible.
  */
 export function validateVideoPublicationUrl(
-  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM",
+  platform: string,
   rawUrl: string,
   expectedIdentifier?: string
 ): VideoUrlValidationResult {
@@ -250,6 +250,95 @@ export function validateVideoPublicationUrl(
       valid: false,
       error:
         "Format de publication Instagram non reconnu. Exemple attendu : https://www.instagram.com/reel/C-xyz123/ ou https://www.instagram.com/p/C-xyz123/",
+    };
+  }
+
+  // ==========================================
+  // Validation FACEBOOK
+  // ==========================================
+  if (platform === "FACEBOOK") {
+    const validFacebookHosts = ["facebook.com", "m.facebook.com", "fb.watch", "fb.com", "web.facebook.com"];
+    if (!validFacebookHosts.includes(hostname)) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir du domaine facebook.com ou fb.watch.",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "fb-post",
+    };
+  }
+
+  // ==========================================
+  // Validation SNAPCHAT
+  // ==========================================
+  if (platform === "SNAPCHAT") {
+    const validSnapHosts = ["snapchat.com", "t.snapchat.com", "story.snapchat.com"];
+    if (!validSnapHosts.includes(hostname)) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir du domaine snapchat.com ou spotlight.",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "snap-spotlight",
+    };
+  }
+
+  // ==========================================
+  // Validation LINKEDIN
+  // ==========================================
+  if (platform === "LINKEDIN") {
+    if (!hostname.includes("linkedin.com")) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir du domaine linkedin.com (ex: https://www.linkedin.com/posts/...)",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "linkedin-post",
+    };
+  }
+
+  // ==========================================
+  // Validation X (TWITTER)
+  // ==========================================
+  if (platform === "X" || platform === "TWITTER") {
+    const validXHosts = ["x.com", "twitter.com", "mobile.twitter.com"];
+    if (!validXHosts.includes(hostname)) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir de x.com ou twitter.com (ex: https://x.com/pseudo/status/123456789).",
+      };
+    }
+    const statusMatch = urlObj.pathname.match(/\/status\/([0-9]+)/);
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: statusMatch?.[1] || urlObj.pathname.split("/").filter(Boolean).pop() || "x-post",
+    };
+  }
+
+  // ==========================================
+  // Validation THREADS
+  // ==========================================
+  if (platform === "THREADS") {
+    if (!hostname.includes("threads.net")) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir du domaine threads.net (ex: https://www.threads.net/@pseudo/post/...)",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "threads-post",
     };
   }
 

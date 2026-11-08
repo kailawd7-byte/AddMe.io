@@ -15,7 +15,7 @@ import {
 
 interface SocialAccount {
   id: string;
-  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  platform: string;
   identifier: string;
   verificationCode: string;
   status: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
@@ -23,12 +23,21 @@ interface SocialAccount {
   createdAt: string;
 }
 
+const SUPPORTED_NETWORKS = [
+  { id: "TIKTOK", name: "TikTok", short: "TT", placeholder: "pseudo_tiktok" },
+  { id: "INSTAGRAM", name: "Instagram", short: "IG", placeholder: "pseudo_instagram" },
+  { id: "YOUTUBE", name: "YouTube", short: "YT", placeholder: "chaine_ou_pseudo" },
+  { id: "FACEBOOK", name: "Facebook", short: "FB", placeholder: "page_ou_profil" },
+  { id: "SNAPCHAT", name: "Snapchat", short: "SC", placeholder: "pseudo_snap" },
+  { id: "LINKEDIN", name: "LinkedIn", short: "IN", placeholder: "profil_ou_entreprise" },
+  { id: "X", name: "X", short: "X", placeholder: "pseudo_x" },
+  { id: "THREADS", name: "Threads", short: "TH", placeholder: "pseudo_threads" },
+] as const;
+
 export default function SocialAccountsPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [platform, setPlatform] = useState<"TIKTOK" | "INSTAGRAM" | "YOUTUBE">(
-    "TIKTOK"
-  );
+  const [platform, setPlatform] = useState<string>("TIKTOK");
   const [identifier, setIdentifier] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
@@ -160,8 +169,7 @@ export default function SocialAccountsPage() {
           Comptes liés
         </h1>
         <p className="text-sm text-[#5A5A70] mt-0.5">
-          Associez vos profils TikTok, Instagram et YouTube sans jamais partager
-          vos mots de passe.
+          Associez vos profils sur vos 8 réseaux favoris (TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads) sans jamais partager vos mots de passe.
         </p>
       </div>
 
@@ -173,7 +181,7 @@ export default function SocialAccountsPage() {
         <strong>Comment fonctionne la vérification sans mot de passe ?</strong>{" "}
         Ajoutez votre pseudo ci-dessous, copiez le code unique généré (ex:{" "}
         <code className="font-mono font-bold text-[#3A22C8]">ADDME-8F92A</code>)
-        dans la biographie de votre profil TikTok, Instagram ou YouTube, puis
+        dans la biographie de votre profil social, puis
         cliquez sur <strong>Vérifier la propriété</strong>.
       </div>
 
@@ -205,25 +213,21 @@ export default function SocialAccountsPage() {
           <form onSubmit={handleAddAccount} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-2">
-                Réseau social
+                Réseau social (8 plateformes compatibles)
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["TIKTOK", "INSTAGRAM", "YOUTUBE"] as const).map((net) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {SUPPORTED_NETWORKS.map((net) => (
                   <button
-                    key={net}
+                    key={net.id}
                     type="button"
-                    onClick={() => setPlatform(net)}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-extrabold transition-all ${
-                      platform === net
-                        ? "bg-[#12122A] border-[#12122A] text-white"
+                    onClick={() => setPlatform(net.id)}
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-extrabold transition-all text-center ${
+                      platform === net.id
+                        ? "bg-[#12122A] border-[#12122A] text-white shadow-sm"
                         : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]"
                     }`}
                   >
-                    {net === "TIKTOK"
-                      ? "TikTok"
-                      : net === "INSTAGRAM"
-                      ? "Instagram"
-                      : "YouTube"}
+                    {net.name}
                   </button>
                 ))}
               </div>
@@ -231,11 +235,7 @@ export default function SocialAccountsPage() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-1.5">
-                {platform === "TIKTOK"
-                  ? "Pseudo TikTok"
-                  : platform === "INSTAGRAM"
-                  ? "Pseudo Instagram"
-                  : "Identifiant de la chaîne YouTube"}
+                Identifiant / Pseudo {SUPPORTED_NETWORKS.find((n) => n.id === platform)?.name || platform}
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-[#5A5A70] font-bold text-sm">
@@ -247,11 +247,7 @@ export default function SocialAccountsPage() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder={
-                    platform === "TIKTOK"
-                      ? "mon_pseudo_tiktok"
-                      : platform === "INSTAGRAM"
-                      ? "mon_pseudo_instagram"
-                      : "MaChaineYouTube"
+                    SUPPORTED_NETWORKS.find((n) => n.id === platform)?.placeholder || "mon_pseudo"
                   }
                   className="w-full pl-8 pr-4 py-3 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5] focus:bg-white"
                 />
@@ -290,18 +286,14 @@ export default function SocialAccountsPage() {
           ) : accounts.length === 0 ? (
             <div className="py-10 text-center text-sm text-[#5A5A70] border-t border-[#E3E3EE]">
               Aucun compte associé pour le moment. Utilisez le formulaire à
-              gauche pour ajouter TikTok, Instagram ou YouTube.
+              gauche pour ajouter l&apos;un de vos 8 profils réseaux sociaux.
             </div>
           ) : (
             <div className="space-y-4">
               {accounts.map((acc) => {
                 const isVerified = acc.status === "VERIFIED";
-                const shortCode =
-                  acc.platform === "TIKTOK"
-                    ? "TT"
-                    : acc.platform === "INSTAGRAM"
-                    ? "IG"
-                    : "YT";
+                const netInfo = SUPPORTED_NETWORKS.find((n) => n.id === acc.platform);
+                const shortCode = netInfo?.short || acc.platform.slice(0, 2);
 
                 return (
                   <div

@@ -45,9 +45,24 @@ export const resetPasswordSchema = z.object({
 });
 
 export const linkSocialAccountSchema = z.object({
-  platform: z.enum(["TIKTOK", "YOUTUBE", "INSTAGRAM"], {
-    errorMap: () => ({ message: "Plateforme non supportée. Choisissez TikTok, YouTube ou Instagram." }),
-  }),
+  platform: z.enum(
+    [
+      "TIKTOK",
+      "INSTAGRAM",
+      "YOUTUBE",
+      "FACEBOOK",
+      "SNAPCHAT",
+      "LINKEDIN",
+      "X",
+      "THREADS",
+    ],
+    {
+      errorMap: () => ({
+        message:
+          "Plateforme non supportée. Choisissez parmi les 8 réseaux partenaires (TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads).",
+      }),
+    }
+  ),
   identifier: z
     .string()
     .trim()

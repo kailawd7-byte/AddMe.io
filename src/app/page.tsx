@@ -341,7 +341,7 @@ export default function HomePage() {
     },
     {
       q: "Pourquoi mes points sont-ils crédités immédiatement sans attendre 24h ?",
-      a: "Nous avons supprimé la rétention de 24 heures pour fluidifier vos échanges. Dès que vous visionnez une publication pendant au moins 10 secondes et validez votre action, vos points sont crédités directement sur votre solde disponible et la tâche disparaît définitivement de votre flux.",
+      a: "Nous avons supprimé la rétention de 24 heures pour fluidifier vos échanges. Dès que vous accomplissez une tâche après au moins 20 secondes de présence active sur la publication, notre robot anti-fraude vérifie en direct que l'action a réellement été exécutée sur le réseau social. Si l'action est confirmée, vos points sont crédités immédiatement sur votre solde ; en cas de non-réalisation, l'action est rejetée pour garantir l'équité communautaire.",
     },
     {
       q: "Un même utilisateur peut-il liker ou s'abonner plusieurs fois à ma publication ?",
@@ -353,7 +353,7 @@ export default function HomePage() {
     },
     {
       q: "Puis-je recharger mes points par Mobile Money en Afrique ?",
-      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs (100, 300 et 1 500 points) sont proposés au meilleur tarif.",
+      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs (150, 500 et 2 000 points) sont proposés au meilleur tarif.",
     },
     {
       q: "Dois-je donner le mot de passe de mon compte TikTok, Instagram ou YouTube ?",
@@ -514,7 +514,7 @@ export default function HomePage() {
                         Vidéo de @créateur_tiktok
                       </b>
                       <span className="text-xs text-[#C9C6DB]">
-                        Visionnage 10s • Crédit direct
+                        Visionnage 20s • Vérification Bot
                       </span>
                     </div>
                     <b className="text-[#FFB84D] text-lg font-extrabold shrink-0 group-hover:scale-110 transition-transform">
@@ -629,18 +629,18 @@ export default function HomePage() {
       <div className="relative w-full overflow-hidden bg-gradient-to-r from-[#4B2DE5] via-[#7C3AED] to-[#4B2DE5] text-white py-3.5 shadow-lg flex select-none pointer-events-none z-20 border-y border-white/15">
         <div className="perpetual-marquee-track">
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
         </div>
         <div className="perpetual-marquee-track" aria-hidden="true">
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · LIKES · COMMENTAIRES · ABONNEMENTS · CRÉDIT DIRECT IMMÉDIAT · PAIEMENT MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) · SANS BOT · 100% HUMAIN ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
         </div>
       </div>
@@ -828,14 +828,16 @@ export default function HomePage() {
                   </h3>
                   <p className="text-[#5A5A70] text-sm leading-relaxed">
                     Likez, commentez ou abonnez-vous depuis les publications des
-                    autres. Après 10 secondes de visionnage effectif, vos points sont
-                    crédités <strong className="text-[#12122A]">immédiatement</strong>{" "}
-                    sur votre solde et la tâche disparaît.
+                    autres. Après 20 secondes de visionnage effectif, notre robot
+                    de vérification anti-fraude contrôle votre action en direct. Vos
+                    points sont crédités{" "}
+                    <strong className="text-[#12122A]">immédiatement</strong> sur
+                    votre solde et la tâche disparaît.
                   </p>
                 </div>
                 <div className="pt-4 mt-6 border-t border-[#E3E3EE] text-xs font-bold text-emerald-600 flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span>Zéro attente 24h · Crédit direct</span>
+                  <span>Chrono 20s · Contrôle Anti-Fraude · Crédit direct</span>
                 </div>
               </div>
             </ScrollReveal>

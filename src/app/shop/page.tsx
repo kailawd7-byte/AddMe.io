@@ -164,7 +164,7 @@ function ShopContent() {
             Boutique de points
           </h1>
           <p className="text-sm text-[#5A5A70] mt-0.5">
-            Packs de points doublés (100, 300 et 1 500 pts) • Paiement Mobile
+            Packs de points doublés (150, 500 et 2 000 pts) • Paiement Mobile
             Money (FCFA) & Carte Bancaire.
           </p>
         </div>

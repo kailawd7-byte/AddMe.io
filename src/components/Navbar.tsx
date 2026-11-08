@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   User,
 } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 interface UserData {
   id: string;
@@ -343,6 +344,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
               {user && (
                 <div className="pt-4 border-t border-[#E3E3EE] space-y-3">
+                  <ThemeToggle />
                   <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE]">
                     <div className="text-xs font-semibold text-[#12122A] truncate">
                       {user.email}
@@ -432,6 +434,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
           {/* Pied de Sidebar */}
           <div className="pt-4 border-t border-[#E3E3EE] space-y-2.5">
+            <ThemeToggle />
             {user ? (
               <>
                 {!user.isEmailVerified && (

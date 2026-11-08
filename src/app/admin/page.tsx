@@ -49,7 +49,7 @@ interface AdminUserItem {
 interface PendingAccountItem {
   id: string;
   userId: string;
-  platform: "TIKTOK" | "YOUTUBE";
+  platform: string;
   identifier: string;
   verificationCode: string;
   status: string;
@@ -420,26 +420,63 @@ export default function AdminPage() {
 
         {/* Statistiques Système Clés */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block uppercase">Membres Totaux</span>
-              <span className="text-2xl font-black text-white mt-1 block">{stats.totalUsers}</span>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <span className="text-xs font-semibold text-slate-400 block uppercase">Membres Réels</span>
+                <span className="text-2xl font-black text-white mt-1 block">{stats.totalUsers}</span>
+                <span className="text-[11px] text-emerald-400 mt-1 block">✓ Base nettoyée</span>
+              </div>
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <span className="text-xs font-semibold text-slate-400 block uppercase">Campagnes Actives</span>
+                <span className="text-2xl font-black text-indigo-400 mt-1 block">{stats.activeCampaigns}</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">En cours de diffusion</span>
+              </div>
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <span className="text-xs font-semibold text-slate-400 block uppercase">Comptes à Vérifier</span>
+                <span className="text-2xl font-black text-amber-400 mt-1 block">{stats.pendingSocialVerifications}</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">Profils en attente</span>
+              </div>
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <span className="text-xs font-semibold text-slate-400 block uppercase">Signalements / Litiges</span>
+                <span className="text-2xl font-black text-rose-400 mt-1 block">{stats.pendingReports}</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">À arbitrer</span>
+              </div>
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <span className="text-xs font-semibold text-slate-400 block uppercase">Points en Circulation</span>
+                <span className="text-2xl font-black text-emerald-400 mt-1 block">{stats.circulatingPoints} pts</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">Grand livre Ledger</span>
+              </div>
             </div>
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block uppercase">Campagnes Actives</span>
-              <span className="text-2xl font-black text-indigo-400 mt-1 block">{stats.activeCampaigns}</span>
-            </div>
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block uppercase">Comptes à Vérifier</span>
-              <span className="text-2xl font-black text-amber-400 mt-1 block">{stats.pendingSocialVerifications}</span>
-            </div>
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block uppercase">Signalements en Attente</span>
-              <span className="text-2xl font-black text-rose-400 mt-1 block">{stats.pendingReports}</span>
-            </div>
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block uppercase">Points en Circulation</span>
-              <span className="text-2xl font-black text-emerald-400 mt-1 block">{stats.circulatingPoints} pts</span>
+
+            {/* Guide Pédagogique des Outils Admin */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-900/60 to-indigo-950/40 border border-indigo-900/40 space-y-3">
+              <div className="flex items-center gap-2 text-indigo-300 font-extrabold text-sm">
+                <FileText className="w-4 h-4 text-[#FFB84D]" />
+                <span>Guide rapide des 5 outils de contrôle de votre Dashboard Admin</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs text-slate-300 leading-relaxed">
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                  <b className="text-white block mb-1">1. Utilisateurs</b>
+                  Visualisez vos membres inscrits, leur réputation et solde. Suspendez ou ajustez manuellement les points.
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                  <b className="text-white block mb-1">2. Comptes Sociaux</b>
+                  Vérifiez ou rejetez les profils sociaux soumis par les membres après contrôle de leur bio.
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                  <b className="text-white block mb-1">3. Signalements</b>
+                  Arbitrez les litiges ouverts par les créateurs en cas d&apos;action non réalisée pour sanctionner la fraude.
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                  <b className="text-white block mb-1">4. Tarifs & Plafonds</b>
+                  Configurez le bonus d&apos;inscription, la rémunération par tâche et les quotas quotidiens.
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                  <b className="text-white block mb-1">5. Journal d&apos;Audit</b>
+                  Consultez l&apos;historique immuable de chaque opération sensible réalisée sur la plateforme.
+                </div>
+              </div>
             </div>
           </div>
         )}

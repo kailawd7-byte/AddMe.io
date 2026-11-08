@@ -22,15 +22,22 @@ export function generateSocialVerificationCode(): string {
 }
 
 /**
- * Normalise un identifiant de réseau social
- * - TikTok : retire le @ et passe en minuscules
- * - YouTube : nettoie les espaces et le préfixe @
+ * Normalise un identifiant de réseau social pour les 8 plateformes partenaires
  */
-export function normalizeSocialIdentifier(platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM", identifier: string): string {
+export function normalizeSocialIdentifier(
+  platform: string,
+  identifier: string
+): string {
   let cleaned = identifier.trim();
-  if (platform === "TIKTOK" || platform === "INSTAGRAM") {
+  if (
+    platform === "TIKTOK" ||
+    platform === "INSTAGRAM" ||
+    platform === "X" ||
+    platform === "THREADS" ||
+    platform === "SNAPCHAT"
+  ) {
     cleaned = cleaned.replace(/^@/, "").toLowerCase();
-  } else if (platform === "YOUTUBE") {
+  } else {
     cleaned = cleaned.replace(/^@/, "").trim();
   }
   return cleaned;

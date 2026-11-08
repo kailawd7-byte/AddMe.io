@@ -25,6 +25,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                try {
+                  const saved = localStorage.getItem('addme-theme');
+                  const isDark = saved === 'dark' || ((!saved || saved === 'system') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch(e) {}
                 if (typeof window === 'undefined') return;
                 const origError = console.error;
                 console.error = function(...args) {

@@ -16,7 +16,7 @@ import { validateVideoPublicationUrl } from "@/lib/video-url-validator";
 
 interface SocialAccount {
   id: string;
-  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  platform: string;
   identifier: string;
   status: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
 }

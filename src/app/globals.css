@@ -406,3 +406,126 @@ body {
     animation: none !important;
   }
 }
+
+/* =====================================================================
+   THEME SOMBRE DU DASHBOARD (Obsidienne & Verre Profond)
+   ===================================================================== */
+html.dark {
+  --surface-light: #0B0A14;
+  --surface-card: #151426;
+  --surface-dark-card: #1C1B2E;
+  --border-light: #2A2742;
+  --border-input: #383556;
+  --text-main: #F4F3FA;
+  --text-muted: #A3A1BD;
+}
+
+html.dark body {
+  background: #0B0A14;
+  color: #F4F3FA;
+}
+
+html.dark aside {
+  background: #111020 !important;
+  border-color: #26243A !important;
+}
+
+html.dark .addme-card {
+  background: rgba(21, 20, 38, 0.94) !important;
+  border-color: #2A2742 !important;
+  color: #F4F3FA !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7) !important;
+}
+
+html.dark .addme-card-static {
+  background: #151426 !important;
+  border-color: #2A2742 !important;
+  color: #F4F3FA !important;
+}
+
+html.dark .addme-btn-ghost {
+  background: #1C1B2E !important;
+  color: #F4F3FA !important;
+  border-color: #383556 !important;
+}
+
+html.dark .addme-btn-ghost:hover:not(:disabled) {
+  background: #25243C !important;
+  border-color: #5B3DF5 !important;
+}
+
+html.dark .addme-chip {
+  background: #1C1B2E !important;
+  border-color: #383556 !important;
+  color: #C9C7E0 !important;
+}
+
+html.dark .addme-chip:hover {
+  border-color: #5B3DF5 !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .addme-chip.on {
+  background: #5B3DF5 !important;
+  border-color: #5B3DF5 !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .addme-row {
+  border-color: #26243A !important;
+}
+
+html.dark .addme-thumb {
+  background: #25214C !important;
+  color: #A38EFF !important;
+}
+
+html.dark input[type="text"],
+html.dark input[type="password"],
+html.dark input[type="email"],
+html.dark input[type="number"],
+html.dark textarea,
+html.dark select {
+  background-color: #17162A !important;
+  border-color: #383556 !important;
+  color: #F4F3FA !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: #5B3DF5 !important;
+  background-color: #1C1B32 !important;
+}
+
+html.dark .text-\[\#12122A\] {
+  color: #F4F3FA !important;
+}
+
+html.dark .text-\[\#5A5A70\] {
+  color: #A3A1BD !important;
+}
+
+html.dark .text-\[\#3A3A52\] {
+  color: #D2D0E6 !important;
+}
+
+html.dark .bg-\[\#F7F7FB\] {
+  background-color: #151426 !important;
+}
+
+html.dark .border-\[\#E3E3EE\] {
+  border-color: #2A2742 !important;
+}
+
+html.dark .border-\[\#CFCFE0\] {
+  border-color: #383556 !important;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #111020;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #383556;
+}
