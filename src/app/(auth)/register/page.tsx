@@ -33,6 +33,9 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      if (typeof window !== "undefined" && email) {
+        localStorage.setItem("addme-last-email", email.trim().toLowerCase());
+      }
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -219,7 +222,7 @@ export default function RegisterPage() {
               </span>
             </div>
 
-            <GoogleAuthButton mode="register" />
+            <GoogleAuthButton mode="register" emailHint={email} />
           </div>
         </div>
       )}

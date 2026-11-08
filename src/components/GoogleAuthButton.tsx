@@ -5,12 +5,14 @@ import { useState } from "react";
 interface GoogleAuthButtonProps {
   mode?: "login" | "register";
   className?: string;
+  emailHint?: string;
   onSuccess?: () => void;
 }
 
 export default function GoogleAuthButton({
   mode = "login",
   className = "",
+  emailHint = "",
   onSuccess,
 }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
@@ -27,8 +29,21 @@ export default function GoogleAuthButton({
         onSuccess();
       } catch {}
     }
-    // Redirection immédiate 1-clic vers Google OAuth (aucun formulaire manuel ni saisie d'email)
-    window.location.href = `/api/auth/google?mode=${mode}`;
+
+    // Récupérer l'adresse email déjà renseignée ou mémorisée sur le navigateur pour relier au compte existant
+    let targetEmail = (emailHint || "").trim();
+    if (!targetEmail && typeof window !== "undefined") {
+      targetEmail = localStorage.getItem("addme-last-email") || "";
+    }
+
+    const params = new URLSearchParams();
+    params.set("mode", mode);
+    if (targetEmail) {
+      params.set("email", targetEmail);
+    }
+
+    // Redirection immédiate 1-clic vers le flux Google
+    window.location.href = `/api/auth/google?${params.toString()}`;
   };
 
   return (

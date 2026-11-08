@@ -30,6 +30,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      if (typeof window !== "undefined" && email) {
+        localStorage.setItem("addme-last-email", email.trim().toLowerCase());
+      }
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -169,7 +172,7 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <GoogleAuthButton mode="login" />
+          <GoogleAuthButton mode="login" emailHint={email} />
         </div>
 
         <div className="text-center text-xs text-[#5A5A70] pt-2 border-t border-[#E3E3EE]">
