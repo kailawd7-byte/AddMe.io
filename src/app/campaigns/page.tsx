@@ -315,114 +315,125 @@ export default function CampaignsPage() {
               const isBusy = actionLoadingId === camp.id;
 
               return (
-                <div key={camp.id} className="addme-row">
-                  <div className="addme-thumb">{shortCode}</div>
+                <div
+                  key={camp.id}
+                  className="p-4 sm:p-5 rounded-2xl border border-[#E3E3EE] dark:border-[#26243A] bg-white/70 dark:bg-[#151426] backdrop-blur-md space-y-3.5 transition-all mb-3.5 last:mb-0 shadow-xs"
+                >
+                  {/* En-tête : Miniature + Titre & Profil + Badge Statut */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="addme-thumb shrink-0 !w-11 !h-11 !rounded-xl !text-xs font-black">
+                        {shortCode}
+                      </div>
+                      <div className="min-w-0">
+                        <b className="block text-sm sm:text-base font-bold text-[#12122A] dark:text-white truncate">
+                          Campagne #{idx + 1} · @{camp.socialAccount?.identifier || "profil"}
+                        </b>
+                        <div className="flex items-center gap-2 text-xs text-[#5A5A70] dark:text-[#A3A1BD] mt-0.5">
+                          <span className="font-semibold text-[#5B3DF5] dark:text-[#A38EFF]">
+                            {camp.platform} · {formatAction(camp.actionType)}
+                          </span>
+                          <span>•</span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400">
+                            {camp.rewardPerUnit} pt/action
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <b className="text-base font-bold text-[#12122A]">
-                        Campagne #{idx + 1} · @{camp.socialAccount?.identifier || "profil"}
-                      </b>
-                      <span
-                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                          camp.status === "ACTIVE"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : camp.status === "PAUSED"
-                            ? "bg-amber-50 text-amber-800 border border-amber-200"
-                            : "bg-[#F7F7FB] text-[#5A5A70] border border-[#E3E3EE]"
-                        }`}
-                      >
-                        {camp.status === "ACTIVE"
-                          ? "Active"
+                    <span
+                      className={`shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                        camp.status === "ACTIVE"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                           : camp.status === "PAUSED"
-                          ? "En pause"
-                          : camp.status === "COMPLETED"
-                          ? "Terminée"
-                          : "Annulée"}
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-[#5A5A70] flex flex-wrap items-center gap-2 mt-1">
-                      <span>
-                        {camp.platform} · {formatAction(camp.actionType)}
-                      </span>
-                      <span>•</span>
-                      <span className="font-bold text-[#5B3DF5]">
-                        {camp.rewardPerUnit} pt/action
-                      </span>
-                      <span>•</span>
-                      <span>Budget : {camp.totalCost} pts</span>
-                      <a
-                        href={camp.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[#5B3DF5] hover:underline font-semibold"
-                      >
-                        <span>Voir la publication</span>
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
+                          ? "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                          : "bg-[#F7F7FB] text-[#5A5A70] dark:bg-[#1B1A26] dark:text-[#A3A1BD] border border-[#E3E3EE] dark:border-[#2E2C48]"
+                      }`}
+                    >
+                      {camp.status === "ACTIVE"
+                        ? "Active"
+                        : camp.status === "PAUSED"
+                        ? "En pause"
+                        : camp.status === "COMPLETED"
+                        ? "Terminée"
+                        : "Annulée"}
+                    </span>
                   </div>
 
-                  {/* Barre de progression */}
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-sm font-extrabold text-[#12122A]">
-                        {camp.completedQuantity} / {camp.totalQuantity}
+                  {/* Barre de progression & Métriques complètes */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#5A5A70] dark:text-[#A3A1BD]">
+                        Budget : <strong className="text-[#12122A] dark:text-white font-bold">{camp.totalCost} pts</strong>
+                      </span>
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <span className="text-[#12122A] dark:text-white">{camp.completedQuantity} / {camp.totalQuantity}</span>
+                        <span className="text-[#5B3DF5] dark:text-[#A38EFF]">({pct}%)</span>
                       </div>
-                      <div className="text-[11px] text-[#5A5A70]">{pct}% livré</div>
                     </div>
-                    <i className="block w-[110px] h-2 rounded-full bg-[#E3E3EE] overflow-hidden">
-                      <b
-                        className="block h-full bg-[#5B3DF5] rounded-full transition-all duration-700"
+                    <div className="w-full h-2 rounded-full bg-[#E3E3EE] dark:bg-[#2A2744] overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#5B3DF5] to-[#EC4899] rounded-full transition-all duration-700"
                         style={{ width: `${pct}%` }}
                       />
-                    </i>
+                    </div>
                   </div>
 
-                  {/* Boutons d'action */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleInspect(camp.id)}
-                      className="addme-btn addme-btn-ghost py-2 px-3 text-xs"
-                      title="Voir les exécutions"
+                  {/* Lien Publication & Boutons d'Action */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#E3E3EE] dark:border-[#26243A]">
+                    <a
+                      href={camp.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-[#5B3DF5] dark:text-[#A38EFF] hover:underline font-semibold"
                     >
-                      <Eye className="h-4 w-4 text-[#5B3DF5]" />
-                      <span>Détails</span>
-                    </button>
+                      <span>Voir la publication</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
 
-                    {(camp.status === "ACTIVE" || camp.status === "PAUSED") && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() => handleToggleStatus(camp)}
-                          className="addme-btn addme-btn-ghost py-2 px-3 text-xs"
-                          title={
-                            camp.status === "ACTIVE"
-                              ? "Mettre en pause"
-                              : "Reprendre"
-                          }
-                        >
-                          {camp.status === "ACTIVE" ? (
-                            <Pause className="h-4 w-4 text-amber-600" />
-                          ) : (
-                            <Play className="h-4 w-4 text-emerald-600" />
-                          )}
-                        </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleInspect(camp.id)}
+                        className="addme-btn addme-btn-ghost !py-1.5 !px-3 !text-xs !min-h-[34px]"
+                        title="Voir les exécutions"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-[#5B3DF5] dark:text-[#A38EFF]" />
+                        <span>Détails</span>
+                      </button>
 
-                        <button
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() => handleCancelCampaign(camp.id)}
-                          className="addme-btn addme-btn-ghost py-2 px-3 text-xs text-rose-600 hover:border-rose-300"
-                          title="Annuler et rembourser le solde restant"
-                        >
-                          <XCircle className="h-4 w-4 text-rose-600" />
-                        </button>
-                      </>
-                    )}
+                      {(camp.status === "ACTIVE" || camp.status === "PAUSED") && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => handleToggleStatus(camp)}
+                            className="addme-btn addme-btn-ghost !py-1.5 !px-2.5 !text-xs !min-h-[34px]"
+                            title={
+                              camp.status === "ACTIVE"
+                                ? "Mettre en pause"
+                                : "Reprendre"
+                            }
+                          >
+                            {camp.status === "ACTIVE" ? (
+                              <Pause className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                            ) : (
+                              <Play className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => handleCancelCampaign(camp.id)}
+                            className="addme-btn addme-btn-ghost !py-1.5 !px-2.5 !text-xs !min-h-[34px] text-rose-600 dark:text-rose-400 hover:border-rose-300"
+                            title="Annuler et rembourser le solde restant"
+                          >
+                            <XCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

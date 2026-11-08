@@ -561,7 +561,7 @@ export default function TasksPage() {
           YouTube
         </button>
 
-        <span className="h-5 w-[1px] bg-[#E3E3EE] mx-1 hidden sm:inline-block" />
+        <span className="h-5 w-[1px] bg-[#E3E3EE] dark:bg-[#383556] mx-1 hidden sm:inline-block" />
 
         {/* Filtres par Action */}
         <button
@@ -880,60 +880,75 @@ export default function TasksPage() {
                   activeSession.campaignId === task.campaignId);
 
               return (
-                <div key={task.taskId} className="addme-row">
-                  <div className="addme-thumb">{shortCode}</div>
+                <div
+                  key={task.taskId}
+                  className="p-4 sm:p-5 rounded-2xl border border-[#E3E3EE] dark:border-[#26243A] bg-white/70 dark:bg-[#151426] backdrop-blur-md transition-all mb-3 last:mb-0 hover:border-[#5B3DF5] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xs"
+                >
+                  {/* Partie Haute sur Mobile / Gauche sur Desktop */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="addme-thumb shrink-0 !w-11 !h-11 !rounded-xl !text-xs font-black">
+                      {shortCode}
+                    </div>
 
-                  <div className="flex-1 min-w-0">
-                    <b className="block text-base font-bold text-[#12122A] truncate">
-                      Publication de @{task.targetHandle || `créateur`}
-                    </b>
-                    <div className="text-sm text-[#5A5A70] flex flex-wrap items-center gap-2 mt-0.5">
-                      <span>
-                        {formatPlatform(task.platform)} ·{" "}
-                        {formatAction(task.actionType)}
-                      </span>
-                      {task.remainingSlots !== undefined && (
-                        <>
-                          <span>•</span>
-                          <span className="text-xs">
-                            {task.remainingSlots} place
-                            {task.remainingSlots > 1 ? "s" : ""} restante
-                            {task.remainingSlots > 1 ? "s" : ""}
-                          </span>
-                        </>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <b className="block text-sm sm:text-base font-bold text-[#12122A] dark:text-white truncate">
+                        Publication de @{task.targetHandle || `créateur`}
+                      </b>
+                      <div className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A3A1BD] flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+                        <span className="font-semibold text-[#5B3DF5] dark:text-[#A38EFF]">
+                          {formatPlatform(task.platform)} · {formatAction(task.actionType)}
+                        </span>
+                        {task.remainingSlots !== undefined && (
+                          <>
+                            <span className="opacity-50">•</span>
+                            <span className="text-[11px] sm:text-xs">
+                              {task.remainingSlots} place
+                              {task.remainingSlots > 1 ? "s" : ""} restante
+                              {task.remainingSlots > 1 ? "s" : ""}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <span className="text-[#5B3DF5] font-extrabold text-lg">
-                    +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
-                  </span>
+                  {/* Partie Basse sur Mobile / Droite sur Desktop */}
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-[#E3E3EE]/60 sm:border-0 dark:border-[#26243A]">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] sm:hidden font-medium">
+                        Récompense :
+                      </span>
+                      <span className="text-[#5B3DF5] font-extrabold text-base sm:text-lg whitespace-nowrap">
+                        +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
+                      </span>
+                    </div>
 
-                  {isCurrentlyActive ? (
-                    <button
-                      type="button"
-                      disabled={secondsRemaining > 0 || submitting}
-                      onClick={() => handleSubmitTask()}
-                      className="addme-btn addme-btn-primary text-sm disabled:opacity-60"
-                    >
-                      {submitting
-                        ? "🤖 Vérification..."
-                        : secondsRemaining > 0
-                        ? `Chrono : ${secondsRemaining}s...`
-                        : `Vérifier (+${task.rewardPoints} pt${
-                            task.rewardPoints > 1 ? "s" : ""
-                          })`}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={isStarting}
-                      onClick={() => handleStartTask(task)}
-                      className="addme-btn addme-btn-primary text-sm disabled:opacity-50"
-                    >
-                      {isStarting ? "Inspection Robot..." : "Faire la tâche"}
-                    </button>
-                  )}
+                    {isCurrentlyActive ? (
+                      <button
+                        type="button"
+                        disabled={secondsRemaining > 0 || submitting}
+                        onClick={() => handleSubmitTask()}
+                        className="addme-btn addme-btn-primary !py-2 !px-4 !text-xs sm:!text-sm disabled:opacity-60 shrink-0"
+                      >
+                        {submitting
+                          ? "🤖 Vérification..."
+                          : secondsRemaining > 0
+                          ? `Chrono : ${secondsRemaining}s...`
+                          : `Vérifier (+${task.rewardPoints} pt${
+                              task.rewardPoints > 1 ? "s" : ""
+                            })`}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isStarting}
+                        onClick={() => handleStartTask(task)}
+                        className="addme-btn addme-btn-primary !py-2 !px-4 !text-xs sm:!text-sm disabled:opacity-50 shrink-0"
+                      >
+                        {isStarting ? "Inspection..." : "Faire la tâche"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

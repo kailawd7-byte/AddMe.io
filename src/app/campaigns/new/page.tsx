@@ -233,8 +233,8 @@ export default function NewCampaignPage() {
                         type="button"
                         onClick={() => setSelectedAccountId(acc.id)}
                         className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between ${isSelected
-                            ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8]"
-                            : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] hover:border-[#5B3DF5]"
+                            ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8] dark:bg-[#5B3DF5]/20 dark:border-[#5B3DF5] dark:text-[#A38EFF]"
+                            : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#F4F3FA] hover:border-[#5B3DF5]"
                           }`}
                       >
                         <div>
@@ -286,7 +286,7 @@ export default function NewCampaignPage() {
               <div className="text-xs font-extrabold uppercase tracking-wider text-[#5B3DF5]">
                 Étape 2 · Action demandée
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
                   { id: "LIKE", label: "Like", icon: Heart },
                   { id: "COMMENT", label: "Commentaire", icon: MessageCircle },
@@ -301,13 +301,15 @@ export default function NewCampaignPage() {
                       onClick={() =>
                         setActionType(item.id as "LIKE" | "COMMENT" | "SUBSCRIBE")
                       }
-                      className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${active
-                          ? "bg-[#5B3DF5] border-[#5B3DF5] text-white shadow-md"
-                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] hover:border-[#5B3DF5]"
+                      className={`py-3 px-1.5 sm:p-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 min-h-[76px] ${active
+                          ? "bg-[#5B3DF5] border-[#5B3DF5] text-white shadow-md shadow-[#5B3DF5]/20"
+                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#F4F3FA] hover:border-[#5B3DF5]"
                         }`}
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="font-bold text-sm">{item.label}</span>
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                      <span className="font-bold text-[11px] sm:text-sm tracking-tight truncate w-full text-center block">
+                        {item.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -315,7 +317,7 @@ export default function NewCampaignPage() {
 
               {actionType === "COMMENT" && (
                 <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#5A5A70] mb-1.5">
+                  <label className="block text-xs font-bold text-[#5A5A70] dark:text-[#A3A1BD] mb-1.5">
                     Orientation ou exemple de commentaire souhaité (Optionnel)
                   </label>
                   <input
@@ -323,7 +325,7 @@ export default function NewCampaignPage() {
                     value={commentTemplate}
                     onChange={(e) => setCommentTemplate(e.target.value)}
                     placeholder="Ex: Donnez votre avis sincère sur le montage !"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5]"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F7F7FB] dark:bg-[#17162A] border border-[#CFCFE0] dark:border-[#383556] text-sm text-[#12122A] dark:text-[#F4F3FA] focus:outline-none focus:border-[#5B3DF5]"
                   />
                 </div>
               )}
@@ -338,27 +340,27 @@ export default function NewCampaignPage() {
               {/* Points offerts à chaque personne */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-bold text-[#12122A]">
+                  <label className="text-sm font-bold text-[#12122A] dark:text-white">
                     Points que vous offrez pour chaque action effectuée
                   </label>
-                  <span className="px-2.5 py-1 rounded-lg bg-[#EEEAFF] text-[#3A22C8] font-extrabold text-xs">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#3A22C8] dark:text-[#A38EFF] font-extrabold text-xs">
                     {rewardPerWorker} pt{rewardPerWorker > 1 ? "s" : ""} / action
                   </span>
                 </div>
-                <p className="text-xs text-[#5A5A70] mb-3">
+                <p className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] mb-3">
                   C’est vous qui décidez : plus vous offrez de points (ex: 2 ou 3
                   pts), plus votre publication s’affiche en haut de la liste des
                   tâches !
                 </p>
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                   {[1, 1.5, 2, 3, 5].map((val) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => setRewardPerWorker(val)}
-                      className={`py-2.5 px-2 rounded-xl border text-xs font-extrabold transition-all ${rewardPerWorker === val
-                          ? "bg-[#12122A] border-[#12122A] text-white"
-                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] hover:border-[#5B3DF5]"
+                      className={`py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl border text-[11px] sm:text-xs font-extrabold transition-all text-center truncate ${rewardPerWorker === val
+                          ? "bg-[#12122A] border-[#12122A] text-white dark:bg-[#5B3DF5] dark:border-[#5B3DF5]"
+                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#F4F3FA] hover:border-[#5B3DF5]"
                         }`}
                     >
                       {val} pt{val > 1 ? "s" : ""}
@@ -368,16 +370,16 @@ export default function NewCampaignPage() {
               </div>
 
               {/* Nombre de personnes souhaitées */}
-              <div className="pt-3 border-t border-[#E3E3EE]">
+              <div className="pt-3 border-t border-[#E3E3EE] dark:border-[#26243A]">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-bold text-[#12122A]">
+                  <label className="text-sm font-bold text-[#12122A] dark:text-white">
                     Nombre de personnes uniques souhaitées
                   </label>
                   <span className="font-extrabold text-[#5B3DF5] text-base">
                     {targetQuantity} personnes
                   </span>
                 </div>
-                <p className="text-xs text-[#5A5A70] mb-3">
+                <p className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] mb-3">
                   Chaque personne ne peut agir qu’une seule fois sur votre
                   publication. Si vous choisissez {targetQuantity}, alors{" "}
                   {targetQuantity} personnes différentes feront l’action.
@@ -400,38 +402,41 @@ export default function NewCampaignPage() {
                     onChange={(e) =>
                       setTargetQuantity(Math.max(1, Number(e.target.value) || 1))
                     }
-                    className="w-20 px-3 py-2 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-center font-extrabold text-sm text-[#12122A]"
+                    className="w-20 px-3 py-2 rounded-xl bg-[#F7F7FB] dark:bg-[#17162A] border border-[#CFCFE0] dark:border-[#383556] text-center font-extrabold text-sm text-[#12122A] dark:text-[#F4F3FA]"
                   />
                 </div>
               </div>
 
               {/* Durée de la mission en jours (0.5 pt / jour) */}
-              <div className="pt-3 border-t border-[#E3E3EE]">
+              <div className="pt-3 border-t border-[#E3E3EE] dark:border-[#26243A]">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-bold text-[#12122A]">
+                  <label className="text-sm font-bold text-[#12122A] dark:text-white">
                     Durée de diffusion en jours (0,5 pt / jour)
                   </label>
-                  <span className="font-extrabold text-[#12122A] text-sm">
+                  <span className="font-extrabold text-[#12122A] dark:text-white text-sm">
                     {durationDays} jour{durationDays > 1 ? "s" : ""} (+
                     {durationFee} pts)
                   </span>
                 </div>
-                <p className="text-xs text-[#5A5A70] mb-3">
+                <p className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] mb-3">
                   Pour faire durer votre campagne sur {durationDays} jour(s), le
                   coût de durée est de 0,5 pt par jour (soit {durationFee} pts).
                 </p>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                   {[1, 3, 5, 7, 10].map((d) => (
                     <button
                       key={d}
                       type="button"
                       onClick={() => setDurationDays(d)}
-                      className={`py-2 rounded-xl border text-xs font-bold transition-all ${durationDays === d
-                          ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8]"
-                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]"
+                      className={`py-2 px-1 rounded-xl border text-center transition-all ${durationDays === d
+                          ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8] dark:bg-[#5B3DF5]/20 dark:border-[#5B3DF5] dark:text-[#A38EFF]"
+                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
                         }`}
                     >
-                      {d} j ({d * 0.5} pt)
+                      <span className="block text-xs font-bold">{d} j</span>
+                      <span className="block text-[10px] opacity-75 font-medium leading-none mt-0.5">
+                        ({d * 0.5} pt)
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -451,35 +456,35 @@ export default function NewCampaignPage() {
                 </h3>
               </div>
 
-              <div className="space-y-3 text-sm border-y border-[#E3E3EE] py-4">
+              <div className="space-y-3 text-sm border-y border-[#E3E3EE] dark:border-[#26243A] py-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#5A5A70]">
+                  <span className="text-[#5A5A70] dark:text-[#A3A1BD]">
                     Personnes souhaitées × Récompense
                   </span>
-                  <strong className="text-[#12122A]">
+                  <strong className="text-[#12122A] dark:text-white">
                     {targetQuantity} × {rewardPerWorker} pt = {interactionsCost}{" "}
                     pts
                   </strong>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-[#5A5A70]">
+                  <span className="text-[#5A5A70] dark:text-[#A3A1BD]">
                     Durée ({durationDays} jour{durationDays > 1 ? "s" : ""} × 0,5
                     pt)
                   </span>
-                  <strong className="text-[#12122A]">+{durationFee} pts</strong>
+                  <strong className="text-[#12122A] dark:text-white">+{durationFee} pts</strong>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#5A5A70] pt-2 border-t border-[#E3E3EE]">
+                <div className="flex items-center justify-between text-xs text-[#5A5A70] dark:text-[#A3A1BD] pt-2 border-t border-[#E3E3EE] dark:border-[#26243A]">
                   <span>Rythme estimé</span>
-                  <span className="font-bold text-[#12122A]">
+                  <span className="font-bold text-[#12122A] dark:text-white">
                     ~{dailyPacing} personne(s) / jour
                   </span>
                 </div>
               </div>
 
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-bold text-[#12122A]">
+                <span className="text-sm font-bold text-[#12122A] dark:text-white">
                   Total à débiter :
                 </span>
                 <span className="text-3xl font-extrabold text-[#5B3DF5]">

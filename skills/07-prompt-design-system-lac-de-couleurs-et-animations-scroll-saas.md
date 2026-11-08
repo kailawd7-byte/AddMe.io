@@ -278,3 +278,24 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
 3. **Lisibilité & Contraste WCAG** : Les textes sur le lac de couleurs sombre utilisent un léger `drop-shadow` et des badges `backdrop-blur-xl` pour rester parfaitement nets quelle que soit la couleur qui passe derrière.
 4. **Performance & Compilation** : Aucune dépendance lourde inutile pour le canvas, nettoyage systématique des `requestAnimationFrame` et `IntersectionObserver` dans les `useEffect`, et validation `tsc --noEmit` sans erreur.
 
+
+---
+
+## 8. ARCHITECTURE MOBILE-FIRST, THÈME SOMBRE MOBILE & ROBUSTESSE ÉCRAN ÉTROIT (360px - 430px)
+
+### A. Topbar & Drawer Mobile en Mode Sombre
+- La barre supérieure mobile (`.mobile-topbar`) et le panneau latéral de navigation rétractable (`.mobile-drawer`) doivent adopter le fond Obsidienne Sombre (`#111020`) avec bordure `#26243A` en mode sombre.
+- S'assurer que `darkMode: 'class'` est activé dans `tailwind.config.js` et que les règles CSS explicites pour `html.dark .mobile-topbar` et `html.dark .mobile-drawer` garantissent une lisibilité sans faille des textes et icônes.
+
+### B. Grilles d'Actions & Boutons Sélecteurs (Anti-Collision)
+- Sur écran étroit mobile (360px-414px), les grilles de 3 ou 5 boutons (ex: *Like / Commentaire / Abonnement* ou forfaits de points *1 / 1.5 / 2 / 3 / 5 pts*) doivent comporter un padding condensé `py-3 px-1.5 sm:p-4`, des libellés avec `truncate text-[11px] sm:text-sm` et un alignement vertical centré.
+- Ne jamais laisser déborder des libellés longs comme « Commentaire » ou « Abonnement » sur leurs voisins.
+
+### C. Transformation Lignes/Tableaux en Cartes Mobiles (Mobile Cards)
+- Remplacer les rangées horizontales compressées (`addme-row`) par des cartes autonomes (`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row justify-between gap-3`).
+- **Niveau supérieur** : Vignette + Identifiant @créateur + Plateforme / Type d'action + Badge de statut.
+- **Niveau médian / Progression** : Barre de jauge pleine largeur avec budget et ratio achevé.
+- **Niveau inférieur** : Boutons d'action espacés (`[Détails]`, `[Pause]`, `[Faire la tâche]`) sans fragmentation verticale des puces « • » ou coupure de texte.
+
+### D. En-têtes d'Authentification Adaptatifs
+- Sur les pages d'inscription et de connexion (`/register`, `/login`), adapter l'en-tête pour n'afficher qu'une seule action contextuelle (`Connexion` sur `/register`, `S'inscrire` sur `/login`) avec une typographie de logo adaptée (`text-xl sm:text-2xl`) pour empêcher tout débordement de bouton ou retour à la ligne forcé.

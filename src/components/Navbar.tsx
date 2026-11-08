@@ -290,10 +290,10 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F7FB] text-[#12122A] app-workspace">
         {/* Topbar Mobile : Redirection logo vers la Landing Page "/" */}
-        <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#E3E3EE]">
+        <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-white dark:bg-[#111020] border-b border-[#E3E3EE] dark:border-[#26243A] transition-colors mobile-topbar">
           <Link href="/" className="flex items-center gap-2">
             <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
-            <span className="text-xl font-extrabold tracking-tight text-[#12122A]">
+            <span className="text-xl font-extrabold tracking-tight text-[#12122A] dark:text-white">
               AddMe<span className="text-[#5B3DF5]">.io</span>
             </span>
           </Link>
@@ -301,7 +301,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
             {user && (
               <Link
                 href="/shop"
-                className="px-3 py-1.5 rounded-xl bg-[#EEEAFF] text-[#5B3DF5] font-extrabold text-xs"
+                className="px-3 py-1.5 rounded-xl bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#5B3DF5] dark:text-[#A38EFF] font-extrabold text-xs transition-colors"
               >
                 {user.balance.toFixed(1)} pts
               </Link>
@@ -309,7 +309,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl border border-[#E3E3EE] text-[#12122A] hover:bg-[#F7F7FB]"
+              className="p-2 rounded-xl border border-[#E3E3EE] dark:border-[#26243A] text-[#12122A] dark:text-white hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E] transition-colors"
               aria-label="Ouvrir le menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -319,23 +319,23 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
         {/* Drawer Mobile */}
         {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-[#12122A]/50 backdrop-blur-xs flex">
-            <div className="w-72 bg-white h-full p-5 flex flex-col justify-between shadow-2xl">
+          <div className="lg:hidden fixed inset-0 z-50 bg-[#12122A]/70 backdrop-blur-sm flex">
+            <div className="w-72 bg-white dark:bg-[#111020] h-full p-5 flex flex-col justify-between shadow-2xl border-r border-[#E3E3EE] dark:border-[#26243A] transition-colors mobile-drawer">
               <div>
-                <div className="flex items-center justify-between px-2 mb-6">
+                <div className="flex items-center justify-between px-2 mb-6 border-b border-[#E3E3EE] dark:border-[#26243A] pb-4">
                   <Link
                     href="/"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-2"
                   >
                     <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
-                    <span className="text-2xl font-extrabold text-[#12122A]">
+                    <span className="text-2xl font-extrabold text-[#12122A] dark:text-white">
                       AddMe<span className="text-[#5B3DF5]">.io</span>
                     </span>
                   </Link>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-1.5 rounded-lg text-[#5A5A70] hover:bg-[#F7F7FB]"
+                    className="p-1.5 rounded-lg text-[#5A5A70] dark:text-[#A3A1BD] hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E] transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -351,11 +351,17 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-colors ${
                           item.active
-                            ? "bg-[#EEEAFF] text-[#3A22C8] font-semibold"
-                            : "text-[#3A3A52] hover:bg-[#F7F7FB] font-medium"
+                            ? "bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#3A22C8] dark:text-[#A38EFF] font-semibold"
+                            : "text-[#3A3A52] dark:text-[#C9C7E0] hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E] dark:hover:text-white font-medium"
                         }`}
                       >
-                        <Icon className="h-4 w-4 shrink-0" />
+                        <Icon
+                          className={`h-4 w-4 shrink-0 ${
+                            item.active
+                              ? "text-[#5B3DF5] dark:text-[#A38EFF]"
+                              : "text-[#5A5A70] dark:text-[#A3A1BD]"
+                          }`}
+                        />
                         <span>{item.label}</span>
                       </Link>
                     );
@@ -364,23 +370,23 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               </div>
 
               {user && (
-                <div className="pt-4 border-t border-[#E3E3EE] space-y-3">
+                <div className="pt-4 border-t border-[#E3E3EE] dark:border-[#26243A] space-y-3">
                   <ThemeToggle />
-                  <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE]">
-                    <div className="text-xs font-semibold text-[#12122A] truncate">
+                  <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] dark:bg-[#151426] border border-[#E3E3EE] dark:border-[#26243A] transition-colors">
+                    <div className="text-xs font-semibold text-[#12122A] dark:text-white truncate">
                       {user.email}
                     </div>
-                    <div className="text-[11px] text-[#5A5A70] mt-0.5 flex items-center justify-between">
+                    <div className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD] mt-0.5 flex items-center justify-between">
                       <span>Réputation : {user.reputationScore.toFixed(0)}/100</span>
-                      <span className="font-bold text-[#5B3DF5]">{user.balance.toFixed(1)} pts</span>
+                      <span className="font-bold text-[#5B3DF5] dark:text-[#A38EFF]">{user.balance.toFixed(1)} pts</span>
                     </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
-                    Se déconnecter
+                    <span>Se déconnecter</span>
                   </button>
                 </div>
               )}
@@ -521,39 +527,64 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   // 3. PAGES AUTH & LEGALES (/login, /register, /verify-email...)
   // =========================================================================
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F7FB] text-[#12122A] app-workspace">
-      <header className="w-full bg-white border-b border-[#E3E3EE]">
-        <div className="max-w-[1100px] mx-auto px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-[#F7F7FB] dark:bg-[#0B0A14] text-[#12122A] dark:text-[#F4F3FA] app-workspace transition-colors">
+      <header className="w-full bg-white dark:bg-[#111020] border-b border-[#E3E3EE] dark:border-[#26243A] transition-colors">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link
             href="/"
             title="Retour à l'accueil"
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2 shrink-0"
           >
-            <img src="/icon.svg" alt="AddMe.io" className="h-7 w-7 rounded-lg" />
-            <span className="text-2xl font-extrabold tracking-tight text-[#12122A]">
+            <img src="/icon.svg" alt="AddMe.io" className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg" />
+            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#12122A] dark:text-white">
               AddMe<span className="text-[#5B3DF5]">.io</span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {user ? (
-              <Link href="/dashboard" className="addme-btn addme-btn-primary text-xs">
+              <Link href="/dashboard" className="addme-btn addme-btn-primary !py-2 !px-3 sm:!py-2.5 sm:!px-4 text-xs whitespace-nowrap">
                 Mon Tableau de bord
               </Link>
-            ) : (
-              <>
+            ) : pathname === "/register" ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] hidden sm:inline">
+                  Déjà inscrit ?
+                </span>
                 <Link
                   href="/login"
-                  className="text-sm font-semibold text-[#5A5A70] hover:text-[#12122A] px-3 py-2"
+                  className="addme-btn addme-btn-ghost !py-2 !px-3.5 text-xs whitespace-nowrap"
+                >
+                  Connexion
+                </Link>
+              </div>
+            ) : pathname === "/login" ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] hidden sm:inline">
+                  Nouveau membre ?
+                </span>
+                <Link
+                  href="/register"
+                  className="addme-btn addme-btn-primary !py-2 !px-3 sm:!py-2.5 sm:!px-4 text-xs whitespace-nowrap"
+                >
+                  <span className="hidden sm:inline">Créer un compte (+50 pts)</span>
+                  <span className="sm:hidden">S&apos;inscrire</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="addme-btn addme-btn-ghost !py-1.5 !px-2.5 text-xs whitespace-nowrap"
                 >
                   Connexion
                 </Link>
                 <Link
                   href="/register"
-                  className="addme-btn addme-btn-primary text-xs py-2.5 px-4"
+                  className="addme-btn addme-btn-primary !py-1.5 !px-3 text-xs whitespace-nowrap"
                 >
-                  Créer un compte (+50 pts)
+                  S&apos;inscrire
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>

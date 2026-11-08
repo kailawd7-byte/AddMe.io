@@ -542,9 +542,12 @@ html.dark .app-workspace {
   color: #F4F3FA !important;
 }
 
-html.dark .app-workspace aside {
+html.dark .app-workspace aside,
+html.dark .mobile-topbar,
+html.dark .mobile-drawer {
   background: #111020 !important;
   border-color: #26243A !important;
+  color: #F4F3FA !important;
 }
 
 html.dark .app-workspace .addme-card:not(.addme-card-solde) {
