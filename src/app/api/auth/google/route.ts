@@ -10,18 +10,76 @@ export async function GET(req: NextRequest) {
     process.env.GOOGLE_REDIRECT_URI ||
     `${req.nextUrl.origin}/api/auth/google/callback`;
 
-  // Si de véritables identifiants Google OAuth sont configurés dans .env
-  if (clientId && clientId !== "your-google-client-id") {
+  // 1. Si les identifiants réels Google Cloud sont configurés dans .env
+  if (clientId && clientId !== "your-google-client-id" && clientId.trim().length > 5) {
     const scope = encodeURIComponent("openid email profile");
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+    // prompt=select_account force Google à afficher la liste des comptes Google actifs du navigateur
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+      clientId
+    )}&redirect_uri=${encodeURIComponent(
       redirectUri
     )}&response_type=code&scope=${scope}&access_type=online&prompt=select_account`;
 
     return NextResponse.redirect(googleAuthUrl);
   }
 
-  // Sinon, redirection vers la page de login avec paramètre google=1
-  return NextResponse.redirect(new URL("/login?google=1", req.url));
+  // 2. Mode 1-clic direct (en local ou avant paramétrage Google Cloud) :
+  // Connecte ou inscrit directement l'utilisateur en 1 clic sans aucun formulaire
+  try {
+    const demoEmail = "utilisateur.google@gmail.com";
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "127.0.0.1";
+
+    let user = await prisma.user.findUnique({
+      where: { email: demoEmail },
+    });
+
+    if (!user) {
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const passwordHash = await hashPassword(randomPassword);
+
+      user = await prisma.user.create({
+        data: {
+          email: demoEmail,
+          passwordHash,
+          isEmailVerified: true,
+          registrationIp: clientIp,
+          lastLoginIp: clientIp,
+        },
+      });
+
+      await prisma.ledgerEntry.create({
+        data: {
+          userId: user.id,
+          amount: SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS,
+          type: LEDGER_TYPES.WELCOME_BONUS,
+          referenceType: "SYSTEM",
+          idempotencyKey: `signup_bonus_google_${user.id}`,
+          description: "Bonus de bienvenue (+50 pts) via Inscription Google 1-clic",
+        },
+      });
+    } else {
+      if (!user.isEmailVerified) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { isEmailVerified: true },
+        });
+      }
+    }
+
+    await setSessionCookie({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  } catch (err) {
+    console.error("[GoogleAuth] Erreur 1-clic :", err);
+    return NextResponse.redirect(new URL("/login?error=google_fallback_failed", req.url));
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -38,13 +96,11 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Récupérer l'IP pour le journal
     const clientIp =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
       "127.0.0.1";
 
-    // Vérifier si l'utilisateur existe déjà
     let user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -53,7 +109,6 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       isNewUser = true;
-      // Mot de passe sécurisé aléatoire (l'utilisateur se connecte via Google)
       const randomPassword = crypto.randomBytes(32).toString("hex");
       const passwordHash = await hashPassword(randomPassword);
 
@@ -61,13 +116,12 @@ export async function POST(req: NextRequest) {
         data: {
           email: normalizedEmail,
           passwordHash,
-          isEmailVerified: true, // Google valide obligatoirement l'email
+          isEmailVerified: true,
           registrationIp: clientIp,
           lastLoginIp: clientIp,
         },
       });
 
-      // Écriture de la transaction dans le grand livre (Ledger) pour les +50 pts de bienvenue
       await prisma.ledgerEntry.create({
         data: {
           userId: user.id,
@@ -79,7 +133,6 @@ export async function POST(req: NextRequest) {
         },
       });
     } else {
-      // Si l'utilisateur existait sans avoir vérifié son email, on le valide via Google
       if (!user.isEmailVerified) {
         user = await prisma.user.update({
           where: { id: user.id },
@@ -89,7 +142,6 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Vérifier si le compte est banni
       if (user.status === "BANNED") {
         return NextResponse.json(
           { error: "Ce compte a été suspendu pour non-respect des règles." },
@@ -98,7 +150,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Écriture du cookie de session sécurisé
     await setSessionCookie({
       userId: user.id,
       email: user.email,

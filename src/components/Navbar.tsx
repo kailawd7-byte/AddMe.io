@@ -350,11 +350,19 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`sidebar-nav-link flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-all group ${
-                          item.active ? "active" : ""
+                        className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm font-medium transition-all group ${
+                          item.active
+                            ? "bg-[#EEEAFF] text-[#3A22C8] dark:bg-[#5B3DF5]/30 dark:text-white dark:border dark:border-[#5B3DF5]/50 font-semibold shadow-xs"
+                            : "text-[#3A3A52] hover:bg-[#5B3DF5]/10 hover:text-[#12122A] dark:text-[#C9C7E0] dark:hover:bg-[#25214C] dark:hover:text-white"
                         }`}
                       >
-                        <Icon className="h-4 w-4 shrink-0 transition-colors" />
+                        <Icon
+                          className={`h-4 w-4 shrink-0 transition-colors ${
+                            item.active
+                              ? "text-[#5B3DF5] dark:text-[#A38EFF]"
+                              : "text-[#5A5A70] group-hover:text-[#5B3DF5] dark:text-[#A3A1BD] dark:group-hover:text-[#A38EFF]"
+                          }`}
+                        />
                         <span>{item.label}</span>
                       </Link>
                     );
@@ -389,7 +397,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
         )}
 
         {/* Sidebar Desktop fixe : Redirection logo vers la Landing Page "/" */}
-        <aside className="hidden lg:flex w-[244px] shrink-0 bg-white border-r border-[#E3E3EE] px-4 py-6 flex-col justify-between sticky top-0 h-screen">
+        <aside className="hidden lg:flex w-[244px] shrink-0 bg-white dark:bg-[#111020] border-r border-[#E3E3EE] dark:border-[#26243A] px-4 py-6 flex-col justify-between sticky top-0 h-screen transition-colors">
           <div>
             {/* Logo officiel menant vers "/" */}
             <Link
@@ -402,7 +410,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                 alt="Logo AddMe.io"
                 className="h-8 w-8 rounded-xl shadow-xs group-hover:scale-105 transition-transform"
               />
-              <span className="text-[22px] font-extrabold tracking-tight text-[#12122A]">
+              <span className="text-[22px] font-extrabold tracking-tight text-[#12122A] dark:text-white">
                 AddMe<span className="text-[#5B3DF5]">.io</span>
               </span>
             </Link>
@@ -434,11 +442,19 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`sidebar-nav-link flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-all group ${
-                      item.active ? "active" : ""
+                    className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm font-medium transition-all group ${
+                      item.active
+                        ? "bg-[#EEEAFF] text-[#3A22C8] dark:bg-[#5B3DF5]/30 dark:text-white dark:border dark:border-[#5B3DF5]/50 font-semibold shadow-xs"
+                        : "text-[#3A3A52] hover:bg-[#5B3DF5]/10 hover:text-[#12122A] dark:text-[#C9C7E0] dark:hover:bg-[#25214C] dark:hover:text-white"
                     }`}
                   >
-                    <Icon className="h-4 w-4 shrink-0 transition-colors" />
+                    <Icon
+                      className={`h-4 w-4 shrink-0 transition-colors ${
+                        item.active
+                          ? "text-[#5B3DF5] dark:text-[#A38EFF]"
+                          : "text-[#5A5A70] group-hover:text-[#5B3DF5] dark:text-[#A3A1BD] dark:group-hover:text-[#A38EFF]"
+                      }`}
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -447,7 +463,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
           </div>
 
           {/* Pied de Sidebar */}
-          <div className="pt-4 border-t border-[#E3E3EE] space-y-2.5">
+          <div className="pt-4 border-t border-[#E3E3EE] dark:border-[#26243A] space-y-2.5">
             <ThemeToggle />
             {user ? (
               <>
@@ -460,10 +476,10 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                     <span>Vérifier email</span>
                   </Link>
                 )}
-                <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE]">
+                <div className="px-3 py-2.5 rounded-xl bg-[#F7F7FB] dark:bg-[#151426] border border-[#E3E3EE] dark:border-[#26243A] transition-colors">
                   <div className="flex items-center justify-between gap-1">
                     <span
-                      className="text-xs font-bold text-[#12122A] truncate"
+                      className="text-xs font-bold text-[#12122A] dark:text-white truncate"
                       title={user.email}
                     >
                       {user.email.split("@")[0]}
@@ -472,12 +488,12 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                     )}
                   </div>
-                  <div className="text-[11px] text-[#5A5A70] truncate mt-0.5">
+                  <div className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD] truncate mt-0.5">
                     {user.email}
                   </div>
-                  <div className="mt-2 pt-2 border-t border-[#E3E3EE] flex items-center justify-between text-[11px]">
-                    <span className="text-[#5A5A70]">Réputation</span>
-                    <span className="font-bold text-[#12122A]">
+                  <div className="mt-2 pt-2 border-t border-[#E3E3EE] dark:border-[#26243A] flex items-center justify-between text-[11px]">
+                    <span className="text-[#5A5A70] dark:text-[#A3A1BD]">Réputation</span>
+                    <span className="font-bold text-[#12122A] dark:text-white">
                       {user.reputationScore.toFixed(0)}/100
                     </span>
                   </div>
@@ -485,7 +501,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-[10px] text-xs font-semibold text-[#5A5A70] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-[10px] text-xs font-semibold text-[#5A5A70] dark:text-[#A3A1BD] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Déconnexion</span>

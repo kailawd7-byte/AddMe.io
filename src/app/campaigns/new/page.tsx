@@ -286,7 +286,7 @@ export default function NewCampaignPage() {
               <div className="text-xs font-extrabold uppercase tracking-wider text-[#5B3DF5]">
                 Étape 2 · Action demandée
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
                 {[
                   { id: "LIKE", label: "Like", icon: Heart },
                   { id: "COMMENT", label: "Commentaire", icon: MessageCircle },
@@ -301,13 +301,14 @@ export default function NewCampaignPage() {
                       onClick={() =>
                         setActionType(item.id as "LIKE" | "COMMENT" | "SUBSCRIBE")
                       }
-                      className={`py-3 px-1.5 sm:p-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 min-h-[76px] ${active
+                      className={`py-2.5 px-1 sm:px-3 sm:py-3.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-2 min-h-[70px] sm:min-h-[80px] ${
+                        active
                           ? "bg-[#5B3DF5] border-[#5B3DF5] text-white shadow-md shadow-[#5B3DF5]/20"
                           : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#F4F3FA] hover:border-[#5B3DF5]"
-                        }`}
+                      }`}
                     >
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-                      <span className="font-bold text-[11px] sm:text-sm tracking-tight truncate w-full text-center block">
+                      <span className="font-bold text-[11px] sm:text-xs tracking-tight leading-tight text-center block px-0.5">
                         {item.label}
                       </span>
                     </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   ShieldAlert,
@@ -97,7 +98,8 @@ interface ReportItem {
   };
 }
 
-export default function AdminPage() {
+function AdminDashboard() {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT" | "SUPPORT">("USERS");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -336,6 +338,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     const init = async () => {
       setLoading(true);
       await fetchStats();
@@ -481,9 +484,18 @@ export default function AdminPage() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div suppressHydrationWarning className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500 mb-4" />
+        <span className="text-sm text-slate-400">Chargement de la console d&apos;administration...</span>
+      </div>
+    );
+  }
+
   if (unauthorized) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
+      <div suppressHydrationWarning className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
         <ShieldAlert className="w-16 h-16 text-rose-500 mb-4" />
         <h1 className="text-2xl font-bold">Accès Réservé aux Administrateurs</h1>
         <p className="text-sm text-slate-400 mt-2 max-w-md">
@@ -501,7 +513,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div suppressHydrationWarning className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* En-tête Administration */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
@@ -1441,4 +1453,8 @@ export default function AdminPage() {
     </div>
   );
 }
+
+export default dynamic(() => Promise.resolve(AdminDashboard), {
+  ssr: false,
+});
 

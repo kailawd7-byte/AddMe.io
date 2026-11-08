@@ -382,8 +382,8 @@ html.dark .landing-page .manifesto-card:hover {
 }
 
 .addme-thumb {
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: #E4DFFE;
   color: #5B3DF5;
@@ -391,8 +391,16 @@ html.dark .landing-page .manifesto-card:hover {
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 14px;
-  flex: none;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .addme-thumb {
+    width: 52px;
+    height: 52px;
+    font-size: 14px;
+  }
 }
 
 /* Custom Scrollbar */
