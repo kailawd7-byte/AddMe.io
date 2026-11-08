@@ -20,6 +20,7 @@ import {
   User,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import SupportWidget from "./SupportWidget";
 
 interface UserData {
   id: string;
@@ -349,17 +350,17 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-colors ${
+                        className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-all group ${
                           item.active
-                            ? "bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#3A22C8] dark:text-[#A38EFF] font-semibold"
-                            : "text-[#3A3A52] dark:text-[#C9C7E0] hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E] dark:hover:text-white font-medium"
+                            ? "bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#3A22C8] dark:text-[#A38EFF] font-semibold dark:border dark:border-[#5B3DF5]/30 shadow-xs"
+                            : "text-[#3A3A52] dark:text-[#C9C7E0] hover:bg-[#EEEAFF]/60 dark:hover:bg-[#1E1C33] hover:text-[#12122A] dark:hover:text-white font-medium"
                         }`}
                       >
                         <Icon
-                          className={`h-4 w-4 shrink-0 ${
+                          className={`h-4 w-4 shrink-0 transition-colors ${
                             item.active
                               ? "text-[#5B3DF5] dark:text-[#A38EFF]"
-                              : "text-[#5A5A70] dark:text-[#A3A1BD]"
+                              : "text-[#5A5A70] dark:text-[#A3A1BD] group-hover:text-[#5B3DF5] dark:group-hover:text-white"
                           }`}
                         />
                         <span>{item.label}</span>
@@ -441,15 +442,17 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-all ${
+                    className={`flex items-center gap-3 px-3.5 py-3 rounded-[10px] text-sm transition-all group ${
                       item.active
-                        ? "bg-[#EEEAFF] text-[#3A22C8] font-semibold"
-                        : "text-[#3A3A52] hover:bg-[#F7F7FB] hover:text-[#12122A] font-medium"
+                        ? "bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#3A22C8] dark:text-[#A38EFF] font-semibold dark:border dark:border-[#5B3DF5]/30 shadow-xs"
+                        : "text-[#3A3A52] dark:text-[#C9C7E0] hover:bg-[#EEEAFF]/60 dark:hover:bg-[#1E1C33] hover:text-[#12122A] dark:hover:text-white font-medium"
                     }`}
                   >
                     <Icon
-                      className={`h-4 w-4 shrink-0 ${
-                        item.active ? "text-[#5B3DF5]" : "text-[#5A5A70]"
+                      className={`h-4 w-4 shrink-0 transition-colors ${
+                        item.active
+                          ? "text-[#5B3DF5] dark:text-[#A38EFF]"
+                          : "text-[#5A5A70] dark:text-[#A3A1BD] group-hover:text-[#5B3DF5] dark:group-hover:text-white"
                       }`}
                     />
                     <span>{item.label}</span>
@@ -519,6 +522,9 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
         {/* Contenu Principal */}
         <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+
+        {/* Widget Support Client Flottant (Accessible exclusivement dans l'espace connecté Dashboard) */}
+        <SupportWidget />
       </div>
     );
   }

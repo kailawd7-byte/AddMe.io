@@ -550,6 +550,17 @@ html.dark .mobile-drawer {
   color: #F4F3FA !important;
 }
 
+html.dark .app-workspace aside nav a:hover,
+html.dark .mobile-drawer nav a:hover {
+  background-color: #1E1C33 !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .app-workspace aside nav a:hover svg,
+html.dark .mobile-drawer nav a:hover svg {
+  color: #A38EFF !important;
+}
+
 html.dark .app-workspace .addme-card:not(.addme-card-solde) {
   background: rgba(21, 20, 38, 0.94) !important;
   border-color: #2A2742 !important;

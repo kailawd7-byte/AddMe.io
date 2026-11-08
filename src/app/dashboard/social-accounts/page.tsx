@@ -223,8 +223,8 @@ export default function SocialAccountsPage() {
                     onClick={() => setPlatform(net.id)}
                     className={`py-2 px-2.5 rounded-xl border text-xs font-extrabold transition-all text-center ${
                       platform === net.id
-                        ? "bg-[#12122A] border-[#12122A] text-white shadow-sm"
-                        : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]"
+                        ? "bg-[#12122A] dark:bg-[#5B3DF5] border-[#12122A] dark:border-[#5B3DF5] text-white shadow-sm"
+                        : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
                     }`}
                   >
                     {net.name}
@@ -356,7 +356,7 @@ export default function SocialAccountsPage() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                          <div className="flex-1 flex items-center justify-between px-4 py-2.5 rounded-xl bg-white border border-[#CFCFE0] font-mono font-bold text-sm text-[#3A22C8]">
+                          <div className="flex-1 flex items-center justify-between px-4 py-2.5 rounded-xl bg-white dark:bg-[#17162A] border border-[#CFCFE0] dark:border-[#383556] font-mono font-bold text-sm text-[#3A22C8] dark:text-[#A38EFF]">
                             <span>{acc.verificationCode}</span>
                             <button
                               type="button"

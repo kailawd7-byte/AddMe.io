@@ -194,8 +194,8 @@ function ShopContent() {
             onClick={() => setPaymentMethod("SAASPAY")}
             className={`px-4 py-3 rounded-xl border text-xs font-extrabold flex items-center gap-2.5 transition-all ${
               paymentMethod === "SAASPAY"
-                ? "bg-[#12122A] border-[#12122A] text-white shadow-md"
-                : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]"
+                ? "bg-[#12122A] border-[#12122A] text-white shadow-md dark:bg-[#5B3DF5] dark:border-[#5B3DF5]"
+                : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
             }`}
           >
             <Smartphone className="h-4 w-4 text-[#FFB84D]" />
@@ -213,7 +213,7 @@ function ShopContent() {
             className={`px-4 py-3 rounded-xl border text-xs font-extrabold flex items-center gap-2.5 transition-all ${
               paymentMethod === "STRIPE"
                 ? "bg-[#5B3DF5] border-[#5B3DF5] text-white shadow-md"
-                : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] hover:border-[#5B3DF5]"
+                : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
             }`}
           >
             <CreditCard className="h-4 w-4" />

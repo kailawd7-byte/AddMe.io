@@ -451,17 +451,17 @@ export default function CampaignsPage() {
                 (c) => c.id === inspectCampaignId
               );
               return (
-                <div className="flex items-start justify-between border-b border-[#E3E3EE] pb-3 gap-3">
+                <div className="flex items-start justify-between border-b border-[#E3E3EE] dark:border-[#26243A] pb-3 gap-3">
                   <div>
-                    <b className="text-lg font-extrabold text-[#12122A] block">
+                    <b className="text-lg font-extrabold text-[#12122A] dark:text-white block">
                       Historique des interactions reçues
                     </b>
                     {inspectedCamp && (
-                      <span className="text-xs text-[#5A5A70]">
+                      <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD]">
                         {inspectedCamp.platform} ·{" "}
                         {formatAction(inspectedCamp.actionType)} (@
                         {inspectedCamp.socialAccount?.identifier || "profil"}) •{" "}
-                        <strong className="text-[#5B3DF5]">
+                        <strong className="text-[#5B3DF5] dark:text-[#A38EFF]">
                           {inspectedCamp.completedQuantity} /{" "}
                           {inspectedCamp.totalQuantity} action
                           {inspectedCamp.totalQuantity > 1 ? "s" : ""} réalisée
@@ -476,20 +476,20 @@ export default function CampaignsPage() {
                       setInspectCampaignId(null);
                       setReportingCompletionId(null);
                     }}
-                    className="p-1.5 rounded-lg hover:bg-[#F7F7FB]"
+                    className="p-1.5 rounded-lg hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E] transition-colors"
                   >
-                    <X className="h-5 w-5 text-[#5A5A70]" />
+                    <X className="h-5 w-5 text-[#5A5A70] dark:text-[#A3A1BD]" />
                   </button>
                 </div>
               );
             })()}
 
             {inspectLoading ? (
-              <div className="py-8 text-center text-sm text-[#5A5A70]">
+              <div className="py-8 text-center text-sm text-[#5A5A70] dark:text-[#A3A1BD]">
                 Chargement de l’historique des interactions...
               </div>
             ) : inspectCompletions.length === 0 ? (
-              <div className="py-8 text-center text-sm text-[#5A5A70]">
+              <div className="py-8 text-center text-sm text-[#5A5A70] dark:text-[#A3A1BD]">
                 Aucune exécution enregistrée pour le moment.
               </div>
             ) : (
@@ -513,23 +513,23 @@ export default function CampaignsPage() {
                   const statusStyle =
                     comp.status === "APPROVED" ||
                     comp.status === "PENDING_RETENTION"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
                       : comp.status === "IN_PROGRESS"
-                      ? "bg-[#EEEAFF] text-[#3A22C8] border-[#D9D2FF]"
-                      : "bg-rose-50 text-rose-700 border-rose-200";
+                      ? "bg-[#EEEAFF] text-[#3A22C8] border-[#D9D2FF] dark:bg-[#5B3DF5]/20 dark:text-[#A38EFF] dark:border-[#5B3DF5]/40"
+                      : "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800";
 
                   return (
                     <div
                       key={comp.id}
-                      className="p-4 rounded-xl bg-[#F7F7FB] border border-[#E3E3EE] flex flex-wrap items-center justify-between gap-3"
+                      className="p-4 rounded-xl bg-[#F7F7FB] dark:bg-[#1C1B2E] border border-[#E3E3EE] dark:border-[#26243A] flex flex-wrap items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-full bg-[#EEEAFF] text-[#5B3DF5] font-extrabold text-xs flex items-center justify-center shrink-0 border border-[#D9D2FF]">
+                        <div className="h-9 w-9 rounded-full bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#5B3DF5] dark:text-[#A38EFF] font-extrabold text-xs flex items-center justify-center shrink-0 border border-[#D9D2FF] dark:border-[#5B3DF5]/40">
                           #{index + 1}
                         </div>
 
                         <div className="text-xs min-w-0">
-                          <div className="font-bold text-[#12122A] flex flex-wrap items-center gap-2">
+                          <div className="font-bold text-[#12122A] dark:text-white flex flex-wrap items-center gap-2">
                             <span>
                               {comp.workerHandle
                                 ? `@${comp.workerHandle}`
@@ -537,7 +537,7 @@ export default function CampaignsPage() {
                                   `Membre #${comp.workerUserId.slice(0, 6)}`}
                             </span>
                             {comp.workerEmailMasked && (
-                              <span className="text-[11px] font-normal text-[#5A5A70]">
+                              <span className="text-[11px] font-normal text-[#5A5A70] dark:text-[#A3A1BD]">
                                 ({comp.workerEmailMasked})
                               </span>
                             )}
@@ -548,7 +548,7 @@ export default function CampaignsPage() {
                             </span>
                           </div>
 
-                          <div className="text-[#5A5A70] mt-1 flex flex-wrap items-center gap-2">
+                          <div className="text-[#5A5A70] dark:text-[#A3A1BD] mt-1 flex flex-wrap items-center gap-2">
                             <span>
                               {comp.submittedAt
                                 ? `Validé le ${new Date(
@@ -559,7 +559,7 @@ export default function CampaignsPage() {
                                   ).toLocaleString("fr-FR")}`}
                             </span>
                             <span>•</span>
-                            <span className="font-extrabold text-[#5B3DF5]">
+                            <span className="font-extrabold text-[#5B3DF5] dark:text-[#A38EFF]">
                               +{pts} pt{pts > 1 ? "s" : ""} reçu
                               {pts > 1 ? "s" : ""}
                             </span>
@@ -572,7 +572,7 @@ export default function CampaignsPage() {
                           <button
                             type="button"
                             onClick={() => setReportingCompletionId(comp.id)}
-                            className="text-xs font-bold text-rose-600 hover:underline shrink-0"
+                            className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline shrink-0"
                           >
                             Signaler un litige
                           </button>
@@ -586,9 +586,9 @@ export default function CampaignsPage() {
             {reportingCompletionId && (
               <form
                 onSubmit={handleSubmitReport}
-                className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-3"
+                className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 space-y-3"
               >
-                <div className="text-xs font-bold text-rose-900">
+                <div className="text-xs font-bold text-rose-900 dark:text-rose-200">
                   Motif du signalement (ex: action non visible sur ma publication)
                 </div>
                 <input
@@ -597,20 +597,20 @@ export default function CampaignsPage() {
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
                   placeholder="Expliquez brièvement le problème..."
-                  className="w-full px-3 py-2 rounded-lg bg-white border border-rose-300 text-xs text-[#12122A]"
+                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#17162A] border border-rose-300 dark:border-rose-800 text-xs text-[#12122A] dark:text-white placeholder-[#5A5A70] dark:placeholder-[#A3A1BD] focus:outline-none focus:border-rose-500"
                 />
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setReportingCompletionId(null)}
-                    className="px-3 py-1.5 rounded-lg text-xs text-[#5A5A70]"
+                    className="px-3 py-1.5 rounded-lg text-xs text-[#5A5A70] dark:text-[#A3A1BD] hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E]"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
                     disabled={submittingReport}
-                    className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold"
+                    className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors"
                   >
                     Envoyer le signalement
                   </button>

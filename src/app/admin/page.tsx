@@ -24,6 +24,12 @@ import {
   Scale,
   Sliders,
   History,
+  MessageSquare,
+  Send,
+  MessageCircle,
+  Inbox,
+  Reply,
+  Headphones,
 } from "lucide-react";
 
 interface AdminStats {
@@ -92,11 +98,22 @@ interface ReportItem {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT">("USERS");
+  const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT" | "SUPPORT">("USERS");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Onglet Support Client (Répertoire & Messagerie)
+  const [supportTickets, setSupportTickets] = useState<any[]>([]);
+  const [supportStats, setSupportStats] = useState<{ totalTickets: number; pendingTickets: number } | null>(null);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportFilter, setSupportFilter] = useState<string>("ALL");
+  const [supportCategoryFilter, setSupportCategoryFilter] = useState<string>("ALL");
+  const [supportSearch, setSupportSearch] = useState<string>("");
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [adminReplyText, setAdminReplyText] = useState<string>("");
+  const [adminReplySubmitting, setAdminReplySubmitting] = useState<boolean>(false);
 
   // Onglet Utilisateurs
   const [users, setUsers] = useState<AdminUserItem[]>([]);
@@ -211,11 +228,84 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSupportTickets = async () => {
+    setSupportLoading(true);
+    try {
+      const q = new URLSearchParams();
+      if (supportFilter !== "ALL") q.set("status", supportFilter);
+      if (supportCategoryFilter !== "ALL") q.set("category", supportCategoryFilter);
+      if (supportSearch.trim()) q.set("search", supportSearch.trim());
+
+      const res = await fetch(`/api/admin/support?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSupportTickets(data.tickets || []);
+        setSupportStats(data.stats || null);
+        if (selectedTicket) {
+          const updated = (data.tickets || []).find((t: any) => t.id === selectedTicket.id);
+          if (updated) setSelectedTicket(updated);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  const handleAdminReply = async (ticketId: string, markResolved: boolean = false) => {
+    if (!adminReplyText.trim()) {
+      alert("Veuillez saisir votre message de réponse.");
+      return;
+    }
+
+    setAdminReplySubmitting(true);
+    try {
+      const res = await fetch(`/api/admin/support/${ticketId}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: adminReplyText.trim(),
+          newStatus: markResolved ? "RESOLVED" : "ANSWERED",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erreur lors de l'envoi de la réponse.");
+      } else {
+        setFeedback({ type: "success", text: "Réponse envoyée avec succès à l'usager !" });
+        setAdminReplyText("");
+        await fetchSupportTickets();
+      }
+    } catch {
+      alert("Erreur réseau.");
+    } finally {
+      setAdminReplySubmitting(false);
+    }
+  };
+
+  const handleUpdateTicketStatus = async (ticketId: string, status: "OPEN" | "ANSWERED" | "RESOLVED") => {
+    try {
+      const res = await fetch(`/api/admin/support/${ticketId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        await fetchSupportTickets();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       await fetchStats();
       await fetchUsers();
+      await fetchSupportTickets();
       setLoading(false);
     };
     init();
@@ -226,6 +316,7 @@ export default function AdminPage() {
     if (activeTab === "REPORTS") fetchReports();
     if (activeTab === "SETTINGS") fetchSettings();
     if (activeTab === "AUDIT") fetchAuditLogs();
+    if (activeTab === "SUPPORT") fetchSupportTickets();
   }, [activeTab]);
 
   const handleUpdateUserStatus = async (userId: string, newStatus: string) => {
@@ -453,9 +544,9 @@ export default function AdminPage() {
             <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-900/60 to-indigo-950/40 border border-indigo-900/40 space-y-3">
               <div className="flex items-center gap-2 text-indigo-300 font-extrabold text-sm">
                 <FileText className="w-4 h-4 text-[#FFB84D]" />
-                <span>Guide rapide des 5 outils de contrôle de votre Dashboard Admin</span>
+                <span>Guide rapide des 6 outils de contrôle de votre Dashboard Admin</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs text-slate-300 leading-relaxed">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs text-slate-300 leading-relaxed">
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
                   <b className="text-white block mb-1">1. Utilisateurs</b>
                   Visualisez vos membres inscrits, leur réputation et solde. Suspendez ou ajustez manuellement les points.
@@ -475,6 +566,10 @@ export default function AdminPage() {
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
                   <b className="text-white block mb-1">5. Journal d&apos;Audit</b>
                   Consultez l&apos;historique immuable de chaque opération sensible réalisée sur la plateforme.
+                </div>
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                  <b className="text-white block mb-1">6. Support Client</b>
+                  Répertoire des messages : répondez aux questions des usagers et suivez les échanges.
                 </div>
               </div>
             </div>
@@ -522,6 +617,20 @@ export default function AdminPage() {
             }`}
           >
             <History className="w-4 h-4" /> Journal d&apos;Audit
+          </button>
+          <button
+            onClick={() => setActiveTab("SUPPORT")}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition relative ${
+              activeTab === "SUPPORT" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4 text-[#FFB84D]" />
+            <span>Support Client</span>
+            {supportStats && supportStats.pendingTickets > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-[10px] font-black text-white">
+                {supportStats.pendingTickets}
+              </span>
+            )}
           </button>
         </div>
 
@@ -984,6 +1093,306 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* CONTENU ONGLET 6 : RÉPERTOIRE & SUPPORT CLIENT */}
+        {activeTab === "SUPPORT" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Headphones className="w-5 h-5 text-indigo-400" /> Répertoire des Messages & Support Client
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Consultez les demandes des usagers, suivez les échanges et apportez vos réponses officielles.
+                </p>
+              </div>
+
+              <button
+                onClick={fetchSupportTickets}
+                className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 self-start sm:self-auto"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Actualiser ({supportTickets.length})
+              </button>
+            </div>
+
+            {/* Barre de Recherche et Filtres */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={supportSearch}
+                  onChange={(e) => setSupportSearch(e.target.value)}
+                  placeholder="Rechercher par nom, email, identifiant ou contenu..."
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {/* Filtres de statut */}
+                {(
+                  [
+                    { id: "ALL", label: "Tous" },
+                    { id: "OPEN", label: "⏳ En attente" },
+                    { id: "ANSWERED", label: "✓ Répondu" },
+                    { id: "RESOLVED", label: "✓ Résolu" },
+                  ] as const
+                ).map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => {
+                      setSupportFilter(f.id);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                      supportFilter === f.id
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Layout 2 Colonnes : Répertoire de gauche + Fil de discussion de droite */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* Colonne Gauche : Liste des usagers et demandes */}
+              <div className="lg:col-span-5 space-y-2.5 max-h-[750px] overflow-y-auto pr-1">
+                {supportLoading ? (
+                  <div className="py-12 text-center text-xs text-slate-400">
+                    Chargement des messages...
+                  </div>
+                ) : supportTickets.length === 0 ? (
+                  <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-400 space-y-2">
+                    <Inbox className="w-8 h-8 mx-auto text-slate-600" />
+                    <p className="text-xs font-medium">Aucun message ne correspond à ce filtre.</p>
+                  </div>
+                ) : (
+                  supportTickets.map((ticket) => {
+                    const isSelected = selectedTicket?.id === ticket.id;
+                    const lastMsg = ticket.messages[ticket.messages.length - 1];
+
+                    const statusPill =
+                      ticket.status === "OPEN"
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        : ticket.status === "ANSWERED"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+
+                    const statusText =
+                      ticket.status === "OPEN"
+                        ? "En attente"
+                        : ticket.status === "ANSWERED"
+                        ? "Répondu"
+                        : "Résolu";
+
+                    return (
+                      <div
+                        key={ticket.id}
+                        onClick={() => setSelectedTicket(ticket)}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-indigo-950/40 border-indigo-500/60 shadow-lg shadow-indigo-950/40"
+                            : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900"
+                        }`}
+                      >
+                        {/* En-tête usager */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <b className="text-xs font-bold text-white truncate">
+                                {ticket.userName}
+                              </b>
+                              <span className="text-[11px] text-slate-400 truncate">
+                                ({ticket.userEmail})
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
+                              ID: {ticket.userId} • Ticket #{ticket.id.slice(-6)}
+                            </span>
+                          </div>
+
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${statusPill}`}>
+                            {statusText}
+                          </span>
+                        </div>
+
+                        {/* Sujet et extrait du message */}
+                        <div className="mt-2.5">
+                          <span className="text-xs font-bold text-indigo-300 block truncate">
+                            {ticket.subject}
+                          </span>
+                          <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                            {lastMsg?.content || ""}
+                          </p>
+                        </div>
+
+                        {/* Date et catégorie */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 font-semibold border border-slate-800">
+                            {ticket.category}
+                          </span>
+                          <span>
+                            {new Date(ticket.updatedAt).toLocaleString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Colonne Droite : Fil de discussion complet & Réponse */}
+              <div className="lg:col-span-7 p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 min-h-[500px] flex flex-col justify-between">
+                {selectedTicket ? (
+                  <>
+                    <div className="space-y-4">
+                      {/* En-tête de la conversation */}
+                      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-base font-extrabold text-white">
+                              {selectedTicket.subject}
+                            </h4>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-950 text-slate-400 border border-slate-800">
+                              #{selectedTicket.id}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
+                            <span>Usager : <strong className="text-white">{selectedTicket.userName}</strong> ({selectedTicket.userEmail})</span>
+                            <span>•</span>
+                            <span className="font-mono text-slate-500">UID: {selectedTicket.userId}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions rapides sur le statut */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateTicketStatus(selectedTicket.id, "OPEN")}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                              selectedTicket.status === "OPEN"
+                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                            }`}
+                          >
+                            En attente
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateTicketStatus(selectedTicket.id, "ANSWERED")}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                              selectedTicket.status === "ANSWERED"
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                            }`}
+                          >
+                            Répondu
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateTicketStatus(selectedTicket.id, "RESOLVED")}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                              selectedTicket.status === "RESOLVED"
+                                ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40"
+                                : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                            }`}
+                          >
+                            Résolu
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Fil des messages échangés */}
+                      <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                        {selectedTicket.messages.map((msg: any) => {
+                          const isAdmin = msg.senderRole === "ADMIN";
+                          return (
+                            <div
+                              key={msg.id}
+                              className={`p-4 rounded-2xl border text-xs leading-relaxed space-y-1.5 ${
+                                isAdmin
+                                  ? "bg-indigo-950/40 border-indigo-800/60 ml-6"
+                                  : "bg-slate-950/80 border-slate-800 mr-6"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[11px] font-bold">
+                                <span className={isAdmin ? "text-indigo-300 flex items-center gap-1.5" : "text-white flex items-center gap-1.5"}>
+                                  {isAdmin ? "🛡️ Support Officiel AddMe.io" : `👤 ${msg.senderName} (${msg.senderEmail})`}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  {new Date(msg.createdAt).toLocaleString("fr-FR")}
+                                </span>
+                              </div>
+                              <p className="text-slate-200 whitespace-pre-wrap m-0">
+                                {msg.content}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Zone de rédaction de la réponse Administrateur */}
+                    <div className="pt-3 border-t border-slate-800 space-y-3">
+                      <div className="text-xs font-bold text-white flex items-center gap-2">
+                        <Reply className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Répondre à {selectedTicket.userName} :</span>
+                      </div>
+
+                      <textarea
+                        rows={3}
+                        value={adminReplyText}
+                        onChange={(e) => setAdminReplyText(e.target.value)}
+                        placeholder={`Rédigez ici votre réponse claire et explicite pour guider ${selectedTicket.userName}...`}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      />
+
+                      <div className="flex flex-wrap items-center justify-end gap-2.5">
+                        <button
+                          type="button"
+                          disabled={adminReplySubmitting || !adminReplyText.trim()}
+                          onClick={() => handleAdminReply(selectedTicket.id, false)}
+                          className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>{adminReplySubmitting ? "Envoi..." : "Envoyer la réponse"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={adminReplySubmitting || !adminReplyText.trim()}
+                          onClick={() => handleAdminReply(selectedTicket.id, true)}
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Envoyer & Marquer comme Résolu</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="my-auto py-16 text-center text-slate-500 space-y-3">
+                    <MessageCircle className="w-12 h-12 mx-auto text-slate-700" />
+                    <div>
+                      <b className="text-slate-300 text-sm block">Sélectionnez une conversation</b>
+                      <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                        Cliquez sur un usager dans le répertoire à gauche pour consulter l&apos;intégralité de ses messages et lui apporter votre réponse.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
