@@ -10,102 +10,27 @@ export async function GET(req: NextRequest) {
     process.env.GOOGLE_REDIRECT_URI ||
     `${req.nextUrl.origin}/api/auth/google/callback`;
 
-  const emailParam = req.nextUrl.searchParams.get("email");
-
   // 1. Si les identifiants réels Google Cloud sont configurés dans .env
   if (clientId && clientId !== "your-google-client-id" && clientId.trim().length > 5) {
     const scope = encodeURIComponent("openid email profile");
-    // prompt=select_account force Google à afficher la liste des comptes Google actifs du navigateur
-    let googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+    // prompt=select_account force Google à afficher la liste officielle des comptes Google du navigateur (ex: kmwmatthieu@gmail.com)
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
       clientId.trim()
     )}&redirect_uri=${encodeURIComponent(
       redirectUri
     )}&response_type=code&scope=${scope}&access_type=online&prompt=select_account`;
 
-    if (emailParam) {
-      googleAuthUrl += `&login_hint=${encodeURIComponent(emailParam.trim().toLowerCase())}`;
-    }
-
     return NextResponse.redirect(googleAuthUrl);
   }
 
-  // 2. Traitement local sans clé Google Cloud :
-  // Relie STRICTEMENT au compte existant créé par email au lieu de générer un faux identifiant
-  try {
-    const clientIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "127.0.0.1";
-
-    let targetEmail = emailParam?.trim().toLowerCase();
-
-    // Si aucune adresse email n'est transmise dans les paramètres, on recherche le compte existant le plus récent
-    // pour relier directement l'usager à son vrai compte créé au préalable
-    if (!targetEmail) {
-      const lastUser = await prisma.user.findFirst({
-        where: { role: { not: "ADMIN" } },
-        orderBy: { createdAt: "desc" },
-      });
-      if (lastUser) {
-        targetEmail = lastUser.email;
-      }
-    }
-
-    // S'il n'existe encore aucun compte dans la base, on utilise une adresse par défaut
-    if (!targetEmail) {
-      targetEmail = "createur.addme@gmail.com";
-    }
-
-    let user = await prisma.user.findUnique({
-      where: { email: targetEmail },
-    });
-
-    if (!user) {
-      // Si le compte n'existait pas encore, on le crée avec son adresse email réelle
-      const randomPassword = crypto.randomBytes(32).toString("hex");
-      const passwordHash = await hashPassword(randomPassword);
-
-      user = await prisma.user.create({
-        data: {
-          email: targetEmail,
-          passwordHash,
-          isEmailVerified: true,
-          registrationIp: clientIp,
-          lastLoginIp: clientIp,
-        },
-      });
-
-      await prisma.ledgerEntry.create({
-        data: {
-          userId: user.id,
-          amount: SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS,
-          type: LEDGER_TYPES.WELCOME_BONUS,
-          referenceType: "SYSTEM",
-          idempotencyKey: `signup_bonus_google_${user.id}`,
-          description: "Bonus de bienvenue (+50 pts) via Inscription Google",
-        },
-      });
-    } else {
-      // LE COMPTE EXISTE DÉJÀ : ON CONSERVE INTÉGRALEMENT LE COMPTE EXISTANT SANS CRÉER D'AUTRE IDENTIFIANT !
-      if (!user.isEmailVerified) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { isEmailVerified: true },
-        });
-      }
-    }
-
-    await setSessionCookie({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  } catch (err) {
-    console.error("[GoogleAuth] Erreur 1-clic :", err);
-    return NextResponse.redirect(new URL("/login?error=google_fallback_failed", req.url));
-  }
+  // 2. Si GOOGLE_CLIENT_ID n'est pas encore configuré dans .env :
+  // On NE crée AUCUN compte fictif artificiel. On redirige vers la page de connexion avec une explication claire.
+  return NextResponse.redirect(
+    new URL(
+      "/login?error=google_not_configured",
+      req.url
+    )
+  );
 }
 
 export async function POST(req: NextRequest) {

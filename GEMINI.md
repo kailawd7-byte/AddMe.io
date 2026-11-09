@@ -341,3 +341,4 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
   - Fournir toujours deux actions distinctes :
     1. **Action rapide en 1 clic** (ex: *« Marquer comme résolu »*) appliquant automatiquement un modèle de réponse standardisé sans obliger l'administrateur à rédiger un message.
     2. **Action détaillée** (ex: *« Envoyer la réponse »*) permettant un message personnalisé et circonstancié.
+

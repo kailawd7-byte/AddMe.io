@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -22,6 +22,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lockedNotice, setLockedNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") === "google_not_configured") {
+        setError(
+          "Configuration Google requise : Pour analyser et lister les comptes réels de votre navigateur (comme sur votre capture d'écran), ajoutez vos clés GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans le fichier .env."
+        );
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
