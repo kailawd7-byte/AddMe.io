@@ -342,3 +342,48 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
     1. **Action rapide en 1 clic** (ex: *« Marquer comme résolu »*) appliquant automatiquement un modèle de réponse standardisé sans obliger l'administrateur à rédiger un message.
     2. **Action détaillée** (ex: *« Envoyer la réponse »*) permettant un message personnalisé et circonstancié.
 
+### G. Architecture Anti-Fraude Multimodale (IA Vision Sentinel & Robot Autonome)
+- **Problématique** : Sur les plateformes d'engagement social, les utilisateurs contournent souvent la vérification (clic éclair sans effectuer l'action, compteurs arrondis par les réseaux sociaux au-delà de 10 000 followers, ou blocages de scraping par les CDN de TikTok/Instagram).
+- **Architecture de Résolution à Triple Verrou** :
+  1. **Focus Timer Obligatoire (20 secondes)** : Bloque la soumission pendant 20s et surveille le focus de la fenêtre. Si l'utilisateur quitte la page trop vite, la tâche échoue automatiquement.
+  2. **Scraping Hybride SSR + API Tierces** :
+     - YouTube : API officielle `YouTube Data API v3` pour vérification instantanée et récupération des miniatures/titres.
+     - TikTok : Moteur TikWM + extraction regex pour les vidéos et profils récents.
+  3. **IA Sentinel Vision (Google Gemini 2.5 Flash)** :
+     - Lorsque les compteurs réseau sont mis en cache ou arrondis (ex: 10,4k), l'utilisateur téléverse une capture d'écran de preuve.
+     - L'IA Vision inspecte l'image et détecte automatiquement :
+       - La présence du bouton "Abonné" / "Following" ou du badge actif.
+       - La présence du cœur rouge actif pour les likes.
+       - La correspondance exacte du @pseudo ou du commentaire textuel.
+     - Si le verdict IA est positif (`confidence > 0.85`), la tâche est validée immédiatement et les points sont crédités sans intervention humaine.
+
+### H. Système de Double Entrée Comptable Inaltérable (Ledger & Idempotence)
+- **Règle Fondamentale** : Ne jamais modifier directement un solde utilisateur (`user.points += 50` est formellement proscrit).
+- **Architecture du Grand Livre (Ledger)** :
+  - Chaque mouvement de points est consigné dans une table immuable `LedgerEntry`.
+  - Le solde réel disponible est calculé par agrégation : `prisma.ledgerEntry.aggregate({ where: { userId }, _sum: { amount: true } })`.
+  - **Idempotence Stricte** : Chaque transaction possède une clé unique `idempotencyKey` (ex: `signup_bonus_${user.id}`, `task_${taskId}_user_${userId}`). Cela empêche mathématiquement le double-crédit même en cas de clics multiples ou de requêtes réseau répétées.
+
+### I. Sécurité des Clés & Déploiement Vercel (Local .env vs Cloud Secrets)
+- **Ségrégation Stricte** :
+  - Le fichier `.env` reste exclusivement sur la machine locale et figure impérativement dans `.gitignore`.
+  - Pour la production Vercel, injecter les variables directement dans *Settings > Environment Variables* (environnement **Production**).
+  - Les clés sensibles (`GOOGLE_CLIENT_SECRET`, `GEMINI_API_KEY`, `YOUTUBE_API_KEY`) doivent être déclarées en mode **Sensitive** pour être masquées aux collaborateurs.
+- **URLs de Redirection OAuth** :
+  - Toujours déclarer deux URLs de redirection distinctes dans Google Cloud Console :
+    1. Local : `http://localhost:3000/api/auth/google/callback`
+    2. Production : `https://[votre-domaine].vercel.app/api/auth/google/callback`
+
+### J. Landing Page Hybride Clair/Sombre Sélectif (Protection du Contraste)
+- **Le Piège du Mode Sombre Global** : Appliquer un dark mode aveugle sur une Landing Page SaaS casse souvent la lisibilité des textes noirs posés sur des sections prévues pour être claires (ex: explications de fonctionnement).
+- **La Règle d'Isolation** :
+  - Le mode sombre global (`.dark`) s'applique en priorité à l'espace applicatif authentifié (`/dashboard`, `/tasks`, etc.).
+  - Sur la Landing Page, le dark mode ne doit transformer que les panels spécifiquement désignés comme immersifs (Packs de tarification, simulateur interactif, Hero) en utilisant des classes Tailwind explicites (`bg-[#0B0A14] text-white border-white/10`), tout en maintenant la lisibilité soyeuse des sections documentaires.
+
+### K. Architecture Prête pour l'Agrégation de Paiements (Stripe / Paystack / LemonSqueezy)
+- **Flux Prêt à l'Emploi** :
+  - Table `Purchase` reliée au `LedgerEntry` pour tracer chaque rechargement de points.
+  - Route Webhook sécurisée (`/api/webhooks/stripe`) vérifiant la signature cryptographique (`stripe.webhooks.constructEvent`).
+  - Crédit instantané des points achetés via la clé d'idempotence basée sur l'ID de session de paiement (`stripe_checkout_${session.id}`).
+
+
