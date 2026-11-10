@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { toggleCampaignStatus } from "@/lib/campaigns";
+import { toggleCampaignStatus, updateCampaign } from "@/lib/campaigns";
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split("@");
@@ -122,21 +122,46 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { status } = body;
+    const { status, rewardPerWorker, totalQuantity, dailyCap, commentTemplate } = body;
 
-    if (status !== "ACTIVE" && status !== "PAUSED") {
-      return NextResponse.json(
-        { error: "Statut invalide. Vous pouvez uniquement activer ou mettre en pause la campagne." },
-        { status: 400 }
-      );
+    // 1. Mise à jour du statut uniquement
+    if (status !== undefined && rewardPerWorker === undefined && totalQuantity === undefined && dailyCap === undefined && commentTemplate === undefined) {
+      if (status !== "ACTIVE" && status !== "PAUSED") {
+        return NextResponse.json(
+          { error: "Statut invalide. Vous pouvez uniquement activer ou mettre en pause la campagne." },
+          { status: 400 }
+        );
+      }
+
+      const updated = await toggleCampaignStatus(id, user.id, status);
+
+      return NextResponse.json({
+        success: true,
+        message: `Campagne ${status === "ACTIVE" ? "réactivée" : "mise en pause"} avec succès.`,
+        campaign: updated,
+      });
     }
 
-    const updated = await toggleCampaignStatus(id, user.id, status);
+    // 2. Modification complète des paramètres (points, volume, cadence, commentaire)
+    const result = await updateCampaign(id, user.id, {
+      rewardPerWorker: rewardPerWorker !== undefined ? Number(rewardPerWorker) : undefined,
+      totalQuantity: totalQuantity !== undefined ? Number(totalQuantity) : undefined,
+      dailyCap: dailyCap !== undefined ? Number(dailyCap) : undefined,
+      commentTemplate: commentTemplate !== undefined ? String(commentTemplate) : undefined,
+    });
+
+    const diffText =
+      result.difference > 0
+        ? ` (${result.difference} pts débités de votre solde)`
+        : result.difference < 0
+        ? ` (${Math.abs(result.difference)} pts remboursés sur votre solde)`
+        : "";
 
     return NextResponse.json({
       success: true,
-      message: `Campagne ${status === "ACTIVE" ? "réactivée" : "mise en pause"} avec succès.`,
-      campaign: updated,
+      message: `Campagne modifiée avec succès${diffText}.`,
+      campaign: result.campaign,
+      difference: result.difference,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });

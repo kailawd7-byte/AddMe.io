@@ -21,12 +21,12 @@ export interface CreateCampaignInput {
 export async function createCampaign(input: CreateCampaignInput) {
   const { userId, socialAccountId, actionType, videoUrl, commentTemplate, totalQuantity } = input;
 
-  // 1. Quantité requise (entre 1 et 500 personnes max par campagne)
+  // 1. Quantité requise (minimum 1 personne par campagne)
   if (!totalQuantity || totalQuantity < 1) {
     throw new Error("Le nombre de personnes souhaitées doit être d'au moins 1.");
   }
-  if (totalQuantity > 500) {
-    throw new Error("Le volume maximal par campagne est de 500 personnes pour garantir une répartition fluide.");
+  if (totalQuantity > 100000) {
+    throw new Error("Le volume maximal par campagne est de 100 000 personnes.");
   }
 
   // 2. Vérification du compte social associé
@@ -151,6 +151,164 @@ export async function createCampaign(input: CreateCampaignInput) {
     });
 
     return campaign;
+  });
+}
+
+/**
+ * Modifie les paramètres d'une campagne active ou en pause (points par action, volume, rythme).
+ * Ajuste atomiquement le Ledger (débit ou remboursement) et les tâches disponibles.
+ */
+export interface UpdateCampaignInput {
+  rewardPerWorker?: number;
+  totalQuantity?: number;
+  dailyCap?: number;
+  commentTemplate?: string;
+}
+
+export async function updateCampaign(
+  campaignId: string,
+  userId: string,
+  input: UpdateCampaignInput
+) {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id: campaignId },
+    include: {
+      tasks: {
+        where: { status: "AVAILABLE" },
+      },
+    },
+  });
+
+  if (!campaign || campaign.userId !== userId) {
+    throw new Error("Campagne introuvable ou accès refusé.");
+  }
+
+  if (campaign.status === "COMPLETED" || campaign.status === "CANCELLED") {
+    throw new Error(`Impossible de modifier une campagne ${campaign.status.toLowerCase()}.`);
+  }
+
+  const completedQuantity = campaign.completedQuantity || 0;
+  const currentAvailableTasks = campaign.tasks.length;
+
+  // Nouvelle quantité totale souhaitée (doit être >= completedQuantity et >= 1)
+  const newTotalQuantity =
+    input.totalQuantity !== undefined
+      ? Math.max(completedQuantity, Math.max(1, input.totalQuantity))
+      : campaign.totalQuantity;
+
+  // Nouvelle rémunération par action (minimum 0.5 pt)
+  const newRewardPerUnit =
+    input.rewardPerWorker !== undefined && input.rewardPerWorker >= 0.5
+      ? Number(input.rewardPerWorker.toFixed(1))
+      : campaign.rewardPerUnit;
+
+  // Actions restantes à exécuter
+  const remainingQuantity = Math.max(0, newTotalQuantity - completedQuantity);
+  const oldRemainingQuantity = Math.max(0, campaign.totalQuantity - completedQuantity);
+
+  const oldRemainingCost = Number((oldRemainingQuantity * campaign.rewardPerUnit).toFixed(2));
+  const newRemainingCost = Number((remainingQuantity * newRewardPerUnit).toFixed(2));
+  const difference = Number((newRemainingCost - oldRemainingCost).toFixed(2));
+
+  // Si différence positive, vérification préalable du solde de l'utilisateur
+  if (difference > 0) {
+    const userBalance = await getUserBalance(userId);
+    if (userBalance < difference) {
+      throw new Error(
+        `SOLDE_INSUFFISANT: Solde actuel (${userBalance.toFixed(
+          1
+        )} pts) insuffisant pour couvrir l'augmentation de budget (+${difference} pts requis).`
+      );
+    }
+  }
+
+  const newDailyCap =
+    input.dailyCap !== undefined
+      ? Math.max(1, input.dailyCap)
+      : campaign.dailyCap;
+
+  const editIdempotencyKey = `campaign-edit-${campaignId}-${Date.now()}`;
+
+  return prisma.$transaction(async (tx) => {
+    // A. Ajustement financier
+    if (difference > 0) {
+      // Débit supplémentaire
+      await recordLedgerTransaction(
+        {
+          userId,
+          amount: -difference,
+          type: "CAMPAIGN_DEBIT",
+          referenceType: "CAMPAIGN",
+          referenceId: campaignId,
+          idempotencyKey: editIdempotencyKey,
+          description: `Modification de campagne #${campaignId.slice(
+            0,
+            8
+          )} : Augmentation du budget (+${difference} pts)`,
+        },
+        tx
+      );
+    } else if (difference < 0) {
+      // Remboursement de la baisse de budget
+      const refundAmount = Math.abs(difference);
+      await recordLedgerTransaction(
+        {
+          userId,
+          amount: refundAmount,
+          type: "CAMPAIGN_REFUND",
+          referenceType: "CAMPAIGN",
+          referenceId: campaignId,
+          idempotencyKey: editIdempotencyKey,
+          description: `Modification de campagne #${campaignId.slice(
+            0,
+            8
+          )} : Baisse de budget remboursée (+${refundAmount} pts)`,
+        },
+        tx
+      );
+    }
+
+    // B. Ajustement du nombre de tâches disponibles
+    if (remainingQuantity > currentAvailableTasks) {
+      // Créer les tâches manquantes
+      const neededTasksCount = remainingQuantity - currentAvailableTasks;
+      const newTasksData = Array.from({ length: neededTasksCount }).map(() => ({
+        campaignId,
+        status: "AVAILABLE",
+      }));
+      await tx.task.createMany({ data: newTasksData });
+    } else if (remainingQuantity < currentAvailableTasks) {
+      // Annuler le surplus de tâches disponibles
+      const excessCount = currentAvailableTasks - remainingQuantity;
+      const tasksToCancel = campaign.tasks.slice(0, excessCount).map((t) => t.id);
+      if (tasksToCancel.length > 0) {
+        await tx.task.updateMany({
+          where: { id: { in: tasksToCancel } },
+          data: { status: "CANCELLED" },
+        });
+      }
+    }
+
+    // C. Mettre à jour la campagne
+    const updatedCampaign = await tx.campaign.update({
+      where: { id: campaignId },
+      data: {
+        totalQuantity: newTotalQuantity,
+        rewardPerUnit: newRewardPerUnit,
+        costPerUnit: newRewardPerUnit,
+        totalCost: Number((campaign.totalCost + difference).toFixed(2)),
+        dailyCap: newDailyCap,
+        commentTemplate: input.commentTemplate ?? campaign.commentTemplate,
+      },
+      include: {
+        socialAccount: true,
+      },
+    });
+
+    return {
+      campaign: updatedCampaign,
+      difference,
+    };
   });
 }
 

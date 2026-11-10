@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   Eye,
   X,
+  Pencil,
 } from "lucide-react";
+import NumberStepper from "@/components/NumberStepper";
 
 interface CompletionDetail {
   id: string;
@@ -74,6 +76,57 @@ export default function CampaignsPage() {
   );
   const [reportReason, setReportReason] = useState("");
   const [submittingReport, setSubmittingReport] = useState(false);
+
+  // Modification de campagne
+  const [editingCampaign, setEditingCampaign] = useState<CampaignItem | null>(null);
+  const [editPoints, setEditPoints] = useState<number>(1);
+  const [editQuantity, setEditQuantity] = useState<number>(10);
+  const [editDailyCap, setEditDailyCap] = useState<number>(10);
+  const [editCommentTemplate, setEditCommentTemplate] = useState<string>("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const handleOpenEdit = (campaign: CampaignItem) => {
+    setEditingCampaign(campaign);
+    setEditPoints(campaign.rewardPerUnit);
+    setEditQuantity(campaign.totalQuantity);
+    setEditDailyCap(campaign.dailyCap || 10);
+    setEditCommentTemplate(campaign.commentTemplate || "");
+    setEditError(null);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCampaign) return;
+    setEditSubmitting(true);
+    setEditError(null);
+
+    try {
+      const res = await fetch(`/api/campaigns/${editingCampaign.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rewardPerWorker: editPoints,
+          totalQuantity: editQuantity,
+          dailyCap: editDailyCap,
+          commentTemplate: editCommentTemplate.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error || "Impossible de modifier la campagne.");
+      } else {
+        setFeedback({ type: "success", text: data.message });
+        setEditingCampaign(null);
+        await fetchCampaigns();
+      }
+    } catch {
+      setEditError("Erreur réseau lors de la modification.");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
 
   const fetchCampaigns = async () => {
     try {
@@ -407,6 +460,17 @@ export default function CampaignsPage() {
                           <button
                             type="button"
                             disabled={isBusy}
+                            onClick={() => handleOpenEdit(camp)}
+                            className="addme-btn addme-btn-ghost !py-1.5 !px-3 !text-xs !min-h-[34px] text-[#5B3DF5] dark:text-[#A38EFF] hover:border-[#5B3DF5]"
+                            title="Modifier la campagne"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Modifier</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isBusy}
                             onClick={() => handleToggleStatus(camp)}
                             className="addme-btn addme-btn-ghost !py-1.5 !px-2.5 !text-xs !min-h-[34px]"
                             title={
@@ -617,6 +681,172 @@ export default function CampaignsPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Modification de Campagne */}
+      {editingCampaign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#151426] border border-[#E3E3EE] dark:border-[#2E2C48] shadow-2xl p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Header modal */}
+            <div className="flex items-center justify-between border-b border-[#E3E3EE] dark:border-[#26243A] pb-3">
+              <div>
+                <b className="text-base sm:text-lg font-extrabold text-[#12122A] dark:text-white block">
+                  Modifier la campagne
+                </b>
+                <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD]">
+                  {editingCampaign.platform} · @{editingCampaign.socialAccount?.identifier || "profil"} ({editingCampaign.actionType})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCampaign(null)}
+                className="p-1.5 rounded-lg text-[#5A5A70] dark:text-[#A3A1BD] hover:bg-[#F7F7FB] dark:hover:bg-[#1F1E33] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center gap-2.5 text-xs text-rose-700 dark:text-rose-300 font-semibold">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              {/* Points offerts par action */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-[#12122A] dark:text-white uppercase tracking-wider">
+                    Points offerts par action
+                  </label>
+                  <span className="text-xs font-extrabold text-[#5B3DF5] dark:text-[#A38EFF]">
+                    Actuel : {editingCampaign.rewardPerUnit} pt(s)
+                  </span>
+                </div>
+                <NumberStepper
+                  value={editPoints}
+                  onChange={setEditPoints}
+                  min={0.5}
+                  max={100}
+                  step={0.5}
+                  suffix="pts / action"
+                />
+                <p className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD] mt-1">
+                  Augmenter les points place votre campagne en tête de liste des créateurs.
+                </p>
+              </div>
+
+              {/* Nombre de personnes uniques */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-[#12122A] dark:text-white uppercase tracking-wider">
+                    Nombre total de personnes uniques
+                  </label>
+                  <span className="text-xs font-semibold text-[#5A5A70] dark:text-[#A3A1BD]">
+                    Déjà livrées : <strong>{editingCampaign.completedQuantity}</strong>
+                  </span>
+                </div>
+                <NumberStepper
+                  value={editQuantity}
+                  onChange={setEditQuantity}
+                  min={Math.max(1, editingCampaign.completedQuantity)}
+                  max={100000}
+                  step={1}
+                  suffix="personnes"
+                />
+                <p className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD] mt-1">
+                  Vous pouvez augmenter le volume ou le réduire jusqu&apos;au nombre d&apos;actions déjà livrées.
+                </p>
+              </div>
+
+              {/* Cadence quotidienne */}
+              <div>
+                <label className="block text-xs font-bold text-[#12122A] dark:text-white uppercase tracking-wider mb-1.5">
+                  Rythme maximum par jour
+                </label>
+                <NumberStepper
+                  value={editDailyCap}
+                  onChange={setEditDailyCap}
+                  min={1}
+                  max={10000}
+                  step={1}
+                  suffix="actions / 24h"
+                />
+              </div>
+
+              {/* Commentaire si applicable */}
+              {editingCampaign.actionType === "COMMENT" && (
+                <div>
+                  <label className="block text-xs font-bold text-[#12122A] dark:text-white uppercase tracking-wider mb-1.5">
+                    Orientation du commentaire
+                  </label>
+                  <input
+                    type="text"
+                    value={editCommentTemplate}
+                    onChange={(e) => setEditCommentTemplate(e.target.value)}
+                    placeholder="Ex: Donnez votre avis sincère sur le produit..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F7F7FB] dark:bg-[#17162A] border border-[#CFCFE0] dark:border-[#383556] text-xs text-[#12122A] dark:text-white focus:outline-none focus:border-[#5B3DF5]"
+                  />
+                </div>
+              )}
+
+              {/* Bilan financier en direct */}
+              {(() => {
+                const completed = editingCampaign.completedQuantity || 0;
+                const rem = Math.max(0, editQuantity - completed);
+                const oldRem = Math.max(0, editingCampaign.totalQuantity - completed);
+                const oldC = Number((oldRem * editingCampaign.rewardPerUnit).toFixed(2));
+                const newC = Number((rem * editPoints).toFixed(2));
+                const diff = Number((newC - oldC).toFixed(2));
+
+                return (
+                  <div
+                    className={`p-3.5 rounded-xl border text-xs space-y-1 ${
+                      diff > 0
+                        ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200"
+                        : diff < 0
+                        ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+                        : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold">
+                      <span>Actions restantes à exécuter :</span>
+                      <span>{rem} action(s)</span>
+                    </div>
+                    <div className="flex items-center justify-between font-bold">
+                      <span>Ajustement de solde :</span>
+                      <span className="text-sm">
+                        {diff > 0
+                          ? `-${diff} pts (débit requis)`
+                          : diff < 0
+                          ? `+${Math.abs(diff)} pts (remboursement immédiat)`
+                          : "0 pt (aucun impact)"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#E3E3EE] dark:border-[#26243A]">
+                <button
+                  type="button"
+                  onClick={() => setEditingCampaign(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#5A5A70] dark:text-[#A3A1BD] hover:bg-[#F7F7FB] dark:hover:bg-[#1C1B2E] transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="addme-btn addme-btn-primary !py-2 !px-5 !text-xs font-bold"
+                >
+                  {editSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

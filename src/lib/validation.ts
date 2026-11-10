@@ -55,11 +55,15 @@ export const linkSocialAccountSchema = z.object({
       "LINKEDIN",
       "X",
       "THREADS",
+      "SPOTIFY",
+      "SOUNDCLOUD",
+      "REDDIT",
+      "WEBSITE",
     ],
     {
       errorMap: () => ({
         message:
-          "Plateforme non supportée. Choisissez parmi les 8 réseaux partenaires (TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads).",
+          "Plateforme non supportée. Choisissez parmi les réseaux partenaires (TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads, Spotify, SoundCloud, Reddit, Site Web).",
       }),
     }
   ),

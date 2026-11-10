@@ -13,6 +13,7 @@ import {
   Share2,
 } from "lucide-react";
 import { validateVideoPublicationUrl } from "@/lib/video-url-validator";
+import NumberStepper from "@/components/NumberStepper";
 
 interface SocialAccount {
   id: string;
@@ -187,7 +188,7 @@ export default function NewCampaignPage() {
         <div className="addme-card-static p-8 text-center space-y-4">
           <Share2 className="h-10 w-10 text-[#5B3DF5] mx-auto" />
           <h2 className="text-xl font-extrabold text-[#12122A]">
-            Liez d’abord un compte TikTok, Instagram ou YouTube
+            Liez d’abord un compte social ou une plateforme compatible
           </h2>
           <p className="text-sm text-[#5A5A70] max-w-md mx-auto">
             Pour lancer une campagne, vous devez associer et vérifier au moins un
@@ -264,7 +265,17 @@ export default function NewCampaignPage() {
                       ? "https://www.tiktok.com/@pseudo/video/1234567890"
                       : selectedPlatform === "INSTAGRAM"
                         ? "https://www.instagram.com/reel/Cxyz123/"
-                        : "https://www.youtube.com/watch?v=... ou /shorts/..."
+                        : selectedPlatform === "YOUTUBE"
+                          ? "https://www.youtube.com/watch?v=... ou /shorts/..."
+                          : selectedPlatform === "SPOTIFY"
+                            ? "https://open.spotify.com/track/... ou /artist/..."
+                            : selectedPlatform === "SOUNDCLOUD"
+                              ? "https://soundcloud.com/artiste/titre"
+                              : selectedPlatform === "REDDIT"
+                                ? "https://www.reddit.com/r/.../comments/..."
+                                : selectedPlatform === "WEBSITE"
+                                  ? "https://votre-site.com/page"
+                                  : "https://..."
                   }
                   className="w-full px-4 py-3 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5] focus:bg-white"
                 />
@@ -349,24 +360,35 @@ export default function NewCampaignPage() {
                   </span>
                 </div>
                 <p className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] mb-3">
-                  C’est vous qui décidez : plus vous offrez de points (ex: 2 ou 3
-                  pts), plus votre publication s’affiche en haut de la liste des
-                  tâches !
+                  Saisissez librement le montant de points souhaité ou utilisez les flèches pour ajuster : plus vous offrez de points, plus votre publication est prioritaire !
                 </p>
-                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                  {[1, 1.5, 2, 3, 5].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setRewardPerWorker(val)}
-                      className={`py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl border text-[11px] sm:text-xs font-extrabold transition-all text-center truncate ${rewardPerWorker === val
-                          ? "bg-[#12122A] border-[#12122A] text-white dark:bg-[#5B3DF5] dark:border-[#5B3DF5]"
-                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#12122A] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#F4F3FA] hover:border-[#5B3DF5]"
+                <div className="space-y-2">
+                  <NumberStepper
+                    value={rewardPerWorker}
+                    onChange={(val) => setRewardPerWorker(Math.max(0.5, val))}
+                    min={0.5}
+                    max={1000}
+                    step={0.5}
+                    suffix="pts / action"
+                    placeholder="Ex: 2"
+                  />
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD]">Suggestions rapides :</span>
+                    {[1, 2, 3, 5, 10, 14, 25].map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setRewardPerWorker(val)}
+                        className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold transition-all ${
+                          rewardPerWorker === val
+                            ? "bg-[#5B3DF5] text-white border-[#5B3DF5]"
+                            : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
                         }`}
-                    >
-                      {val} pt{val > 1 ? "s" : ""}
-                    </button>
-                  ))}
+                      >
+                        {val} pts
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -381,30 +403,35 @@ export default function NewCampaignPage() {
                   </span>
                 </div>
                 <p className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] mb-3">
-                  Chaque personne ne peut agir qu’une seule fois sur votre
-                  publication. Si vous choisissez {targetQuantity}, alors{" "}
-                  {targetQuantity} personnes différentes feront l’action.
+                  Aucune limite arbitraire : saisissez exactement le volume souhaité (ex: 20, 100, 500, 2 500 personnes...). Chaque membre ne peut agir qu&apos;une seule fois.
                 </p>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
+                <div className="space-y-2">
+                  <NumberStepper
+                    value={targetQuantity}
+                    onChange={(val) => setTargetQuantity(Math.max(1, Math.round(val)))}
                     min={1}
-                    max={200}
+                    max={100000}
                     step={1}
-                    value={targetQuantity}
-                    onChange={(e) => setTargetQuantity(Number(e.target.value))}
-                    className="flex-1 accent-[#5B3DF5] cursor-pointer"
+                    suffix="personnes uniques"
+                    placeholder="Ex: 50"
                   />
-                  <input
-                    type="number"
-                    min={1}
-                    max={1000}
-                    value={targetQuantity}
-                    onChange={(e) =>
-                      setTargetQuantity(Math.max(1, Number(e.target.value) || 1))
-                    }
-                    className="w-20 px-3 py-2 rounded-xl bg-[#F7F7FB] dark:bg-[#17162A] border border-[#CFCFE0] dark:border-[#383556] text-center font-extrabold text-sm text-[#12122A] dark:text-[#F4F3FA]"
-                  />
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD]">Paliers :</span>
+                    {[10, 25, 50, 100, 250, 500, 1000].map((qty) => (
+                      <button
+                        key={qty}
+                        type="button"
+                        onClick={() => setTargetQuantity(qty)}
+                        className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold transition-all ${
+                          targetQuantity === qty
+                            ? "bg-[#5B3DF5] text-white border-[#5B3DF5]"
+                            : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
+                        }`}
+                      >
+                        {qty}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -415,31 +442,39 @@ export default function NewCampaignPage() {
                     Durée de diffusion en jours (0,5 pt / jour)
                   </label>
                   <span className="font-extrabold text-[#12122A] dark:text-white text-sm">
-                    {durationDays} jour{durationDays > 1 ? "s" : ""} (+
-                    {durationFee} pts)
+                    {durationDays} jour{durationDays > 1 ? "s" : ""} (+{durationFee} pts)
                   </span>
                 </div>
                 <p className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] mb-3">
-                  Pour faire durer votre campagne sur {durationDays} jour(s), le
-                  coût de durée est de 0,5 pt par jour (soit {durationFee} pts).
+                  Définissez le nombre de jours exact de diffusion (ex: 7, 14, 30 jours). Le calcul s&apos;effectue automatiquement à 0,5 pt par jour.
                 </p>
-                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                  {[1, 3, 5, 7, 10].map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDurationDays(d)}
-                      className={`py-2 px-1 rounded-xl border text-center transition-all ${durationDays === d
-                          ? "bg-[#EEEAFF] border-[#5B3DF5] text-[#3A22C8] dark:bg-[#5B3DF5]/20 dark:border-[#5B3DF5] dark:text-[#A38EFF]"
-                          : "bg-[#F7F7FB] border-[#E3E3EE] text-[#5A5A70] dark:bg-[#1C1B2E] dark:border-[#383556] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
+                <div className="space-y-2">
+                  <NumberStepper
+                    value={durationDays}
+                    onChange={(val) => setDurationDays(Math.max(1, Math.round(val)))}
+                    min={1}
+                    max={365}
+                    step={1}
+                    suffix="jours de diffusion"
+                    placeholder="Ex: 7"
+                  />
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD]">Durées types :</span>
+                    {[1, 3, 7, 14, 30].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDurationDays(d)}
+                        className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold transition-all ${
+                          durationDays === d
+                            ? "bg-[#5B3DF5] text-white border-[#5B3DF5]"
+                            : "bg-[#F7F7FB] dark:bg-[#1C1B2E] border-[#E3E3EE] dark:border-[#383556] text-[#5A5A70] dark:text-[#A3A1BD] hover:border-[#5B3DF5]"
                         }`}
-                    >
-                      <span className="block text-xs font-bold">{d} j</span>
-                      <span className="block text-[10px] opacity-75 font-medium leading-none mt-0.5">
-                        ({d * 0.5} pt)
-                      </span>
-                    </button>
-                  ))}
+                      >
+                        {d}j ({d * 0.5} pt)
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

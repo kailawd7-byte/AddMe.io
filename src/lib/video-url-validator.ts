@@ -342,6 +342,76 @@ export function validateVideoPublicationUrl(
     };
   }
 
+  // ==========================================
+  // Validation SPOTIFY
+  // ==========================================
+  if (platform === "SPOTIFY") {
+    const validSpotifyHosts = ["spotify.com", "open.spotify.com"];
+    if (!validSpotifyHosts.some((h) => hostname === h || hostname.endsWith(`.${h}`))) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir de Spotify (ex: https://open.spotify.com/track/... ou /artist/...)",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "spotify-item",
+    };
+  }
+
+  // ==========================================
+  // Validation SOUNDCLOUD
+  // ==========================================
+  if (platform === "SOUNDCLOUD") {
+    if (!hostname.includes("soundcloud.com")) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir de SoundCloud (ex: https://soundcloud.com/artiste/titre)",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).join("-") || "soundcloud-track",
+    };
+  }
+
+  // ==========================================
+  // Validation REDDIT
+  // ==========================================
+  if (platform === "REDDIT") {
+    const validRedditHosts = ["reddit.com", "old.reddit.com", "m.reddit.com"];
+    if (!validRedditHosts.some((h) => hostname === h || hostname.endsWith(`.${h}`))) {
+      return {
+        valid: false,
+        error: "L'URL doit provenir de Reddit (ex: https://www.reddit.com/r/communaute/comments/...)",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "reddit-post",
+    };
+  }
+
+  // ==========================================
+  // Validation WEBSITE / TRAFIC WEB
+  // ==========================================
+  if (platform === "WEBSITE") {
+    if (!hostname.includes(".") || hostname.length < 3) {
+      return {
+        valid: false,
+        error: "Veuillez renseigner un lien de site web valide (ex: https://votre-site.com/page)",
+      };
+    }
+    return {
+      valid: true,
+      normalizedUrl: urlObj.href,
+      extractedId: hostname,
+    };
+  }
+
   return { valid: false, error: "Plateforme non supportée." };
 }
 

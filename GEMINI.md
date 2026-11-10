@@ -390,4 +390,27 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
   - Route Webhook sécurisée (`/api/webhooks/stripe`) vérifiant la signature cryptographique (`stripe.webhooks.constructEvent`).
   - Crédit instantané des points achetés via la clé d'idempotence basée sur l'ID de session de paiement (`stripe_checkout_${session.id}`).
 
+### L. Modification Dynamique de Campagnes & Contrôles Numériques Précis (`<NumberStepper />`)
+- **Édition de Campagne en 1 Clic (`/campaigns`)** :
+  - Un bouton d'action **« Modifier »** est positionné rigoureusement entre les boutons « Détails » et « Pause ».
+  - Ouvre une modale permettant d'ajuster les points par action, le volume cible de personnes uniques, le plafond quotidien et l'orientation des commentaires.
+  - **Comptabilité Atomique Réactive** : Calcul instantané de la différence budgétaire sur les actions non encore complétées.
+    - Si augmentation de budget : contrôle du solde en temps réel et débit sécurisé (`CAMPAIGN_DEBIT`).
+    - Si réduction de budget : remboursement immédiat et inconditionnel de la différence (`CAMPAIGN_REFUND`) sur le solde utilisateur, avec ajustement des tâches disponibles dans la base.
+- **Composant Numérique Universel (`<NumberStepper />`)** :
+  - Remplacement des boutons fixes limitants par des champs de saisie manuelle libre avec boutons fléchés superposés (haut/bas) intégrés à droite.
+  - Suppression de tout plafond arbitraire (débloqué jusqu'à 100 000 personnes uniques).
+  - Prise en charge des décimales (ex: 0.5 pt pour la durée quotidienne de diffusion) et calcul dynamique instantané de l'impact budgétaire dans le récapitulatif.
+
+### M. Écosystème Multicanal Étendu (12 Plateformes d'Influence & d'Attention)
+- **Couverture Complète** :
+  - Réseaux sociaux : **TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X (Twitter), Threads**.
+  - Plateformes audio & streaming : **Spotify** (titres, albums, artistes, playlists) et **SoundCloud** (morceaux, profils).
+  - Communautés & Référencement : **Reddit** (subreddits, posts communautaires).
+  - Trafic Web Direct : **Sites Web & Blogs** (visites, conversions, tests utilisateurs).
+- **Validation Strictement Typée & Logos Vectoriels** :
+  - Module `validateVideoPublicationUrl` étendu avec normalisation d'URL et extraction d'identifiants pour chaque plateforme.
+  - Bandeau Marquee 60 FPS perpétuel et grille d'écosystème enrichis de logos SVG dédiés et de micro-interactions dynamiques.
+
+
 

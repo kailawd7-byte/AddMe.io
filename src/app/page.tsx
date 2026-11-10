@@ -282,7 +282,18 @@ export default function HomePage() {
 
   // Simulateur de campagne
   const [simPlatform, setSimPlatform] = useState<
-    "TIKTOK" | "INSTAGRAM" | "YOUTUBE" | "FACEBOOK" | "SNAPCHAT" | "LINKEDIN" | "X" | "THREADS"
+    | "TIKTOK"
+    | "INSTAGRAM"
+    | "YOUTUBE"
+    | "FACEBOOK"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X"
+    | "THREADS"
+    | "SPOTIFY"
+    | "SOUNDCLOUD"
+    | "REDDIT"
+    | "WEBSITE"
   >("TIKTOK");
   const [simAction, setSimAction] = useState<"LIKE" | "COMMENT" | "SUBSCRIBE">("LIKE");
   const [simQuantity, setSimQuantity] = useState<number>(30);
@@ -629,24 +640,24 @@ export default function HomePage() {
       <div className="relative w-full overflow-hidden bg-gradient-to-r from-[#4B2DE5] via-[#7C3AED] to-[#4B2DE5] text-white py-3.5 shadow-lg flex select-none pointer-events-none z-20 border-y border-white/15">
         <div className="perpetual-marquee-track">
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · SPOTIFY · SOUNDCLOUD · REDDIT · SITES WEB & BLOGS · OBTENEZ DES LIKES, ÉCOUTES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · SPOTIFY · SOUNDCLOUD · REDDIT · SITES WEB & BLOGS · OBTENEZ DES LIKES, ÉCOUTES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
         </div>
         <div className="perpetual-marquee-track" aria-hidden="true">
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · SPOTIFY · SOUNDCLOUD · REDDIT · SITES WEB & BLOGS · OBTENEZ DES LIKES, ÉCOUTES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
           <span className="px-6 font-extrabold tracking-[0.14em] text-xs sm:text-sm">
-            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · OBTENEZ DES LIKES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
+            TIKTOK · INSTAGRAM · YOUTUBE · FACEBOOK · SNAPCHAT · LINKEDIN · X (TWITTER) · THREADS · SPOTIFY · SOUNDCLOUD · REDDIT · SITES WEB & BLOGS · OBTENEZ DES LIKES, ÉCOUTES, COMMENTAIRES & ABONNEMENTS RÉELS VIA DES CAMPAGNES FINANCÉES PAR DES CRÉDITS DIRECTS · PROPULSEZ VOTRE ENGAGEMENT SANS BOT · 100% HUMAIN & VÉRIFIÉ · PAIEMENTS CARTE & MOBILE MONEY (ORANGE, MTN, WAVE, MOOV) ·
           </span>
         </div>
       </div>
 
       {/* =====================================================================
-          SECTION PARTENAIRES RÉSEAUX SOCIAUX (Style Sponsors Monochrome)
+          SECTION PARTENAIRES RÉSEAUX SOCIAUX & PLATEFORMES D'ATTENTION
          ===================================================================== */}
       <section
         id="ecosystem"
@@ -655,15 +666,15 @@ export default function HomePage() {
         <div className="max-w-[1140px] mx-auto px-6 text-center relative z-10">
           <ScrollReveal variant="fade-up">
             <p className="text-xs sm:text-[13px] uppercase tracking-[0.2em] text-[#FFB84D] font-bold mb-2.5">
-              Compatible avec l&apos;écosystème des 8 grands réseaux sociaux
+              Compatible avec l&apos;écosystème de 12 plateformes d&apos;attention &amp; d&apos;influence
             </p>
             <p className="text-sm text-[#C9C6DB] max-w-2xl mx-auto mb-10 leading-relaxed">
-              Utilisez la plateforme AddMe.io pour amplifier votre visibilité, vos abonnés et vos interactions réelles sur l’ensemble de ces 8 réseaux.
+              Utilisez la plateforme AddMe.io pour amplifier votre visibilité, vos écoutes, vos abonnés, vos visites et vos interactions réelles sur l’ensemble de ces réseaux et services web.
             </p>
           </ScrollReveal>
 
           <ScrollReveal variant="scale-up" delay={120}>
-            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-14 lg:gap-16">
+            <div className="flex flex-wrap items-center justify-center gap-7 sm:gap-10 md:gap-12 lg:gap-14">
               {/* TikTok */}
               <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
                 <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
@@ -687,7 +698,7 @@ export default function HomePage() {
               </div>
 
               {/* YouTube */}
-              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#FF0000] transition-all duration-300 group cursor-default">
                 <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
@@ -697,7 +708,7 @@ export default function HomePage() {
               </div>
 
               {/* Facebook */}
-              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#1877F2] transition-all duration-300 group cursor-default">
                 <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
@@ -707,7 +718,7 @@ export default function HomePage() {
               </div>
 
               {/* Snapchat */}
-              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#FFFC00] transition-all duration-300 group cursor-default">
                 <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                   <path d="M12.003 2c-3.528 0-6.046 2.37-6.046 5.86 0 .864.218 2.052.553 2.87.145.353-.027.604-.306.777-.52.32-.98.665-1.282 1.085-.308.43-.223.957.253 1.25.753.465 1.713.435 2.502.435.297 0 .548.163.548.45 0 .23-.133.565-.39.845-.58.632-1.353 1.144-2.186 1.492-.533.223-.746.68-.487 1.173.342.648 1.468.99 2.54 1.135 1.037.14 2.148.06 3.125.438.385.15.776.386 1.176.386.4 0 .791-.236 1.176-.386.977-.378 2.088-.298 3.125-.438 1.072-.145 2.198-.487 2.54-1.135.259-.493.046-.95-.487-1.173-.833-.348-1.606-.86-2.186-1.492-.257-.28-.39-.615-.39-.845 0-.287.251-.45.548-.45.789 0 1.749.03 2.502-.435.476-.293.561-.82.253-1.25-.302-.42-.762-.765-1.282-1.085-.279-.173-.451-.424-.306-.777.335-.818.553-2.006.553-2.87C18.05 4.37 15.532 2 12.003 2z"/>
                 </svg>
@@ -717,7 +728,7 @@ export default function HomePage() {
               </div>
 
               {/* LinkedIn */}
-              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#0A66C2] transition-all duration-300 group cursor-default">
                 <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                   <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                 </svg>
@@ -743,6 +754,48 @@ export default function HomePage() {
                 </svg>
                 <span className="font-extrabold text-base sm:text-lg tracking-tight">
                   Threads
+                </span>
+              </div>
+
+              {/* Spotify */}
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#1ED760] transition-all duration-300 group cursor-default">
+                <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.308c-.218.358-.68.473-1.038.254-2.846-1.738-6.429-2.13-10.65-1.166-.407.094-.813-.16-.906-.566-.094-.407.16-.813.566-.906 4.625-1.056 8.583-.615 11.774 1.346.358.219.473.68.254 1.038zm1.468-3.262c-.274.446-.86.587-1.306.312-3.259-2.003-8.227-2.585-12.083-1.415-.503.153-1.038-.135-1.19-.638-.153-.504.135-1.038.638-1.191 4.412-1.338 9.889-.691 13.629 1.626.446.275.587.86.312 1.306zm.126-3.41c-3.908-2.321-10.354-2.535-14.086-1.402-.599.182-1.233-.164-1.415-.763-.182-.599.164-1.233.763-1.415 4.293-1.303 11.41-1.053 15.894 1.609.539.32.716 1.02.396 1.559-.32.539-1.02.716-1.552.412z"/>
+                </svg>
+                <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                  Spotify
+                </span>
+              </div>
+
+              {/* SoundCloud */}
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#FF5500] transition-all duration-300 group cursor-default">
+                <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <path d="M11.56 8.87V17h9.19c1.8 0 3.25-1.46 3.25-3.25s-1.45-3.25-3.25-3.25c-.28 0-.55.04-.81.1-.38-2.57-2.59-4.55-5.26-4.55-1.2 0-2.32.41-3.2 1.1-.28.22-.52.47-.72.76-.08.12-.15.24-.2.36zm-1.5 8.13V9.67c-.24.38-.42.79-.53 1.23v6.1h.53zm-1.5 0v-5.63c-.15.34-.26.7-.32 1.08v4.55h.32zm-1.5 0v-4.14c-.16.32-.27.66-.32 1.03v3.11h.32zm-1.5 0v-2.85c-.17.33-.28.7-.32 1.08v1.77h.32zm-1.5 0v-1.63c-.15.32-.26.68-.32 1.05v.58h.32zm-1.5 0v-.63c-.16.29-.27.62-.32.96h.32zm-1.5 0c-.17.16-.32.35-.43.56v.44h.43v-1z"/>
+                </svg>
+                <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                  SoundCloud
+                </span>
+              </div>
+
+              {/* Reddit */}
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#FF4500] transition-all duration-300 group cursor-default">
+                <svg className="h-6 w-6 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.702zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.096.35.35 0 0 0 0 .49c.81.81 2.015 1.212 2.947 1.212.932 0 2.137-.402 2.947-1.212a.35.35 0 0 0 0-.49.327.327 0 0 0-.462 0c-.655.656-1.66.974-2.485.974-.825 0-1.83-.318-2.485-.974a.327.327 0 0 0-.231-.096z"/>
+                </svg>
+                <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                  Reddit
+                </span>
+              </div>
+
+              {/* Site Web */}
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#06B6D4] transition-all duration-300 group cursor-default">
+                <svg className="h-6 w-6 fill-none stroke-current stroke-2 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span className="font-extrabold text-base sm:text-lg tracking-tight">
+                  Site Web
                 </span>
               </div>
             </div>
@@ -904,7 +957,7 @@ export default function HomePage() {
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#A5A2BA] mb-2">
                         1. Réseau social
                       </label>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
                         {[
                           { id: "TIKTOK", label: "TikTok" },
                           { id: "INSTAGRAM", label: "Instagram" },
@@ -914,6 +967,10 @@ export default function HomePage() {
                           { id: "LINKEDIN", label: "LinkedIn" },
                           { id: "X", label: "X" },
                           { id: "THREADS", label: "Threads" },
+                          { id: "SPOTIFY", label: "Spotify" },
+                          { id: "SOUNDCLOUD", label: "SoundCloud" },
+                          { id: "REDDIT", label: "Reddit" },
+                          { id: "WEBSITE", label: "Site Web" },
                         ].map((net) => (
                           <button
                             key={net.id}
@@ -929,6 +986,10 @@ export default function HomePage() {
                                   | "LINKEDIN"
                                   | "X"
                                   | "THREADS"
+                                  | "SPOTIFY"
+                                  | "SOUNDCLOUD"
+                                  | "REDDIT"
+                                  | "WEBSITE"
                               )
                             }
                             className={`py-2 px-1.5 rounded-xl text-[11px] font-bold border transition-all truncate text-center ${

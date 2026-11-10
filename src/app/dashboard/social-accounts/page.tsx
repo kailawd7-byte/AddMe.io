@@ -32,6 +32,10 @@ const SUPPORTED_NETWORKS = [
   { id: "LINKEDIN", name: "LinkedIn", short: "IN", placeholder: "profil_ou_entreprise" },
   { id: "X", name: "X", short: "X", placeholder: "pseudo_x" },
   { id: "THREADS", name: "Threads", short: "TH", placeholder: "pseudo_threads" },
+  { id: "SPOTIFY", name: "Spotify", short: "SP", placeholder: "artiste_ou_profil" },
+  { id: "SOUNDCLOUD", name: "SoundCloud", short: "SC", placeholder: "nom_artiste" },
+  { id: "REDDIT", name: "Reddit", short: "RD", placeholder: "u/pseudo_reddit" },
+  { id: "WEBSITE", name: "Site Web", short: "WEB", placeholder: "domaine.com" },
 ] as const;
 
 export default function SocialAccountsPage() {
@@ -169,7 +173,7 @@ export default function SocialAccountsPage() {
           Comptes liés
         </h1>
         <p className="text-sm text-[#5A5A70] mt-0.5">
-          Associez vos profils sur vos 8 réseaux favoris (TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads) sans jamais partager vos mots de passe.
+          Associez vos profils sur vos 12 réseaux et plateformes compatibles (TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads, Spotify, SoundCloud, Reddit, Site Web) sans jamais partager vos mots de passe.
         </p>
       </div>
 
@@ -213,7 +217,7 @@ export default function SocialAccountsPage() {
           <form onSubmit={handleAddAccount} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5A5A70] mb-2">
-                Réseau social (8 plateformes compatibles)
+                Réseau social & Plateforme (12 compatibles)
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {SUPPORTED_NETWORKS.map((net) => (
