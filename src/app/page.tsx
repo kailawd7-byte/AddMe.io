@@ -1225,13 +1225,13 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/85 backdrop-blur-md border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
-                  Boutique de Points · 150, 500 & 2 000 pts
+                  Boutique de Points · 2 000, 10 000 & 25 000 pts
                 </span>
                 <h2 className="text-[34px] sm:text-[44px] font-extrabold text-[#12122A] mt-2 mb-1">
                   Tarifs
                 </h2>
                 <p className="text-[#3A3A52] text-base font-medium">
-                  Packs de points (150, 500 et 2 000 pts), sans abonnement obligatoire. Paiement
+                  Packs de points (2 000, 10 000 et 25 000 pts), sans abonnement obligatoire. Paiement
                   Mobile Money (FCFA) & Carte Bancaire (EUR).
                 </p>
               </div>
