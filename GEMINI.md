@@ -381,6 +381,10 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
   - Sur la Landing Page, le dark mode ne doit transformer que les panels spécifiquement désignés comme immersifs (Packs de tarification, simulateur interactif, Hero) en utilisant des classes Tailwind explicites (`bg-[#0B0A14] text-white border-white/10`), tout en maintenant la lisibilité soyeuse des sections documentaires.
 
 ### K. Architecture Prête pour l'Agrégation de Paiements (Stripe / Paystack / LemonSqueezy)
+- **Catalogue de Packs Équilibré** :
+  - **Pack Découverte** : `2 000 points` (3 000 FCFA / 4,99 €)
+  - **Pack Créateur Populaire** : `10 000 points` (8 500 FCFA / 12,99 €)
+  - **Pack Influence** : `25 000 points` (22 500 FCFA / 34,99 €)
 - **Flux Prêt à l'Emploi** :
   - Table `Purchase` reliée au `LedgerEntry` pour tracer chaque rechargement de points.
   - Route Webhook sécurisée (`/api/webhooks/stripe`) vérifiant la signature cryptographique (`stripe.webhooks.constructEvent`).
