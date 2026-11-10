@@ -407,10 +407,10 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg sm:text-[19px] leading-[1.65] text-white/90 max-w-xl mx-auto md:mx-0 m-0 px-2 md:px-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
-                Propulsez vos contenus sur vos 8 réseaux favoris en échange d’engagement réel.
+                Propulsez vos contenus sur vos 12 réseaux et plateformes d’attention en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
-                pour faire décoller votre visibilité sur TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X et Threads.
+                pour faire décoller votre visibilité sur TikTok, Instagram, YouTube, Facebook, Snapchat, LinkedIn, X, Threads, Spotify, SoundCloud, Reddit et vos sites web.
               </p>
 
               {/* Actions selon le statut de connexion */}
@@ -472,9 +472,9 @@ export default function HomePage() {
                 </div>
                 <div className="group">
                   <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
-                    8 Réseaux
+                    12 Plateformes
                   </div>
-                  <div className="opacity-80">TikTok, IG, YT, X, FB, SC...</div>
+                  <div className="opacity-80">TikTok, IG, YT, Spotify, Web...</div>
                 </div>
               </div>
             </div>
@@ -955,7 +955,7 @@ export default function HomePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#A5A2BA] mb-2">
-                        1. Réseau social
+                        1. Réseau social ou Plateforme (12 au choix)
                       </label>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
                         {[

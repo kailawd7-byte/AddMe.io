@@ -22,7 +22,7 @@ export function generateSocialVerificationCode(): string {
 }
 
 /**
- * Normalise un identifiant de réseau social pour les 8 plateformes partenaires
+ * Normalise un identifiant pour les 12 plateformes partenaires
  */
 export function normalizeSocialIdentifier(
   platform: string,
