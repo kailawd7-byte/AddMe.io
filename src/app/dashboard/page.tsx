@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   Clock,
   Share2,
+  Gift,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface UserProfile {
@@ -30,6 +33,19 @@ interface UserProfile {
     verificationCode: string;
     status: string;
     verifiedAt: string | null;
+  }>;
+  giftCodes?: Array<{
+    id: string;
+    code: string;
+    description: string | null;
+    multiplier: number;
+    userBonusPoints: number;
+    influencerBonus: number;
+    usesCount: number;
+    verifiedCount: number;
+    isActive: boolean;
+    expiresAt: string | null;
+    createdAt: string;
   }>;
 }
 
@@ -59,6 +75,26 @@ export default function DashboardPage() {
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   const [recommendedTasks, setRecommendedTasks] = useState<RecommendedTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedUserCode, setCopiedUserCode] = useState<string | null>(null);
+  const [copiedUserLink, setCopiedUserLink] = useState<string | null>(null);
+
+  const handleCopyUserCode = (code: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(code);
+    }
+    setCopiedUserCode(code);
+    setTimeout(() => setCopiedUserCode(null), 2500);
+  };
+
+  const handleCopyUserLink = (code: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://addme.io";
+    const link = `${origin}/register?ref=${code}`;
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(link);
+    }
+    setCopiedUserLink(code);
+    setTimeout(() => setCopiedUserLink(null), 2500);
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -367,54 +403,169 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Colonne Droite : Tâches recommandées (Style Dashboard.dc.html) */}
-        <div className="lg:col-span-5 addme-card animate-up-1">
-          <div className="flex items-center justify-between mb-3">
-            <b className="text-lg font-extrabold text-[#12122A]">
-              Tâches recommandées
-            </b>
-            <span className="text-xs font-bold text-[#5B3DF5]">
-              Crédit immédiat
-            </span>
+        {/* Colonne Droite : Tâches recommandées + Mon Code Partenaire / Cadeau */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Tâches recommandées */}
+          <div className="addme-card animate-up-1">
+            <div className="flex items-center justify-between mb-3">
+              <b className="text-lg font-extrabold text-[#12122A]">
+                Tâches recommandées
+              </b>
+              <span className="text-xs font-bold text-[#5B3DF5]">
+                Crédit immédiat
+              </span>
+            </div>
+
+            {recommendedTasks.length === 0 ? (
+              <div className="py-8 text-center space-y-2 border-t border-[#E3E3EE] mt-2">
+                <p className="text-sm text-[#5A5A70]">
+                  Aucune tâche en attente dans votre flux pour l’instant.
+                </p>
+                <p className="text-xs text-[#5A5A70]">
+                  Revenez dès qu'un créateur publie une nouvelle mission !
+                </p>
+              </div>
+            ) : (
+              <div>
+                {recommendedTasks.map((task) => (
+                  <div key={task.taskId} className="addme-row">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-[#12122A]">
+                        {formatPlatformLabel(task.platform)} ·{" "}
+                        {formatActionLabel(task.actionType)}
+                      </div>
+                      <div className="text-xs text-[#5A5A70] truncate">
+                        {task.videoUrl}
+                      </div>
+                    </div>
+                    <span className="text-[#5B3DF5] font-extrabold text-base">
+                      +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Link
+              href="/tasks"
+              className="addme-btn addme-btn-primary w-full mt-5"
+            >
+              <span>Voir toutes les tâches</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
-          {recommendedTasks.length === 0 ? (
-            <div className="py-8 text-center space-y-2 border-t border-[#E3E3EE] mt-2">
-              <p className="text-sm text-[#5A5A70]">
-                Aucune tâche en attente dans votre flux pour l’instant.
-              </p>
-              <p className="text-xs text-[#5A5A70]">
-                Revenez dès qu'un créateur publie une nouvelle mission !
-              </p>
-            </div>
-          ) : (
-            <div>
-              {recommendedTasks.map((task) => (
-                <div key={task.taskId} className="addme-row">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-[#12122A]">
-                      {formatPlatformLabel(task.platform)} ·{" "}
-                      {formatActionLabel(task.actionType)}
+          {/* Panel Code Cadeau / Partenaire de l'utilisateur (remplit l'espace vide sous Tâches recommandées) */}
+          {profile?.giftCodes && profile.giftCodes.length > 0 && (
+            <div className="addme-card animate-up-2 border-2 border-emerald-500/30 bg-gradient-to-br from-[#1B1A26] via-[#151426] to-[#0E0D14] text-white p-5 space-y-4 shadow-xl">
+              {profile.giftCodes.map((gc) => {
+                const isCodeCopied = copiedUserCode === gc.code;
+                const isLinkCopied = copiedUserLink === gc.code;
+                return (
+                  <div key={gc.id} className="space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-9 w-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
+                          <Gift className="h-5 w-5 text-emerald-400" />
+                        </div>
+                        <div>
+                          <b className="text-sm font-black text-white block leading-tight">
+                            Votre Code Partenaire
+                          </b>
+                          <span className="text-[10px] text-emerald-400 font-semibold">
+                            Partenariat Officiel Actif
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/50 text-emerald-300 text-[10px] font-black">
+                        +{gc.influencerBonus} pts / vérifié
+                      </span>
                     </div>
-                    <div className="text-xs text-[#5A5A70] truncate">
-                      {task.videoUrl}
+
+                    {/* Zone d'affichage du Code & bouton Copier */}
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                          Votre Code Cadeau
+                        </span>
+                        <span className="font-mono text-xl font-black tracking-widest text-[#FFB84D]">
+                          {gc.code}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUserCode(gc.code)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                          isCodeCopied
+                            ? "bg-emerald-600 text-white"
+                            : "bg-indigo-600 hover:bg-indigo-500 text-white"
+                        }`}
+                        title="Copier le code uniquement"
+                      >
+                        {isCodeCopied ? (
+                          <>
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Copié !</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copier le code</span>
+                          </>
+                        )}
+                      </button>
                     </div>
+
+                    {/* Explication dynamique des gains */}
+                    <p className="text-[11px] text-slate-300 leading-relaxed m-0">
+                      Partagez ce code : vos abonnés reçoivent <strong>x{gc.multiplier} de points (+{gc.userBonusPoints} pts offerts)</strong> dès leur inscription, et vous gagnez <strong>+{gc.influencerBonus} points</strong> dès que leur compte est vérifié !
+                    </p>
+
+                    {/* Mini Métriques */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/80 text-center">
+                      <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Inscrits</span>
+                        <strong className="text-xs font-black text-white">{gc.usesCount}</strong>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Vérifiés</span>
+                        <strong className="text-xs font-black text-emerald-400">{gc.verifiedCount}</strong>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Gains</span>
+                        <strong className="text-xs font-black text-amber-300">
+                          {gc.verifiedCount * gc.influencerBonus} pts
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Bouton copier le lien direct */}
+                    <button
+                      type="button"
+                      onClick={() => handleCopyUserLink(gc.code)}
+                      className={`w-full py-2.5 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2 ${
+                        isLinkCopied
+                          ? "bg-emerald-950 border-emerald-500 text-emerald-300"
+                          : "bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
+                      }`}
+                    >
+                      {isLinkCopied ? (
+                        <>
+                          <Check className="h-4 w-4 text-emerald-400" />
+                          <span>Lien d&apos;invitation copié !</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="h-4 w-4 text-indigo-400" />
+                          <span>Copier mon lien d&apos;invitation direct (?ref=...)</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <span className="text-[#5B3DF5] font-extrabold text-base">
-                    +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-
-          <Link
-            href="/tasks"
-            className="addme-btn addme-btn-primary w-full mt-5"
-          >
-            <span>Voir toutes les tâches</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { prisma } from "./prisma.ts";
 import { recordLedgerTransaction } from "./ledger.ts";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "./constants.ts";
+import { sendGiftCodeAffiliationEmail } from "./email.ts";
 
 export interface GiftCodeValidationResult {
   valid: boolean;
@@ -432,6 +433,23 @@ export async function createGiftCodeAdmin({
       }),
     },
   });
+
+  // 5. Envoi immédiat de l'email officiel de notification à l'influenceur
+  try {
+    const origin = process.env.NEXT_PUBLIC_APP_URL || "https://addme.io";
+    const referralUrl = `${origin}/register?ref=${cleanCode}`;
+    await sendGiftCodeAffiliationEmail({
+      toEmail: influencer.email,
+      code: cleanCode,
+      referralUrl,
+      multiplier,
+      userBonusPoints,
+      influencerBonus,
+      description: description?.trim() || null,
+    });
+  } catch (emailErr) {
+    console.warn("[GIFT CODE] Erreur envoi email influenceur:", emailErr);
+  }
 
   return newGiftCode;
 }

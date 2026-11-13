@@ -127,7 +127,8 @@ function AdminDashboard() {
   const [newMaxUses, setNewMaxUses] = useState<string>("");
   const [newExpiresAt, setNewExpiresAt] = useState<string>("");
   const [createGiftSubmitting, setCreateGiftSubmitting] = useState(false);
-  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
+  const [copiedCodeOnlyId, setCopiedCodeOnlyId] = useState<string | null>(null);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
 
   // Onglet Support Client (Répertoire & Messagerie)
   const [supportTickets, setSupportTickets] = useState<any[]>([]);
@@ -475,14 +476,22 @@ function AdminDashboard() {
     }
   };
 
+  const handleCopyCodeOnly = (code: string, id: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(code);
+    }
+    setCopiedCodeOnlyId(id);
+    setTimeout(() => setCopiedCodeOnlyId(null), 2500);
+  };
+
   const handleCopyReferralLink = (code: string, id: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://addme.io";
     const link = `${origin}/register?ref=${code}`;
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(link);
     }
-    setCopiedCodeId(id);
-    setTimeout(() => setCopiedCodeId(null), 2500);
+    setCopiedLinkId(id);
+    setTimeout(() => setCopiedLinkId(null), 2500);
   };
 
   useEffect(() => {
@@ -1788,7 +1797,8 @@ function AdminDashboard() {
                           );
                         })
                         .map((gc) => {
-                          const isCopied = copiedCodeId === gc.id;
+                          const isCodeOnlyCopied = copiedCodeOnlyId === gc.id;
+                          const isLinkCopied = copiedLinkId === gc.id;
                           return (
                             <tr key={gc.id} className="hover:bg-slate-800/30 transition">
                               {/* Code & Lien */}
@@ -1800,15 +1810,25 @@ function AdminDashboard() {
                                     </span>
                                     <button
                                       type="button"
-                                      onClick={() => handleCopyReferralLink(gc.code, gc.id)}
-                                      className={`p-1.5 rounded-lg border transition ${
-                                        isCopied
-                                          ? "bg-emerald-600 text-white border-emerald-500"
-                                          : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                                      onClick={() => handleCopyCodeOnly(gc.code, gc.id)}
+                                      className={`px-2 py-1 rounded-lg border transition flex items-center gap-1.5 ${
+                                        isCodeOnlyCopied
+                                          ? "bg-emerald-600 text-white border-emerald-500 font-bold shadow-xs"
+                                          : "bg-slate-950 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-800"
                                       }`}
-                                      title="Copier le lien d'inscription affilié (?ref=...)"
+                                      title="Copier uniquement le code (ex: KAILAWD13)"
                                     >
-                                      {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                      {isCodeOnlyCopied ? (
+                                        <>
+                                          <Check className="w-3.5 h-3.5 text-white" />
+                                          <span className="text-[10px] font-bold text-white">Code copié</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="w-3.5 h-3.5" />
+                                          <span className="text-[10px] text-slate-400">Copier code</span>
+                                        </>
+                                      )}
                                     </button>
                                   </div>
                                   {gc.description && (
@@ -1925,11 +1945,24 @@ function AdminDashboard() {
                                   <button
                                     type="button"
                                     onClick={() => handleCopyReferralLink(gc.code, gc.id)}
-                                    className="px-2.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-semibold flex items-center gap-1 transition"
-                                    title="Copier le lien public"
+                                    className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition ${
+                                      isLinkCopied
+                                        ? "bg-emerald-600 text-white border-emerald-500 font-bold"
+                                        : "bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800"
+                                    }`}
+                                    title="Copier le lien public d'inscription (?ref=...)"
                                   >
-                                    <Link2 className="w-3.5 h-3.5 text-indigo-400" />
-                                    <span>Lien</span>
+                                    {isLinkCopied ? (
+                                      <>
+                                        <Check className="w-3.5 h-3.5 text-white" />
+                                        <span>Lien copié</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Link2 className="w-3.5 h-3.5 text-indigo-400" />
+                                        <span>Lien</span>
+                                      </>
+                                    )}
                                   </button>
 
                                   <button

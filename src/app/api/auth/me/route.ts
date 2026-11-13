@@ -44,6 +44,25 @@ export async function GET() {
     },
   });
 
+  // Récupération des codes cadeaux / affiliation dont l'utilisateur est propriétaire / influenceur
+  const giftCodes = await prisma.giftCode.findMany({
+    where: { influencerId: user.id },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      code: true,
+      description: true,
+      multiplier: true,
+      userBonusPoints: true,
+      influencerBonus: true,
+      usesCount: true,
+      verifiedCount: true,
+      isActive: true,
+      expiresAt: true,
+      createdAt: true,
+    },
+  });
+
   return NextResponse.json({
     authenticated: true,
     user: {
@@ -58,6 +77,7 @@ export async function GET() {
       balance,
       pendingPoints,
       socialAccounts,
+      giftCodes,
     },
   });
 }

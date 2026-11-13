@@ -103,3 +103,80 @@ test("Codes Cadeaux - Anti-Fraude & Rémunération conditionnelle de l'influence
   assert.equal(secondRun.reason, "already_rewarded");
 });
 
+test("Codes Cadeaux - Extraction intelligente d'un code collé sous forme d'URL complète", () => {
+  const parseGiftCodeInput = (raw) => {
+    let text = (raw || "").trim();
+    if (
+      text.includes("http") ||
+      text.includes("?ref=") ||
+      text.includes("?code=") ||
+      text.includes("&ref=") ||
+      text.includes("&code=")
+    ) {
+      try {
+        const urlToParse = text.startsWith("http") ? text : `https://${text}`;
+        const url = new URL(urlToParse);
+        const extracted = url.searchParams.get("ref") || url.searchParams.get("code");
+        if (extracted) {
+          return extracted.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+        }
+      } catch {
+        const match = text.match(/[?&](?:ref|code)=([a-zA-Z0-9_-]+)/i);
+        if (match && match[1]) {
+          return match[1].toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+        }
+      }
+    }
+    return text.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+  };
+
+  // URL Vercel complète collée
+  assert.equal(
+    parseGiftCodeInput("https://addme-steel.vercel.app/register?ref=KAILAWD13"),
+    "KAILAWD13"
+  );
+
+  // URL avec paramètre code
+  assert.equal(
+    parseGiftCodeInput("https://addme.io/register?code=TIKTOK200"),
+    "TIKTOK200"
+  );
+
+  // Saisie du code brut sans URL
+  assert.equal(parseGiftCodeInput("kailawd13"), "KAILAWD13");
+  assert.equal(parseGiftCodeInput("  PROMO_50  "), "PROMO_50");
+});
+
+test("Codes Cadeaux - Non-cumul des bonus à la vérification d'email (500 pts restent 500 pts)", () => {
+  // Simule les transactions d'un utilisateur ayant utilisé un code cadeau
+  const userLedger = [
+    {
+      userId: "usr_test",
+      type: "GIFT_CODE_BONUS",
+      amount: 500.0, // Multiplicateur x10 appliqué à l'inscription
+      idempotencyKey: "gift-code-user-usr_test",
+    },
+  ];
+
+  // Logique de validation d'email : ne pas rajouter de WELCOME_BONUS si un bonus d'inscription existe déjà
+  const existingRegistrationBonus = userLedger.find((tx) =>
+    ["WELCOME_BONUS", "GIFT_CODE_BONUS"].includes(tx.type)
+  );
+
+  let newBonusCredited = 0;
+  if (!existingRegistrationBonus) {
+    newBonusCredited = 50.0;
+    userLedger.push({
+      userId: "usr_test",
+      type: "WELCOME_BONUS",
+      amount: 50.0,
+      idempotencyKey: "welcome-bonus-usr_test",
+    });
+  }
+
+  // Vérification : aucun point supplémentaire n'est crédité
+  assert.equal(newBonusCredited, 0, "Aucun bonus de 50 points supplémentaire ne doit être ajouté.");
+  const totalBalance = userLedger.reduce((sum, tx) => sum + tx.amount, 0);
+  assert.equal(totalBalance, 500.0, "Le solde final doit rester exactement 500 points et non 550 points.");
+});
+

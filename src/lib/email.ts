@@ -146,6 +146,103 @@ L'équipe AddMe.io`;
   return deliverEmail({ toEmail, subject, textBody, htmlBody });
 }
 
+export interface GiftCodeAffiliationEmailParams {
+  toEmail: string;
+  code: string;
+  referralUrl: string;
+  multiplier: number;
+  userBonusPoints: number;
+  influencerBonus: number;
+  description?: string | null;
+}
+
+/**
+ * Envoie un email de notification à l'influenceur lorsqu'un code cadeau lui est affilié par l'admin
+ */
+export async function sendGiftCodeAffiliationEmail({
+  toEmail,
+  code,
+  referralUrl,
+  multiplier,
+  userBonusPoints,
+  influencerBonus,
+  description,
+}: GiftCodeAffiliationEmailParams): Promise<{ success: boolean; error?: string }> {
+  const subject = `🎉 Votre Code Partenaire AddMe.io est disponible : ${code}`;
+
+  const textBody = `Félicitations !
+
+L'administration d'AddMe.io vient de créer et d'affilier un Code Partenaire officiel à votre compte : ${code}
+
+VOS AVANTAGES & FONCTIONNEMENT :
+- Votre Code Cadeau : ${code}
+- Votre Lien d'Affiliation Direct : ${referralUrl}
+- Bonus pour vos abonnés : Multiplicateur x${multiplier} (+${userBonusPoints} points offerts dès l'inscription au lieu des 50 points habituels).
+- Votre rémunération : +${influencerBonus} points crédités automatiquement dès que le compte de votre filleul est vérifié.
+
+${description ? `Contexte du partenariat : ${description}\n` : ""}
+Vous pouvez dès à présent partager ce code et votre lien dans vos biographies TikTok, Instagram, YouTube ou dans vos descriptions de vidéos.
+Rendez-vous dans votre tableau de bord sur AddMe.io pour suivre en direct vos statistiques et vos points cumulés.
+
+L'équipe AddMe.io`;
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html lang="fr">
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0E0D14; color: #FFFFFF; margin: 0; padding: 24px; }
+          .container { max-width: 580px; margin: 0 auto; background-color: #1B1A26; border: 1px solid #2E2C40; border-radius: 20px; padding: 36px; }
+          .logo { font-size: 24px; font-weight: 800; color: #FFFFFF; text-decoration: none; margin-bottom: 24px; display: inline-block; }
+          .logo span { color: #FFB84D; }
+          .title { font-size: 22px; font-weight: 800; color: #FFFFFF; margin-top: 0; margin-bottom: 16px; }
+          .text { font-size: 14px; line-height: 1.6; color: #C9C6DB; margin-bottom: 20px; }
+          .code-box { background-color: #0E0D14; border: 2px dashed #5B3DF5; border-radius: 16px; padding: 20px; text-align: center; margin: 24px 0; }
+          .code { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 900; letter-spacing: 4px; color: #FFB84D; }
+          .perks { background-color: rgba(91, 61, 245, 0.1); border-left: 4px solid #5B3DF5; padding: 14px 18px; border-radius: 10px; margin-bottom: 24px; }
+          .perk-item { font-size: 13px; color: #E0DCF8; margin-bottom: 8px; line-height: 1.5; }
+          .perk-item strong { color: #FFFFFF; }
+          .btn { display: inline-block; background-color: #5B3DF5; color: #FFFFFF !important; font-weight: 700; font-size: 14px; text-decoration: none; padding: 14px 28px; border-radius: 12px; margin: 20px 0; }
+          .footer { font-size: 12px; color: #7A7893; border-top: 1px solid #2E2C40; padding-top: 20px; margin-top: 24px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="logo">AddMe<span>.io</span></div>
+          <h1 class="title">🎉 Votre Code Partenaire est actif !</h1>
+          <p class="text">Bonjour,</p>
+          <p class="text">L'administration d'AddMe.io vient de vous créer un <strong>Code Partenaire Officiel</strong> exclusif rattaché à votre compte <strong>${toEmail}</strong> :</p>
+
+          <div class="code-box">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #8C8AA3; margin-bottom: 8px;">Votre Code Cadeau</div>
+            <div class="code">${code}</div>
+          </div>
+
+          <div class="perks">
+            <div class="perk-item">🎁 <strong>Pour votre audience :</strong> Vos filleuls reçoivent <strong>x${multiplier} de points (+${userBonusPoints} points gratuits)</strong> dès leur inscription en utilisant votre code.</div>
+            <div class="perk-item">💰 <strong>Pour vous :</strong> Vous gagnez <strong>+${influencerBonus} points</strong> automatiquement à chaque fois qu'un utilisateur s'inscrit et valide son compte.</div>
+          </div>
+
+          <p class="text">Votre lien d'affiliation direct à partager :<br>
+            <a href="${referralUrl}" style="color: #7C63F8; font-weight: bold; word-break: break-all;">${referralUrl}</a>
+          </p>
+
+          <div style="text-align: center;">
+            <a href="https://addme.io/dashboard" class="btn">Accéder à mon tableau de bord &rarr;</a>
+          </div>
+
+          <div class="footer">
+            Partagez votre code sur vos réseaux sociaux (TikTok, Instagram, YouTube) pour développer votre visibilité et votre solde de points.<br>&copy; AddMe.io — Tous droits réservés.
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return deliverEmail({ toEmail, subject, textBody, htmlBody });
+}
+
 /**
  * Routeur d'envoi d'email multi-fournisseurs :
  * 1. Resend API (si RESEND_API_KEY est défini) - Idéal Vercel & Edge

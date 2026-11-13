@@ -101,12 +101,16 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 2. Écriture atomique et idempotente dans le Ledger
-      const existingBonus = await tx.ledgerEntry.findUnique({
-        where: { idempotencyKey },
+      // 2. Contrôle strict du bonus d'inscription dans le Grand Livre :
+      // Empêche formellement tout cumul indu si l'utilisateur a déjà reçu son bonus (GIFT_CODE_BONUS ou WELCOME_BONUS)
+      const existingRegistrationBonus = await tx.ledgerEntry.findFirst({
+        where: {
+          userId: user.id,
+          type: { in: [LEDGER_TYPES.WELCOME_BONUS, LEDGER_TYPES.GIFT_CODE_BONUS] },
+        },
       });
 
-      if (!existingBonus) {
+      if (!existingRegistrationBonus) {
         await tx.ledgerEntry.create({
           data: {
             userId: user.id,
@@ -130,7 +134,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Votre adresse email a été validée avec succès ! ${welcomePoints} points de bienvenue ont été ajoutés à votre solde.`,
+      message: "Votre adresse email a été validée avec succès ! Votre compte est désormais pleinement actif.",
       bonusPoints: welcomePoints,
     });
   } catch (error) {

@@ -39,9 +39,36 @@ export default function RegisterPage() {
     verificationUrl: string;
   } | null>(null);
 
+  // Extraction intelligente de code cadeau même si l'usager colle une URL complète
+  const parseGiftCodeInput = (raw: string): string => {
+    let text = (raw || "").trim();
+    if (
+      text.includes("http") ||
+      text.includes("?ref=") ||
+      text.includes("?code=") ||
+      text.includes("&ref=") ||
+      text.includes("&code=")
+    ) {
+      try {
+        const urlToParse = text.startsWith("http") ? text : `https://${text}`;
+        const url = new URL(urlToParse);
+        const extracted = url.searchParams.get("ref") || url.searchParams.get("code");
+        if (extracted) {
+          return extracted.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+        }
+      } catch {
+        const match = text.match(/[?&](?:ref|code)=([a-zA-Z0-9_-]+)/i);
+        if (match && match[1]) {
+          return match[1].toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+        }
+      }
+    }
+    return text.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+  };
+
   // Vérification de code cadeau
   const verifyCode = async (codeToVerify: string) => {
-    const clean = (codeToVerify || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+    const clean = parseGiftCodeInput(codeToVerify);
     if (!clean) {
       setGiftValidation({ status: "idle" });
       return;
@@ -202,32 +229,43 @@ export default function RegisterPage() {
         )}
 
         {successData ? (
-          <div className="p-6 rounded-2xl bg-[#EEEAFF] border border-[#D9D2FF] text-center space-y-4">
-            <div className="h-12 w-12 rounded-full bg-white text-[#5B3DF5] flex items-center justify-center mx-auto shadow-sm">
-              <CheckCircle2 className="h-6 w-6" />
+          <div className="p-6 sm:p-7 rounded-3xl bg-slate-900 border border-slate-700 text-center space-y-4 shadow-2xl animate-up">
+            <div className="h-14 w-14 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </div>
-            <h3 className="text-lg font-extrabold text-[#12122A]">
+            <h3 className="text-xl font-black text-white tracking-tight">
               Compte créé avec succès !
             </h3>
-            <p className="text-xs text-[#5A5A70] leading-relaxed">
-              Vos <strong className="text-[#3A22C8]">+{successData.bonusPoints} points de bienvenue</strong> ont été crédités ! Voici votre code de vérification pour sécuriser votre compte :
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto">
+              Vos <strong className="text-amber-400 font-black">+{successData.bonusPoints} points de bienvenue</strong> ont été crédités sur votre compte !
             </p>
-            <div className="py-2.5 px-5 rounded-xl bg-white border border-[#CFCFE0] inline-block font-mono text-xl font-extrabold tracking-widest text-[#3A22C8]">
-              {successData.verificationCode}
+
+            <div className="py-4 px-6 rounded-2xl bg-slate-950 border-2 border-indigo-500/70 shadow-[0_0_25px_rgba(91,61,245,0.3)] space-y-2 inline-block w-full max-w-xs mx-auto">
+              <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider block">
+                Votre code de confirmation :
+              </span>
+              <div className="font-mono text-2xl sm:text-3xl font-black tracking-[0.25em] text-amber-300 select-all py-1">
+                {successData.verificationCode || successData.verificationToken || "VÉRIFIEZ EMAIL"}
+              </div>
             </div>
-            <div className="pt-2 flex flex-col gap-2">
+
+            <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-tight">
+              Un email contenant ce code à 6 chiffres vous a également été envoyé pour sécuriser votre compte.
+            </p>
+
+            <div className="pt-2 flex flex-col gap-2.5">
               <Link
-                href={`/verify-email?code=${successData.verificationToken}`}
-                className="addme-btn addme-btn-primary w-full"
+                href={`/verify-email?code=${encodeURIComponent(successData.verificationCode || successData.verificationToken || "")}`}
+                className="addme-btn addme-btn-primary w-full py-3.5 text-sm font-bold shadow-lg"
               >
                 <span>Confirmer mon adresse email</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/dashboard"
-                className="text-xs font-semibold text-[#5A5A70] hover:text-[#12122A] py-2"
+                className="text-xs font-semibold text-slate-400 hover:text-white py-1.5 transition"
               >
-                Accéder au tableau de bord
+                Accéder directement au tableau de bord &rarr;
               </Link>
             </div>
           </div>
@@ -328,8 +366,16 @@ export default function RegisterPage() {
                   type="text"
                   value={giftCode}
                   onChange={(e) => {
-                    const upper = e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
-                    setGiftCode(upper);
+                    const parsed = parseGiftCodeInput(e.target.value);
+                    setGiftCode(parsed);
+                  }}
+                  onPaste={(e) => {
+                    const pastedText = e.clipboardData.getData("text");
+                    const parsed = parseGiftCodeInput(pastedText);
+                    if (parsed && parsed !== pastedText) {
+                      e.preventDefault();
+                      setGiftCode(parsed);
+                    }
                   }}
                   placeholder="EX: TIKTOK200, INFLUENCEUR..."
                   className={`w-full pl-10 pr-10 py-3 rounded-xl bg-[#F7F7FB] border text-sm font-mono uppercase tracking-wider focus:outline-none transition-all ${

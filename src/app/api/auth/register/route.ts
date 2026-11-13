@@ -150,6 +150,9 @@ export async function POST(req: NextRequest) {
       message: validatedGiftCode
         ? `Compte créé avec succès ! Bonus x${validatedGiftCode.multiplier ?? 4} (+${userBonusPoints} points) appliqué. Un email de confirmation contenant votre code à 6 chiffres vous a été envoyé.`
         : "Compte créé avec succès ! Un email de confirmation contenant votre code à 6 chiffres vous a été envoyé.",
+      verificationCode: emailVerificationToken,
+      verificationToken: emailVerificationToken,
+      verificationUrl,
       user: {
         id: newUser.id,
         email: newUser.email,
