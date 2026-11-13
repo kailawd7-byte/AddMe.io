@@ -23,6 +23,9 @@ import {
   Flame,
 } from "lucide-react";
 import { POINT_PACKS } from "@/lib/constants";
+import DiscordIcon from "@/components/DiscordIcon";
+
+const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/addme";
 
 /**
  * Moteur Graphique Canvas 60 FPS : "Lac de Couleurs Vivant" (Liquid Color Lake)
@@ -399,14 +402,14 @@ export default function HomePage() {
                 <span>Plateforme P2P Éthique · Engagement 100% Réel & Vérifié</span>
               </div>
 
-              <h1 className="text-[40px] sm:text-[60px] lg:text-[68px] font-extrabold leading-[1.02] tracking-[-0.03em] m-0 mb-5 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+              <h1 className="text-[32px] sm:text-[50px] lg:text-[68px] font-extrabold leading-[1.04] tracking-[-0.03em] m-0 mb-5 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
                 Donnez de l’attention.{" "}
                 <span className="bg-gradient-to-r from-[#FFB84D] via-[#FFF0C2] to-[#FFB84D] bg-clip-text text-transparent font-serif-drama italic font-bold drop-shadow-[0_4px_24px_rgba(255,184,77,0.35)]">
                   Recevez-en.
                 </span>
               </h1>
 
-              <p className="text-lg sm:text-[19px] leading-[1.65] text-white/90 max-w-xl mx-auto md:mx-0 m-0 px-2 md:px-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              <p className="text-base sm:text-[19px] leading-[1.65] text-white/90 max-w-xl mx-auto md:mx-0 m-0 px-1 md:px-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
                 Propulsez vos contenus sur vos 12 réseaux et plateformes d’attention en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
@@ -414,12 +417,12 @@ export default function HomePage() {
               </p>
 
               {/* Actions selon le statut de connexion */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-8">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 mt-8">
                 {isAuthenticated ? (
                   <>
                     <Link
                       href="/dashboard"
-                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
+                      className="addme-btn addme-btn-primary text-sm sm:text-base px-5 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto"
                     >
                       <span>
                         Accéder à mon Dashboard (
@@ -428,29 +431,47 @@ export default function HomePage() {
                         </strong>
                         )
                       </span>
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-4 w-4 shrink-0" />
                     </Link>
                     <Link
                       href="/tasks"
-                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-[#FFB84D] hover:bg-black/50 px-6 py-4"
+                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-[#FFB84D] hover:bg-black/50 px-5 sm:px-6 py-3.5 sm:py-4 text-sm w-full sm:w-auto"
                     >
                       Gagner des points
                     </Link>
+                    <a
+                      href={DISCORD_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="addme-btn bg-[#5865F2]/25 hover:bg-[#5865F2]/40 text-white backdrop-blur-xl border border-[#5865F2]/50 hover:border-[#5865F2] text-sm px-4 sm:px-5 py-3 sm:py-4 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <DiscordIcon className="h-4 w-4 text-[#8EA1FF] shrink-0" />
+                      <span>Rejoindre le Discord</span>
+                    </a>
                   </>
                 ) : (
                   <>
                     <Link
                       href="/register"
-                      className="addme-btn addme-btn-primary text-base px-7 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
+                      className="addme-btn addme-btn-primary text-sm sm:text-base px-5 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto"
                     >
-                      <span>Créer mon compte · 50 points offerts</span>
-                      <ArrowRight className="h-4 w-4" />
+                      <span>Créer mon compte <span className="hidden sm:inline">· 50 points offerts</span><span className="sm:hidden">(+50 pts offerts)</span></span>
+                      <ArrowRight className="h-4 w-4 shrink-0" />
                     </Link>
                     <a
-                      href="#how"
-                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-white hover:bg-black/50 px-6 py-4"
+                      href={DISCORD_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="addme-btn bg-[#5865F2]/25 hover:bg-[#5865F2]/40 text-white backdrop-blur-xl border border-[#5865F2]/50 hover:border-[#5865F2] text-sm px-4 sm:px-5 py-3.5 sm:py-4 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
-                      Voir comment ça marche
+                      <DiscordIcon className="h-4 w-4 text-[#8EA1FF] shrink-0" />
+                      <span>Communauté Discord</span>
+                    </a>
+                    <a
+                      href="#how"
+                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-white hover:bg-black/50 px-5 sm:px-6 py-3.5 sm:py-4 text-sm w-full sm:w-auto"
+                    >
+                      Fonctionnement
                     </a>
                   </>
                 )}
@@ -1043,13 +1064,13 @@ export default function HomePage() {
                         {simReward} pt{simReward > 1 ? "s" : ""} / personne
                       </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
                       {[1, 2, 3, 5].map((pt) => (
                         <button
                           key={pt}
                           type="button"
                           onClick={() => setSimReward(pt)}
-                          className={`py-2.5 rounded-xl text-xs font-extrabold border transition-all ${
+                          className={`py-2 sm:py-2.5 rounded-xl text-xs font-extrabold border transition-all ${
                             simReward === pt
                               ? "bg-[#5B3DF5]/30 border-[#5B3DF5] text-white shadow-xs scale-[1.02]"
                               : "bg-[#181726] border-white/10 text-[#D6D3E9] hover:border-[#5B3DF5]/50 hover:text-white"
@@ -1321,7 +1342,7 @@ export default function HomePage() {
                   className="h-full"
                 >
                   <div
-                    className={`manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between relative overflow-hidden group ${
+                    className={`manifesto-card backdrop-blur-2xl p-5 sm:p-7 h-full flex flex-col justify-between relative overflow-hidden group ${
                       isPopular
                         ? "!border-2 !border-[#5B3DF5] shadow-[0_28px_60px_-20px_rgba(91,61,245,0.45)]"
                         : ""
@@ -1457,9 +1478,9 @@ export default function HomePage() {
         {/* ===================================================================
             SECTION 7 : BANNIÈRE D'APPEL À L'ACTION FINALE
            =================================================================== */}
-        <section className="max-w-[1140px] mx-auto px-6 pb-20 relative z-10">
+        <section className="max-w-[1140px] mx-auto px-4 sm:px-6 pb-20 relative z-10">
           <ScrollReveal variant="zoom-in">
-            <div className="rounded-3xl bg-[#0B0A14] text-white p-8 sm:p-14 border border-white/15 relative overflow-hidden shadow-2xl text-center">
+            <div className="rounded-3xl bg-[#0B0A14] text-white p-6 sm:p-14 border border-white/15 relative overflow-hidden shadow-2xl text-center">
               <LiquidColorLake mode="dark" />
               <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
@@ -1468,28 +1489,38 @@ export default function HomePage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Bonus de bienvenue immédiat : +50 points offerts</span>
                 </div>
-                <h2 className="text-[30px] sm:text-[44px] font-extrabold leading-tight tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+                <h2 className="text-[26px] sm:text-[44px] font-extrabold leading-tight tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                   Prêt à faire décoller vos publications avec de{" "}
                   <span className="text-[#FFB84D] font-serif-drama italic">
                     vrais créateurs ?
                   </span>
                 </h2>
-                <p className="text-sm sm:text-base text-white/90 leading-relaxed">
+                <p className="text-sm sm:text-base text-white/90 leading-relaxed px-1">
                   Rejoignez la communauté AddMe.io en 30 secondes. Aucun mot de passe
                   de réseau social demandé, aucun abonnement imposé.
                 </p>
-                <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
                   <Link
                     href={isAuthenticated ? "/dashboard" : "/register"}
-                    className="addme-btn addme-btn-primary text-base px-8 py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)]"
+                    className="addme-btn addme-btn-primary text-sm sm:text-base px-6 sm:px-8 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto"
                   >
                     <span>
                       {isAuthenticated
                         ? "Ouvrir mon Tableau de bord"
                         : "Créer mon compte gratuitement"}
                     </span>
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 shrink-0" />
                   </Link>
+
+                  <a
+                    href={DISCORD_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="addme-btn bg-[#5865F2] hover:bg-[#4752C4] text-white text-sm sm:text-base px-6 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(88,101,242,0.7)] border border-white/20 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto"
+                  >
+                    <DiscordIcon className="h-5 w-5 shrink-0" />
+                    <span>Rejoindre le Discord</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -1502,7 +1533,7 @@ export default function HomePage() {
          ===================================================================== */}
       <footer className="bg-[#0B0A14] text-white py-10 mt-auto border-t border-[#2E2C40]">
         <div className="max-w-[1140px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
             <Link href="/" className="flex items-center gap-2">
               <img src="/icon.svg" alt="AddMe.io" className="h-6 w-6 rounded-md" />
               <b className="text-xl font-extrabold">
@@ -1513,9 +1544,18 @@ export default function HomePage() {
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               Système Opérationnel
             </span>
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/40 text-xs font-semibold text-[#8EA1FF] hover:text-white transition-all"
+            >
+              <DiscordIcon className="h-3.5 w-3.5 text-[#5865F2]" />
+              <span>Communauté Discord</span>
+            </a>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm text-[#C9C6DB]">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4 text-sm text-[#C9C6DB]">
             <Link href="/legal/terms" className="hover:text-white transition-colors">
               CGU
             </Link>

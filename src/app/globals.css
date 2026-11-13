@@ -721,3 +721,21 @@ html.dark ::-webkit-scrollbar-track {
 html.dark ::-webkit-scrollbar-thumb {
   background: #383556;
 }
+
+/* =====================================================================
+   OPTIMISATIONS RESPONSIVE ULTRA-COMPACTES (360px à 480px)
+   Ajuste le padding des cartes et des boutons pour éviter tout débordement
+   sur smartphones et écrans étroits tout en préservant l'élégance optique.
+   ===================================================================== */
+@media (max-width: 480px) {
+  .addme-card,
+  .addme-card-static {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .addme-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}

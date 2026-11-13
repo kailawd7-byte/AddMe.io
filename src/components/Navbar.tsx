@@ -18,9 +18,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   User,
+  ExternalLink,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import SupportWidget from "./SupportWidget";
+import DiscordIcon from "./DiscordIcon";
 
 interface UserData {
   id: string;
@@ -45,6 +47,8 @@ const APP_ROUTE_PREFIXES = [
   "/shop",
   "/admin",
 ];
+
+const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/addme";
 
 export default function Navbar({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
@@ -368,6 +372,23 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                     );
                   })}
                 </nav>
+
+                {/* Lien Communauté Discord Mobile */}
+                <a
+                  href={DISCORD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mt-3 flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all bg-[#5865F2]/10 hover:bg-[#5865F2]/20 text-[#5865F2] dark:text-[#8EA1FF] border border-[#5865F2]/30"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <DiscordIcon className="h-4 w-4 shrink-0 text-[#5865F2]" />
+                    <span className="truncate">Communauté Discord</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#5865F2] text-white font-extrabold shrink-0">
+                    Rejoindre
+                  </span>
+                </a>
               </div>
 
               {user && (
@@ -464,6 +485,19 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
           {/* Pied de Sidebar */}
           <div className="pt-4 border-t border-[#E3E3EE] dark:border-[#26243A] space-y-2.5">
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-[#5865F2]/10 hover:bg-[#5865F2]/20 text-[#5865F2] dark:text-[#8EA1FF] border border-[#5865F2]/30 transition-colors"
+              title="Rejoindre le serveur Discord officiel AddMe.io"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <DiscordIcon className="h-4 w-4 text-[#5865F2] shrink-0" />
+                <span className="truncate">Serveur Discord</span>
+              </div>
+              <ExternalLink className="h-3 w-3 opacity-60 shrink-0" />
+            </a>
             <ThemeToggle />
             {user ? (
               <>
@@ -604,7 +638,17 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               AddMe<span className="text-[#FFB84D]">.io</span>
             </b>
           </Link>
-          <div className="flex items-center gap-4 text-[#C9C6DB]">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-[#C9C6DB]">
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white flex items-center gap-1.5 text-[#8EA1FF] hover:underline"
+            >
+              <DiscordIcon className="h-3.5 w-3.5 text-[#5865F2]" />
+              <span>Discord</span>
+            </a>
+            <span>·</span>
             <Link href="/legal/terms" className="hover:text-white">
               CGU
             </Link>

@@ -15,6 +15,9 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import DiscordIcon from "@/components/DiscordIcon";
+
+const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/addme";
 
 interface UserProfile {
   id: string;
@@ -566,6 +569,44 @@ export default function DashboardPage() {
               })}
             </div>
           )}
+
+          {/* Widget Communauté Discord */}
+          <div className="addme-card animate-up-3 bg-gradient-to-br from-[#5865F2]/15 via-[#1E1D36] to-[#0E0D14] border-2 border-[#5865F2]/40 text-white p-5 space-y-3.5 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-[#5865F2]/20 border border-[#5865F2]/40 text-[#8EA1FF] flex items-center justify-center shrink-0">
+                  <DiscordIcon className="h-5 w-5 text-[#8EA1FF]" />
+                </div>
+                <div>
+                  <b className="text-sm font-black text-white block leading-tight">
+                    Serveur Discord AddMe.io
+                  </b>
+                  <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Communauté Active & Support Direct
+                  </span>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-[#5865F2]/30 border border-[#5865F2]/50 text-white text-[10px] font-black">
+                Officiel
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-300 leading-relaxed m-0">
+              Échangez des astuces de visibilité, découvrez les nouvelles missions en avant-première et rejoignez les discussions en direct avec les autres créateurs.
+            </p>
+
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <DiscordIcon className="h-4 w-4 shrink-0" />
+              <span>Rejoindre la communauté Discord</span>
+              <ExternalLink className="h-3.5 w-3.5 opacity-80 shrink-0" />
+            </a>
+          </div>
         </div>
       </div>
 

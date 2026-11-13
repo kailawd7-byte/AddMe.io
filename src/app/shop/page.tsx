@@ -462,48 +462,52 @@ function ShopContent() {
         ) : (
           <div>
             {history.map((item) => (
-              <div key={item.id} className="addme-row">
-                <div className="addme-thumb">+{item.pointsAmount}</div>
-                <div className="flex-1 min-w-0">
-                  <b className="text-sm font-bold text-[#12122A] block">
-                    {item.packName} (+{item.pointsAmount} pts)
-                  </b>
-                  <span className="text-xs text-[#5A5A70]">
-                    {new Date(item.createdAt).toLocaleDateString("fr-FR")} •{" "}
-                    {item.amountFormatted}
-                  </span>
+              <div key={item.id} className="addme-row flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto flex-1 min-w-0">
+                  <div className="addme-thumb shrink-0">+{item.pointsAmount}</div>
+                  <div className="flex-1 min-w-0">
+                    <b className="text-sm font-bold text-[#12122A] dark:text-white block truncate">
+                      {item.packName} (+{item.pointsAmount} pts)
+                    </b>
+                    <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD]">
+                      {new Date(item.createdAt).toLocaleDateString("fr-FR")} •{" "}
+                      {item.amountFormatted}
+                    </span>
+                  </div>
                 </div>
 
-                {item.status === "COMPLETED" ? (
-                  <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
-                    Crédité
-                  </span>
-                ) : item.status === "PENDING" ? (
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
-                      Non finalisé
+                <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E3E3EE]/60 dark:border-[#26243A]">
+                  {item.status === "COMPLETED" ? (
+                    <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                      Crédité
                     </span>
-                    <button
-                      type="button"
-                      disabled={resumingItemId === item.id}
-                      onClick={() => handleResumeOrPayPending(item)}
-                      className="addme-btn addme-btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
-                    >
-                      {resumingItemId === item.id ? (
-                        <span>Vérification...</span>
-                      ) : (
-                        <>
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span>Finaliser le paiement</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <span className="px-3 py-1 rounded-full bg-[#F7F7FB] border border-[#E3E3EE] text-[#5A5A70] text-xs font-semibold">
-                    {item.status}
-                  </span>
-                )}
+                  ) : item.status === "PENDING" ? (
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                      <span className="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+                        Non finalisé
+                      </span>
+                      <button
+                        type="button"
+                        disabled={resumingItemId === item.id}
+                        onClick={() => handleResumeOrPayPending(item)}
+                        className="addme-btn addme-btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      >
+                        {resumingItemId === item.id ? (
+                          <span>Vérification...</span>
+                        ) : (
+                          <>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            <span>Finaliser le paiement</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full bg-[#F7F7FB] border border-[#E3E3EE] text-[#5A5A70] text-xs font-semibold">
+                      {item.status}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
