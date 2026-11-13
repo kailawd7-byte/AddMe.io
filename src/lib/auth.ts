@@ -16,7 +16,36 @@ export {
   type SessionPayload,
 };
 
-const COOKIE_NAME = "addme_session";
+export const COOKIE_NAME = "addme_session";
+
+/**
+ * Calcule dynamiquement l'URL de redirection OAuth Google pour s'adapter
+ * automatiquement à l'environnement actuel (localhost en dev, domaine Vercel en prod)
+ */
+export function getGoogleRedirectUri(req: { headers: Headers; nextUrl: { host: string; origin: string } }): string {
+  const host =
+    req.headers.get("x-forwarded-host") ||
+    req.headers.get("host") ||
+    req.nextUrl.host;
+  const proto =
+    req.headers.get("x-forwarded-proto") ||
+    (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
+
+  const currentOrigin = `${proto}://${host}`;
+
+  const configured = process.env.GOOGLE_REDIRECT_URI;
+  if (configured) {
+    try {
+      const parsed = new URL(configured);
+      // Ne respecter la variable statique que si son hôte correspond au host réel
+      if (parsed.host === host) {
+        return configured;
+      }
+    } catch {}
+  }
+
+  return `${currentOrigin}/api/auth/google/callback`;
+}
 
 /**
  * Écrit le cookie de session sécurisé

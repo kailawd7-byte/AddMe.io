@@ -76,6 +76,12 @@ export const ADDME_KNOWLEDGE_BASE = `
 - **Problème de points non crédités** : Rappeler le délai impératif de 20 secondes et la vérification par le robot. Inviter à fournir une capture d'écran nette si le compteur du réseau est arrondi.
 - **Problème de paiement Mobile Money** : Expliquer que la confirmation dépend de la validation du code PIN USSD sur le téléphone. Si la transaction a été débitée, l'administrateur peut retrouver la référence SasPay ou créditer les points après vérification.
 - **Problème de code cadeau** : Rappeler que les codes cadeaux sont sensibles aux fautes de frappe et ne s'appliquent qu'à l'inscription.
+
+## 8. NOTIFICATION DES BUGS & ESCALADE TECHNIQUE VERS L'ADMINISTRATEUR
+- Lorsqu'un utilisateur signale un bug technique (erreur de chargement, page blanche, problème de redirection, dysfonctionnement d'un bouton, tâche bloquée ou exception) :
+  1. L'IA Secrétaire envoie immédiatement un message rassurant au client pour lui expliquer que sa requête a été analysée et transmise en priorité haute à l'équipe technique, et l'invite à patienter pendant les vérifications.
+  2. L'IA Secrétaire notifie instantanément l'administrateur dans la console d'administration (\`/admin\`) sous la rubrique dédiée aux incidents techniques afin que celui-ci puisse tester, reproduire et corriger le bug.
+  3. L'administrateur dispose d'une vue synthétique de tous les bugs signalés avec les coordonnées du plaignant, les étapes à reproduire et un bouton pour marquer l'incident résolu une fois le test effectué.
 `;
 
 export async function askAISecretary({
@@ -93,6 +99,7 @@ export async function askAISecretary({
     subject: string;
     category: string;
     status: string;
+    isTechnicalBug?: boolean;
     messages: Array<{ senderRole: string; content: string; createdAt: string }>;
   };
   platformStats?: {
@@ -102,6 +109,8 @@ export async function askAISecretary({
     pendingReports?: number;
     circulatingPoints?: number;
     openTickets?: number;
+    openBugsCount?: number;
+    bugTickets?: any[];
   };
 }): Promise<AISecretaryResponse> {
   const geminiKey = process.env.GEMINI_API_KEY?.trim();

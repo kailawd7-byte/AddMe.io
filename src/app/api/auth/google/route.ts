@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { setSessionCookie, hashPassword } from "@/lib/auth";
+import { setSessionCookie, hashPassword, getGoogleRedirectUri } from "@/lib/auth";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
 import crypto from "crypto";
 
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI ||
-    `${req.nextUrl.origin}/api/auth/google/callback`;
+  const redirectUri = getGoogleRedirectUri(req);
 
   // 1. Si les identifiants réels Google Cloud sont configurés dans .env
   if (clientId && clientId !== "your-google-client-id" && clientId.trim().length > 5) {

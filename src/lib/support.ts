@@ -21,6 +21,7 @@ export interface SupportTicket {
   category: "GENERAL" | "POINTS" | "CAMPAIGN" | "TASK" | "ACCOUNT" | "BUG";
   status: "OPEN" | "ANSWERED" | "RESOLVED";
   priority: "LOW" | "NORMAL" | "HIGH";
+  isTechnicalBug?: boolean;
   messages: SupportMessage[];
   createdAt: string;
   updatedAt: string;
@@ -79,28 +80,67 @@ export async function createSupportTicket(params: {
 
   const displayName = params.userName || params.userEmail.split("@")[0] || "Utilisateur";
 
+  const bugKeywords = [
+    "bug",
+    "erreur",
+    "bloqué",
+    "bloque",
+    "bloquer",
+    "plante",
+    "planté",
+    "crash",
+    "panne",
+    "ne marche pas",
+    "ne fonctionne pas",
+    "problème technique",
+    "impossible de",
+    "page blanche",
+    "exception",
+    "fail",
+  ];
+  const combinedText = `${params.subject} ${params.message}`.toLowerCase();
+  const isBug =
+    params.category === "BUG" ||
+    bugKeywords.some((kw) => combinedText.includes(kw));
+
+  const initialMessages: SupportMessage[] = [
+    {
+      id: messageId,
+      senderRole: "USER",
+      senderId: params.userId,
+      senderName: displayName,
+      senderEmail: params.userEmail,
+      content: params.message.trim(),
+      createdAt: now,
+    },
+  ];
+
+  if (isBug) {
+    const aiMessageId = `msg_ai_${crypto.randomBytes(6).toString("hex")}`;
+    initialMessages.push({
+      id: aiMessageId,
+      senderRole: "ADMIN",
+      senderId: "system_ai_secretary",
+      senderName: "Secrétaire IA AddMe.io",
+      senderEmail: "support@addme.io",
+      content: `🤖 Bonjour ${displayName},\n\nNotre Secrétaire IA a bien enregistré votre signalement technique concernant « ${params.subject.trim()} ».\n\nVotre requête a été classée en PRIORITÉ HAUTE et transmise directement sur la console d'administration pour investigation. L'administrateur et l'équipe technique procèdent actuellement aux vérifications pour tester et reproduire ce bug.\n\nNous vous prions de bien vouloir patienter ; vous recevrez une mise à jour dès que l'incident aura été résolu. Merci de votre patience !`,
+      createdAt: new Date(Date.now() + 1000).toISOString(),
+    });
+  }
+
   const newTicket: SupportTicket = {
     id: ticketId,
     userId: params.userId,
     userEmail: params.userEmail,
     userName: displayName,
     subject: params.subject.trim(),
-    category: params.category || "GENERAL",
-    status: "OPEN",
-    priority: "NORMAL",
+    category: isBug ? "BUG" : params.category || "GENERAL",
+    status: isBug ? "ANSWERED" : "OPEN",
+    priority: isBug ? "HIGH" : "NORMAL",
+    isTechnicalBug: isBug,
     createdAt: now,
     updatedAt: now,
-    messages: [
-      {
-        id: messageId,
-        senderRole: "USER",
-        senderId: params.userId,
-        senderName: displayName,
-        senderEmail: params.userEmail,
-        content: params.message.trim(),
-        createdAt: now,
-      },
-    ],
+    messages: initialMessages,
   };
 
   tickets.unshift(newTicket);
@@ -243,17 +283,37 @@ export async function getSupportStats(): Promise<{
   pendingTickets: number;
   answeredTickets: number;
   resolvedTickets: number;
+  openBugsCount: number;
 }> {
   const tickets = loadTickets();
   const totalTickets = tickets.length;
   const pendingTickets = tickets.filter((t) => t.status === "OPEN").length;
   const answeredTickets = tickets.filter((t) => t.status === "ANSWERED").length;
   const resolvedTickets = tickets.filter((t) => t.status === "RESOLVED").length;
+  const openBugsCount = tickets.filter(
+    (t) => (t.isTechnicalBug || t.category === "BUG") && t.status !== "RESOLVED"
+  ).length;
 
   return {
     totalTickets,
     pendingTickets,
     answeredTickets,
     resolvedTickets,
+    openBugsCount,
   };
+}
+
+/**
+ * Récupère les tickets de bugs techniques en attente d'investigation ou de test
+ */
+export async function getOpenBugTickets(): Promise<SupportTicket[]> {
+  const tickets = loadTickets();
+  return tickets
+    .filter(
+      (t) => (t.isTechnicalBug || t.category === "BUG") && t.status !== "RESOLVED"
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
 }

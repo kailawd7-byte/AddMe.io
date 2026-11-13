@@ -26,10 +26,25 @@ export default function LoginPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("error") === "google_not_configured") {
-        setError(
-          "Configuration Google requise : Pour analyser et lister les comptes réels de votre navigateur (comme sur votre capture d'écran), ajoutez vos clés GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans le fichier .env."
-        );
+      const err = params.get("error");
+      if (err) {
+        if (err === "google_not_configured") {
+          setError(
+            "Configuration Google requise : Veuillez vérifier que GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET sont bien renseignés."
+          );
+        } else if (err === "google_token_failed") {
+          setError(
+            "Échec de l'authentification Google (échange de token). Veuillez vérifier vos identifiants."
+          );
+        } else if (err === "google_userinfo_failed") {
+          setError("Impossible de récupérer les informations de votre profil Google.");
+        } else if (err === "no_email_provided") {
+          setError("Votre compte Google n'a fourni aucune adresse email valide.");
+        } else if (err === "server_error") {
+          setError("Une erreur interne est survenue lors de la connexion Google. Veuillez réessayer.");
+        } else {
+          setError(`Erreur de connexion : ${decodeURIComponent(err)}`);
+        }
       }
     }
   }, []);

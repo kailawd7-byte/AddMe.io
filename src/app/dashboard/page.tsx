@@ -221,10 +221,10 @@ export default function DashboardPage() {
       {/* En-tête du Tableau de bord (Style exact Dashboard.dc.html) */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[28px] sm:text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-[28px] font-extrabold text-[#12122A] m-0 tracking-tight">
             Bonjour, {displayName}
           </h1>
-          <p className="text-sm text-[#5A5A70] mt-0.5">
+          <p className="text-xs sm:text-sm text-[#5A5A70] mt-0.5">
             Pilotez vos points, vos campagnes et vos interactions en temps réel.
           </p>
         </div>
@@ -233,13 +233,13 @@ export default function DashboardPage() {
           {profile.role === "ADMIN" && (
             <Link
               href="/admin"
-              className="addme-btn addme-btn-ghost text-xs py-2.5 px-4"
+              className="addme-btn addme-btn-ghost text-xs py-2 px-3 sm:py-2.5 sm:px-4"
             >
               <ShieldCheck className="h-4 w-4 text-[#5B3DF5]" />
               Panel Admin
             </Link>
           )}
-          <Link href="/campaigns/new" className="addme-btn addme-btn-primary">
+          <Link href="/campaigns/new" className="addme-btn addme-btn-primary text-xs sm:text-sm py-2 px-3.5 sm:py-2.5 sm:px-4">
             <Plus className="h-4 w-4" />
             <span>Nouvelle campagne</span>
           </Link>
@@ -247,21 +247,21 @@ export default function DashboardPage() {
       </div>
 
       {/* 4 Cartes de Statistiques (Style exact Dashboard.dc.html) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4 items-stretch">
         {/* Carte 1 : Solde (#5B3DF5 - Reste TOUJOURS Violet en clair comme en sombre) */}
         <div
           className="addme-card addme-card-solde animate-up flex flex-col justify-between"
           style={{ background: "#5B3DF5", borderColor: "#5B3DF5", color: "#FFFFFF" }}
         >
           <div>
-            <div className="text-sm font-medium opacity-90 text-white">Solde disponible</div>
-            <div className="text-[42px] font-extrabold leading-tight my-1.5 text-white">
+            <div className="text-xs sm:text-sm font-medium opacity-90 text-white">Solde disponible</div>
+            <div className="text-2xl sm:text-3xl xl:text-[34px] font-extrabold leading-tight my-1.5 text-white">
               {profile.balance.toFixed(1)} pts
             </div>
           </div>
           <Link
             href="/shop"
-            className="btn-solde-shop addme-btn bg-white text-[#3A22C8] hover:bg-[#F7F7FB] text-xs py-2.5 px-4 w-fit mt-2 font-bold shadow-xs"
+            className="btn-solde-shop addme-btn bg-white text-[#3A22C8] hover:bg-[#F7F7FB] text-xs py-2 px-3.5 sm:py-2.5 sm:px-4 w-fit mt-2 font-bold shadow-xs"
           >
             Acheter des points
           </Link>
@@ -270,15 +270,15 @@ export default function DashboardPage() {
         {/* Carte 2 : Tâches effectuées / Points gagnés */}
         <div className="addme-card animate-up-1 flex flex-col justify-between">
           <div>
-            <div className="text-sm text-[#5A5A70] font-medium">
+            <div className="text-xs sm:text-sm text-[#5A5A70] font-medium">
               Tâches (Aujourd’hui)
             </div>
-            <div className="text-[34px] font-extrabold text-[#12122A] mt-2">
+            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] mt-1.5">
               +{profile.dailyTasksCompleted}
             </div>
           </div>
-          <div className="text-xs text-emerald-600 font-semibold mt-3 flex items-center gap-1">
-            <CheckCircle2 className="h-3.5 w-3.5" />
+          <div className="text-[11px] sm:text-xs text-emerald-600 font-semibold mt-2.5 flex items-center gap-1">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
             <span>Crédit direct sans attente 24h</span>
           </div>
         </div>
@@ -286,16 +286,16 @@ export default function DashboardPage() {
         {/* Carte 3 : Interactions reçues / Campagnes */}
         <div className="addme-card animate-up-2 flex flex-col justify-between">
           <div>
-            <div className="text-sm text-[#5A5A70] font-medium">
+            <div className="text-xs sm:text-sm text-[#5A5A70] font-medium">
               Actions reçues ({activeCampaigns.length} actives)
             </div>
-            <div className="text-[34px] font-extrabold text-[#12122A] mt-2">
+            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] mt-1.5">
               {totalReceivedActions}
             </div>
           </div>
           <Link
             href="/campaigns"
-            className="text-xs font-bold text-[#5B3DF5] hover:underline mt-3 inline-flex items-center gap-1"
+            className="text-[11px] sm:text-xs font-bold text-[#5B3DF5] hover:underline mt-2.5 inline-flex items-center gap-1"
           >
             <span>Gérer mes campagnes</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -305,12 +305,12 @@ export default function DashboardPage() {
         {/* Carte 4 : Réputation */}
         <div className="addme-card animate-up-3 flex flex-col justify-between">
           <div>
-            <div className="text-sm text-[#5A5A70] font-medium">Réputation</div>
-            <div className="text-[34px] font-extrabold text-[#12122A] mt-2">
+            <div className="text-xs sm:text-sm text-[#5A5A70] font-medium">Réputation</div>
+            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] mt-1.5">
               {profile.reputationScore.toFixed(0)}/100
             </div>
           </div>
-          <div className="text-xs text-[#5A5A70] mt-3">
+          <div className="text-[11px] sm:text-xs text-[#5A5A70] mt-2.5">
             Indice de fiabilité communautaire
           </div>
         </div>

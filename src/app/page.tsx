@@ -852,7 +852,7 @@ export default function HomePage() {
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-14">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-10 md:mt-14">
             {/* Étape 1 */}
             <ScrollReveal variant="fade-up" delay={0} className="h-full">
               <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group relative overflow-hidden">
@@ -1210,7 +1210,7 @@ export default function HomePage() {
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-7 mt-14">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7 mt-10 md:mt-14">
             {/* Panel 1 : Zéro mot de passe requis */}
             <ScrollReveal variant="fade-up" delay={0} className="h-full">
               <div className="manifesto-card backdrop-blur-2xl p-7 h-full flex flex-col justify-between group">
@@ -1331,7 +1331,7 @@ export default function HomePage() {
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-7 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7 items-stretch">
             {POINT_PACKS.map((pack, idx) => {
               const isPopular = Boolean(pack.popular);
               return (
@@ -1339,7 +1339,7 @@ export default function HomePage() {
                   key={pack.id}
                   variant="fade-up"
                   delay={idx * 140}
-                  className="h-full"
+                  className={`h-full ${idx === 2 ? "md:col-span-2 lg:col-span-1" : ""}`}
                 >
                   <div
                     className={`manifesto-card backdrop-blur-2xl p-5 sm:p-7 h-full flex flex-col justify-between relative overflow-hidden group ${

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { setSessionCookie, hashPassword } from "@/lib/auth";
+import {
+  setSessionCookie,
+  hashPassword,
+  getGoogleRedirectUri,
+  signSessionToken,
+  COOKIE_NAME,
+} from "@/lib/auth";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
 import { rewardInfluencerIfVerified } from "@/lib/gift-codes";
 import crypto from "crypto";
@@ -22,9 +28,7 @@ export async function GET(req: NextRequest) {
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI ||
-    `${req.nextUrl.origin}/api/auth/google/callback`;
+  const redirectUri = getGoogleRedirectUri(req);
 
   try {
     // 1. Échange du code d'autorisation contre un access token
@@ -118,14 +122,34 @@ export async function GET(req: NextRequest) {
       console.warn("[GoogleOAuth] Erreur rewardInfluencerIfVerified:", e);
     }
 
-    // 4. Session cookie
-    await setSessionCookie({
+    // 4. Session cookie & redirection vers le dashboard
+    const sessionPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
+    };
+
+    const token = signSessionToken(sessionPayload);
+    await setSessionCookie(sessionPayload);
+
+    const isLocal =
+      req.url.startsWith("http://localhost") ||
+      req.url.startsWith("http://127.0.0.1");
+
+    const redirectUrl = new URL("/dashboard", req.url);
+    const response = NextResponse.redirect(redirectUrl);
+
+    // CRITIQUE : Fixer explicitement le Set-Cookie sur la réponse HTTP 302/307
+    // pour que le navigateur conserve le cookie de session lors du suivi de la redirection
+    response.cookies.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" && !isLocal,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60, // 7 jours
     });
 
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return response;
   } catch (err) {
     console.error("[GoogleOAuth] Erreur callback :", err);
     return NextResponse.redirect(new URL("/login?error=server_error", req.url));

@@ -334,8 +334,8 @@ function ShopContent() {
           Chargement des offres...
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          {packs.map((pack) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
+          {packs.map((pack, idx) => {
             const isPopular = Boolean(pack.popular);
             const isBuying = purchasingPackId === pack.id;
 
@@ -344,11 +344,11 @@ function ShopContent() {
                 key={pack.id}
                 className={`addme-card flex flex-col justify-between ${
                   isPopular ? "border-2 border-[#5B3DF5] shadow-xl" : ""
-                }`}
+                } ${idx === 2 ? "md:col-span-2 lg:col-span-1" : ""}`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
-                    <b className="text-lg font-extrabold text-[#12122A]">
+                    <b className="text-base sm:text-lg font-extrabold text-[#12122A]">
                       {pack.name} {isPopular ? "· Populaire" : ""}
                     </b>
                     {isPopular && (
@@ -358,10 +358,10 @@ function ShopContent() {
                     )}
                   </div>
 
-                  <div className="mt-4 mb-1">
+                  <div className="mt-3.5 mb-1">
                     {paymentMethod === "SAASPAY" ? (
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-[36px] font-extrabold text-[#12122A]">
+                      <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-[#12122A]">
                           {pack.priceFcfaFormatted}
                         </span>
                         <span className="text-xs font-bold text-[#5A5A70]">
@@ -369,8 +369,8 @@ function ShopContent() {
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-[36px] font-extrabold text-[#12122A]">
+                      <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-[#12122A]">
                           {pack.priceFormatted}
                         </span>
                         <span className="text-xs font-bold text-[#5A5A70]">

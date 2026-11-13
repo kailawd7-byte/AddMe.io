@@ -739,3 +739,21 @@ html.dark ::-webkit-scrollbar-thumb {
     font-size: 13px;
   }
 }
+
+/* =====================================================================
+   OPTIMISATIONS RESPONSIVE TABLETTE (iPad Mini, iPad Air, 768px à 1024px)
+   Calibre le padding et la taille des cartes pour une aération parfaite
+   sans encombrement ni saturation visuelle sur tablettes.
+   ===================================================================== */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .addme-card,
+  .addme-card-static {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .addme-btn {
+    padding: 11px 18px;
+    font-size: 13px;
+  }
+}

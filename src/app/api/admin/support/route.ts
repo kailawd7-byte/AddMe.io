@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getAllSupportTickets, getSupportStats } from "@/lib/support";
+import { getAllSupportTickets, getSupportStats, getOpenBugTickets } from "@/lib/support";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
@@ -17,14 +17,16 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") || "";
 
   try {
-    const [tickets, stats] = await Promise.all([
+    const [tickets, stats, bugTickets] = await Promise.all([
       getAllSupportTickets({ status, category, search }),
       getSupportStats(),
+      getOpenBugTickets(),
     ]);
 
     return NextResponse.json({
       tickets,
       stats,
+      bugTickets,
     });
   } catch (err: any) {
     return NextResponse.json(
