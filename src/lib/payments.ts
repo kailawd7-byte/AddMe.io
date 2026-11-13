@@ -94,22 +94,29 @@ export async function createCheckoutSession(
           },
         });
 
-        // Mise à jour avec l'ID réel de la session SasPay
-        await prisma.payment.update({
-          where: { id: payment.id },
-          data: {
-            stripeSessionId: sasPaySession.id,
-          },
-        });
+        const sasPayTxId = sasPaySession.id || (sasPaySession as any).data?.id;
+        const sasPayCheckoutUrl = sasPaySession.checkout_url || (sasPaySession as any).data?.checkout_url;
 
-        return {
-          url: sasPaySession.checkout_url,
-          sessionId: sasPaySession.id,
-          paymentId: payment.id,
-          pack,
-          isMock: false,
-          provider: "SAASPAY",
-        };
+        // Mise à jour avec l'ID réel de la session SasPay
+        if (sasPayTxId) {
+          await prisma.payment.update({
+            where: { id: payment.id },
+            data: {
+              stripeSessionId: sasPayTxId,
+            },
+          });
+        }
+
+        if (sasPayCheckoutUrl) {
+          return {
+            url: sasPayCheckoutUrl,
+            sessionId: sasPayTxId || payment.id,
+            paymentId: payment.id,
+            pack,
+            isMock: false,
+            provider: "SAASPAY",
+          };
+        }
       } catch (err: any) {
         console.warn("Échec appel direct API SasPay (mode simulation Mobile Money activé) :", err.message);
       }

@@ -169,6 +169,21 @@ async function sasPayRequest<T>(
     throw new SasPayApiError(message, status, code, data);
   }
 
+  // Désencapsulation intelligente de l'enveloppe SasPay : {"success": true, "data": {...}, "code": 200/201}
+  // Permet d'accéder directement aux propriétés (ex: .checkout_url, .id, .status)
+  // tout en préservant l'accès via .data et les métadonnées de l'enveloppe.
+  if (data && typeof data === "object") {
+    if ("data" in data && data.data !== undefined) {
+      if (typeof data.data === "object" && data.data !== null && !Array.isArray(data.data)) {
+        return {
+          ...data,
+          ...data.data,
+        } as T;
+      }
+      return data.data as T;
+    }
+  }
+
   return data as T;
 }
 

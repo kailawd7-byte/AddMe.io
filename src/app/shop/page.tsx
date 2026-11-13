@@ -145,6 +145,11 @@ function ShopContent() {
             text: `Session créée pour le ${pack.name}. Cliquez ci-dessous pour finaliser le crédit.`,
           });
           await fetchShopData();
+        } else {
+          setFeedback({
+            type: "error",
+            text: data.error || "L'adresse de redirection vers la passerelle de paiement n'a pas pu être obtenue.",
+          });
         }
       }
     } catch {
