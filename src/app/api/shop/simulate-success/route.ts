@@ -32,6 +32,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Sécurité absolue : désactiver la simulation en production
+    // Seul le paiement réel SasPay validé peut créditer des points
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    const isLocalDev =
+      process.env.NODE_ENV === "development" &&
+      (appUrl.includes("localhost") || appUrl.includes("127.0.0.1"));
+
+    if (!isLocalDev || process.env.ENABLE_MOCK_PAYMENT !== "true") {
+      return NextResponse.json(
+        {
+          error:
+            "La validation simulée est strictement désactivée. Veuillez finaliser votre règlement via la passerelle Mobile Money sécurisée.",
+        },
+        { status: 403 }
+      );
+    }
+
     const result = await completePaymentConfirmation(sessionId, `pi_mock_${Date.now()}`);
 
     return NextResponse.json(result);

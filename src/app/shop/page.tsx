@@ -8,6 +8,8 @@ import {
   Smartphone,
   AlertTriangle,
   ArrowRight,
+  Info,
+  ExternalLink,
 } from "lucide-react";
 import type { PointPack } from "@/lib/constants";
 
@@ -38,13 +40,11 @@ function ShopContent() {
   const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasingPackId, setPurchasingPackId] = useState<string | null>(null);
+  const [resumingItemId, setResumingItemId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [simulatingSessionId, setSimulatingSessionId] = useState<string | null>(
-    null
-  );
 
   const fetchShopData = async () => {
     try {
@@ -138,13 +138,6 @@ function ShopContent() {
       } else {
         if (data.url) {
           window.location.href = data.url;
-        } else if (data.isMock) {
-          setSimulatingSessionId(data.sessionId);
-          setFeedback({
-            type: "success",
-            text: `Session créée pour le ${pack.name}. Cliquez ci-dessous pour finaliser le crédit.`,
-          });
-          await fetchShopData();
         } else {
           setFeedback({
             type: "error",
@@ -162,30 +155,56 @@ function ShopContent() {
     }
   };
 
-  const handleSimulateConfirmation = async (sessionId: string) => {
-    setSimulatingSessionId(sessionId);
+  const handleResumeOrPayPending = async (item: PaymentHistoryItem) => {
+    setResumingItemId(item.id);
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/shop/simulate-success", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
+      // 1. Vérifier si le paiement a déjà été validé par SasPay
+      const verifyRes = await fetch(
+        `/api/shop/saaspay/verify?sessionId=${encodeURIComponent(
+          item.stripeSessionId || item.id
+        )}`
+      );
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.status === "SUCCESS" || verifyData.status === "COMPLETED") {
+        setFeedback({
+          type: "success",
+          text: `Paiement validé avec succès ! +${item.pointsAmount} points crédités à votre solde.`,
+        });
+        await fetchShopData();
+        return;
+      }
+
+      // 2. Si le paiement est toujours en attente (non réglé), redirection vers la passerelle de paiement
+      setFeedback({
+        type: "success",
+        text: "Paiement en attente de règlement. Redirection vers la passerelle sécurisée Mobile Money...",
       });
 
-      const data = await res.json();
-      if (!res.ok) {
+      const checkoutRes = await fetch("/api/shop/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packId: item.packId, provider: "SAASPAY" }),
+      });
+
+      const checkoutData = await checkoutRes.json();
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+      } else {
         setFeedback({
           type: "error",
-          text: data.error || "Échec de la confirmation.",
+          text: "Impossible d'ouvrir la passerelle. Veuillez cliquer sur Choisir ci-dessus.",
         });
-      } else {
-        setFeedback({ type: "success", text: data.message });
-        setSimulatingSessionId(null);
-        await fetchShopData();
       }
     } catch {
-      setFeedback({ type: "error", text: "Erreur réseau." });
+      setFeedback({
+        type: "error",
+        text: "Erreur de communication avec la passerelle de paiement.",
+      });
+    } finally {
+      setResumingItemId(null);
     }
   };
 
@@ -252,7 +271,12 @@ function ShopContent() {
           >
             <CreditCard className="h-4 w-4" />
             <div className="text-left">
-              <div>Carte Bancaire (Stripe)</div>
+              <div className="flex items-center gap-1.5">
+                <span>Carte Bancaire</span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
+                  Bientôt
+                </span>
+              </div>
               <div className="text-[10px] opacity-75 font-normal">
                 Visa • Mastercard • Apple Pay (€)
               </div>
@@ -260,6 +284,29 @@ function ShopContent() {
           </button>
         </div>
       </div>
+
+      {paymentMethod === "STRIPE" && (
+        <div className="p-4 rounded-2xl border border-amber-300 dark:border-amber-700/60 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-amber-950/40 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm shadow-xs">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <b className="font-bold block text-amber-950 dark:text-amber-100">
+                Paiement par Carte Bancaire temporairement indisponible
+              </b>
+              <span className="opacity-90 leading-relaxed block mt-0.5">
+                Le module d'encaissement par carte Visa / Mastercard est en cours de configuration. Pour recharger vos points dès maintenant, veuillez utiliser le paiement par <strong>Mobile Money</strong> (Wave, Orange, MTN, Moov) qui est 100 % instantané et sécurisé.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("SAASPAY")}
+            className="shrink-0 px-4 py-2 rounded-xl bg-[#5B3DF5] hover:bg-[#4828E0] text-white font-extrabold text-xs transition-all shadow-sm"
+          >
+            Payer en Mobile Money
+          </button>
+        </div>
+      )}
 
       {feedback && (
         <div
@@ -277,16 +324,6 @@ function ShopContent() {
             )}
             <span>{feedback.text}</span>
           </div>
-
-          {simulatingSessionId && (
-            <button
-              type="button"
-              onClick={() => handleSimulateConfirmation(simulatingSessionId)}
-              className="addme-btn addme-btn-primary text-xs py-2 px-4 shrink-0"
-            >
-              Valider le crédit maintenant
-            </button>
-          )}
         </div>
       )}
 
@@ -372,21 +409,35 @@ function ShopContent() {
                 <button
                   type="button"
                   disabled={isBuying}
-                  onClick={() => handleBuyPack(pack)}
+                  onClick={() => {
+                    if (paymentMethod === "STRIPE") {
+                      setPaymentMethod("SAASPAY");
+                      setFeedback({
+                        type: "error",
+                        text: "Le paiement par Carte Bancaire est temporairement indisponible. Veuillez utiliser le paiement Mobile Money.",
+                      });
+                      return;
+                    }
+                    handleBuyPack(pack);
+                  }}
                   className={`addme-btn w-full ${
-                    isPopular ? "addme-btn-primary" : "addme-btn-ghost"
+                    paymentMethod === "STRIPE"
+                      ? "opacity-90 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50 hover:bg-amber-500/20"
+                      : isPopular
+                      ? "addme-btn-primary"
+                      : "addme-btn-ghost"
                   }`}
                 >
                   {isBuying ? (
                     <span>Redirection...</span>
+                  ) : paymentMethod === "STRIPE" ? (
+                    <span className="text-xs font-bold">
+                      Carte indisponible • Payer en Mobile Money
+                    </span>
                   ) : (
                     <>
                       <span>
-                        Choisir ({pack.points} pts •{" "}
-                        {paymentMethod === "SAASPAY"
-                          ? pack.priceFcfaFormatted
-                          : pack.priceFormatted}
-                        )
+                        Choisir ({pack.points} pts • {pack.priceFcfaFormatted})
                       </span>
                       <ArrowRight className="h-4 w-4" />
                     </>
@@ -427,16 +478,27 @@ function ShopContent() {
                   <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
                     Crédité
                   </span>
-                ) : item.status === "PENDING" && item.stripeSessionId ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleSimulateConfirmation(item.stripeSessionId!)
-                    }
-                    className="addme-btn addme-btn-primary text-xs py-2 px-3"
-                  >
-                    Confirmer (+{item.pointsAmount} pts)
-                  </button>
+                ) : item.status === "PENDING" ? (
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+                      Non finalisé
+                    </span>
+                    <button
+                      type="button"
+                      disabled={resumingItemId === item.id}
+                      onClick={() => handleResumeOrPayPending(item)}
+                      className="addme-btn addme-btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                    >
+                      {resumingItemId === item.id ? (
+                        <span>Vérification...</span>
+                      ) : (
+                        <>
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span>Finaliser le paiement</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 ) : (
                   <span className="px-3 py-1 rounded-full bg-[#F7F7FB] border border-[#E3E3EE] text-[#5A5A70] text-xs font-semibold">
                     {item.status}

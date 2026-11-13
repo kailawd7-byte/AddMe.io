@@ -19,6 +19,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (provider === "STRIPE") {
+      return NextResponse.json(
+        {
+          error:
+            "Le paiement par Carte Bancaire est temporairement indisponible pour maintenance. Veuillez utiliser le paiement Mobile Money (Wave, Orange, MTN, Moov) pour créditer vos points immédiatement.",
+        },
+        { status: 400 }
+      );
+    }
+
     const origin =
       req.headers.get("origin") ||
       req.headers.get("referer")?.split("/").slice(0, 3).join("/") ||

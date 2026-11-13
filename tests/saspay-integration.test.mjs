@@ -131,3 +131,12 @@ test("SasPay Softpay Redirection - Redirection si checkout_url est renseignée",
     message: "Validez l'invite USSD sur votre téléphone.",
   });
 });
+
+test("Catalogue - Rétablissement du tarif initial du Pack Découverte à 3 000 FCFA", async () => {
+  const { getPackById } = await import("../src/lib/constants.ts");
+  const starter = getPackById("PACK_STARTER");
+  assert.ok(starter);
+  assert.equal(starter.priceInFcfa, 3000);
+  assert.equal(starter.priceFcfaFormatted, "3 000 FCFA");
+  assert.equal(starter.points, 2000);
+});

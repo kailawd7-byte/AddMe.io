@@ -427,6 +427,11 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
   4. **Redirection Softpay Impérative** : Si `checkout_url` est non vide (ex: Wave, Orange, Cartes), l'application redirige automatiquement le client vers cette URL. Si vide (ex: MTN Bénin), l'application attend la confirmation USSD push.
   5. **Vérification HMAC-SHA256 des Webhooks** : Contrôle cryptographique en temps constant (`crypto.timingSafeEqual`) sur le corps brut (`${timestamp}.${rawBody}`) via `X-Webhook-Signature` et `X-Webhook-Timestamp`, avec rejet systématique si l'écart d'horodatage dépasse 300 secondes (`TOLERANCE_SECONDS = 300`).
   6. **Retraits & Payouts Sécurisés** : L'initialisation d'un retrait nécessite que l'adresse IP du serveur soit préalablement whitelistée sur le dashboard SasPay sous peine d'erreur `403 ip_not_whitelisted`.
+  7. **Sécurité Anti-Contournement & Gestion des Paiements en Attente** :
+     - Suppression définitive de tout bouton de confirmation simulée dans l'historique : les paiements non complétés affichent un bouton « Finaliser le paiement » qui interroge SasPay et redirige automatiquement vers le portail de paiement sans délivrer aucun point tant que le règlement n'a pas eu lieu.
+     - L'endpoint de simulation `/api/shop/simulate-success` est verrouillé et inaccessible en production (`403 Forbidden`).
+     - Carte Bancaire (Stripe) mise en pause avec bannière informative invitant à utiliser le paiement par Mobile Money.
+
 
 
 
