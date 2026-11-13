@@ -15,9 +15,6 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import DiscordIcon from "@/components/DiscordIcon";
-
-const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/addme";
 
 interface UserProfile {
   id: string;
@@ -458,9 +455,9 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* Panel Code Cadeau / Partenaire de l'utilisateur (remplit l'espace vide sous Tâches recommandées) */}
+          {/* Panel Code Cadeau / Partenaire de l'utilisateur (Affiché exclusivement si l'utilisateur possède un code partenaire officiel) */}
           {profile?.giftCodes && profile.giftCodes.length > 0 && (
-            <div className="addme-card animate-up-2 border-2 border-emerald-500/30 bg-gradient-to-br from-[#1B1A26] via-[#151426] to-[#0E0D14] text-white p-5 space-y-4 shadow-xl">
+            <div className="animate-up-2 p-5 rounded-2xl border-2 border-emerald-500/40 bg-white dark:bg-[#151426] text-[#12122A] dark:text-white shadow-xl space-y-4">
               {profile.giftCodes.map((gc) => {
                 const isCodeCopied = copiedUserCode === gc.code;
                 const isLinkCopied = copiedUserLink === gc.code;
@@ -468,30 +465,30 @@ export default function DashboardPage() {
                   <div key={gc.id} className="space-y-3.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="h-9 w-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
-                          <Gift className="h-5 w-5 text-emerald-400" />
+                        <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                          <Gift className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <b className="text-sm font-black text-white block leading-tight">
+                          <b className="text-sm font-black text-[#12122A] dark:text-white block leading-tight">
                             Votre Code Partenaire
                           </b>
-                          <span className="text-[10px] text-emerald-400 font-semibold">
+                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">
                             Partenariat Officiel Actif
                           </span>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/50 text-emerald-300 text-[10px] font-black">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 text-[10px] font-black">
                         +{gc.influencerBonus} pts / vérifié
                       </span>
                     </div>
 
                     {/* Zone d'affichage du Code & bouton Copier */}
-                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#F7F7FB] dark:bg-slate-950/80 border border-[#E3E3EE] dark:border-slate-800">
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        <span className="text-[10px] uppercase font-bold text-[#5A5A70] dark:text-slate-400 block tracking-wider">
                           Votre Code Cadeau
                         </span>
-                        <span className="font-mono text-xl font-black tracking-widest text-[#FFB84D]">
+                        <span className="font-mono text-xl font-black tracking-widest text-[#5B3DF5] dark:text-[#FFB84D]">
                           {gc.code}
                         </span>
                       </div>
@@ -501,7 +498,7 @@ export default function DashboardPage() {
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                           isCodeCopied
                             ? "bg-emerald-600 text-white"
-                            : "bg-indigo-600 hover:bg-indigo-500 text-white"
+                            : "bg-[#5B3DF5] hover:bg-[#4828E0] text-white"
                         }`}
                         title="Copier le code uniquement"
                       >
@@ -520,23 +517,23 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Explication dynamique des gains */}
-                    <p className="text-[11px] text-slate-300 leading-relaxed m-0">
+                    <p className="text-[11px] text-[#3A3A52] dark:text-slate-300 leading-relaxed m-0 font-medium">
                       Partagez ce code : vos abonnés reçoivent <strong>x{gc.multiplier} de points (+{gc.userBonusPoints} pts offerts)</strong> dès leur inscription, et vous gagnez <strong>+{gc.influencerBonus} points</strong> dès que leur compte est vérifié !
                     </p>
 
                     {/* Mini Métriques */}
-                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/80 text-center">
-                      <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
-                        <span className="text-[10px] text-slate-400 block font-semibold">Inscrits</span>
-                        <strong className="text-xs font-black text-white">{gc.usesCount}</strong>
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-[#E3E3EE] dark:border-slate-800/80 text-center">
+                      <div className="p-2 rounded-lg bg-[#F7F7FB] dark:bg-slate-950/60 border border-[#E3E3EE] dark:border-slate-800/60">
+                        <span className="text-[10px] text-[#5A5A70] dark:text-slate-400 block font-semibold">Inscrits</span>
+                        <strong className="text-xs font-black text-[#12122A] dark:text-white">{gc.usesCount}</strong>
                       </div>
-                      <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
-                        <span className="text-[10px] text-slate-400 block font-semibold">Vérifiés</span>
-                        <strong className="text-xs font-black text-emerald-400">{gc.verifiedCount}</strong>
+                      <div className="p-2 rounded-lg bg-[#F7F7FB] dark:bg-slate-950/60 border border-[#E3E3EE] dark:border-slate-800/60">
+                        <span className="text-[10px] text-[#5A5A70] dark:text-slate-400 block font-semibold">Vérifiés</span>
+                        <strong className="text-xs font-black text-emerald-600 dark:text-emerald-400">{gc.verifiedCount}</strong>
                       </div>
-                      <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
-                        <span className="text-[10px] text-slate-400 block font-semibold">Gains</span>
-                        <strong className="text-xs font-black text-amber-300">
+                      <div className="p-2 rounded-lg bg-[#F7F7FB] dark:bg-slate-950/60 border border-[#E3E3EE] dark:border-slate-800/60">
+                        <span className="text-[10px] text-[#5A5A70] dark:text-slate-400 block font-semibold">Gains</span>
+                        <strong className="text-xs font-black text-amber-600 dark:text-amber-300">
                           {gc.verifiedCount * gc.influencerBonus} pts
                         </strong>
                       </div>
@@ -548,18 +545,18 @@ export default function DashboardPage() {
                       onClick={() => handleCopyUserLink(gc.code)}
                       className={`w-full py-2.5 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2 ${
                         isLinkCopied
-                          ? "bg-emerald-950 border-emerald-500 text-emerald-300"
-                          : "bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
+                          ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-400 dark:border-emerald-500 text-emerald-800 dark:text-emerald-300"
+                          : "bg-[#EEEAFF] hover:bg-[#E2DCFF] dark:bg-slate-950 dark:hover:bg-slate-900 border-[#D9D2FF] dark:border-slate-800 text-[#3A22C8] dark:text-slate-300 hover:text-[#12122A] dark:hover:text-white"
                       }`}
                     >
                       {isLinkCopied ? (
                         <>
-                          <Check className="h-4 w-4 text-emerald-400" />
+                          <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           <span>Lien d&apos;invitation copié !</span>
                         </>
                       ) : (
                         <>
-                          <Share2 className="h-4 w-4 text-indigo-400" />
+                          <Share2 className="h-4 w-4 text-[#5B3DF5] dark:text-indigo-400" />
                           <span>Copier mon lien d&apos;invitation direct (?ref=...)</span>
                         </>
                       )}
@@ -569,44 +566,6 @@ export default function DashboardPage() {
               })}
             </div>
           )}
-
-          {/* Widget Communauté Discord */}
-          <div className="addme-card animate-up-3 bg-gradient-to-br from-[#5865F2]/15 via-[#1E1D36] to-[#0E0D14] border-2 border-[#5865F2]/40 text-white p-5 space-y-3.5 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-[#5865F2]/20 border border-[#5865F2]/40 text-[#8EA1FF] flex items-center justify-center shrink-0">
-                  <DiscordIcon className="h-5 w-5 text-[#8EA1FF]" />
-                </div>
-                <div>
-                  <b className="text-sm font-black text-white block leading-tight">
-                    Serveur Discord AddMe.io
-                  </b>
-                  <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Communauté Active & Support Direct
-                  </span>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#5865F2]/30 border border-[#5865F2]/50 text-white text-[10px] font-black">
-                Officiel
-              </span>
-            </div>
-
-            <p className="text-[11px] text-slate-300 leading-relaxed m-0">
-              Échangez des astuces de visibilité, découvrez les nouvelles missions en avant-première et rejoignez les discussions en direct avec les autres créateurs.
-            </p>
-
-            <a
-              href={DISCORD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-md transition-all flex items-center justify-center gap-2"
-            >
-              <DiscordIcon className="h-4 w-4 shrink-0" />
-              <span>Rejoindre la communauté Discord</span>
-              <ExternalLink className="h-3.5 w-3.5 opacity-80 shrink-0" />
-            </a>
-          </div>
         </div>
       </div>
 

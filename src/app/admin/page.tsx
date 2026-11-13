@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   ShieldAlert,
@@ -39,6 +38,7 @@ import {
   ToggleRight,
   Link2,
   Sparkles,
+  Bot,
 } from "lucide-react";
 
 interface AdminStats {
@@ -108,11 +108,27 @@ interface ReportItem {
 
 function AdminDashboard() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT" | "SUPPORT" | "GIFT_CODES">("USERS");
+  const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT" | "SUPPORT" | "GIFT_CODES" | "AI_ASSISTANT">("USERS");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Onglet Secrétaire IA & Co-Pilote
+  const [aiChatMessages, setAiChatMessages] = useState<
+    Array<{ sender: "admin" | "ai"; text: string; time: string }>
+  >([
+    {
+      sender: "ai",
+      text: "Bonjour ! Je suis votre Secrétaire IA AddMe.io. Je surveille l'activité de vos créateurs, les signalements, les tickets support et l'intégrité comptable du grand livre Ledger. Comment puis-je vous assister aujourd'hui ?",
+      time: "Maintenant",
+    },
+  ]);
+  const [aiInputMessage, setAiInputMessage] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiDraftLoading, setAiDraftLoading] = useState(false);
+  const [aiAuditReport, setAiAuditReport] = useState<string | null>(null);
+  const [aiAuditLoading, setAiAuditLoading] = useState(false);
 
   // Onglet Codes Cadeaux & Influenceurs
   const [giftCodes, setGiftCodes] = useState<any[]>([]);
@@ -358,6 +374,119 @@ function AdminDashboard() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleSendToAI = async (messageToSend?: string) => {
+    const text = (messageToSend || aiInputMessage).trim();
+    if (!text) return;
+
+    const userMsg = {
+      sender: "admin" as const,
+      text,
+      time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setAiChatMessages((prev) => [...prev, userMsg]);
+    if (!messageToSend) setAiInputMessage("");
+    setAiLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/ai-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "chat",
+          userMessage: text,
+          platformStats: {
+            totalUsers: stats?.totalUsers,
+            activeCampaigns: stats?.activeCampaigns,
+            pendingSocialVerifications: stats?.pendingSocialVerifications,
+            pendingReports: stats?.pendingReports,
+            circulatingPoints: stats?.circulatingPoints,
+            openTickets: supportStats?.pendingTickets,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.reply) {
+        setAiChatMessages((prev) => [
+          ...prev,
+          {
+            sender: "ai",
+            text: data.reply,
+            time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+      }
+    } catch {
+      setAiChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: "Désolée, une erreur de communication est survenue avec le service d'intelligence artificielle.",
+          time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleGenerateAIDraft = async () => {
+    if (!selectedTicket) return;
+    setAiDraftLoading(true);
+    try {
+      const res = await fetch("/api/admin/ai-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "support_draft",
+          ticketContext: selectedTicket,
+        }),
+      });
+      const data = await res.json();
+      if (data.reply) {
+        setAdminReplyText(data.reply);
+        setFeedback({
+          type: "success",
+          text: "✨ Proposition de réponse rédigée avec succès par votre Secrétaire IA !",
+        });
+      }
+    } catch {
+      alert("Erreur lors de la génération de la réponse par l'IA.");
+    } finally {
+      setAiDraftLoading(false);
+    }
+  };
+
+  const handleRunAIAudit = async () => {
+    setAiAuditLoading(true);
+    try {
+      const res = await fetch("/api/admin/ai-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "audit",
+          platformStats: {
+            totalUsers: stats?.totalUsers,
+            activeCampaigns: stats?.activeCampaigns,
+            pendingSocialVerifications: stats?.pendingSocialVerifications,
+            pendingReports: stats?.pendingReports,
+            circulatingPoints: stats?.circulatingPoints,
+            openTickets: supportStats?.pendingTickets,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.reply) {
+        setAiAuditReport(data.reply);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAiAuditLoading(false);
     }
   };
 
@@ -851,6 +980,18 @@ function AdminDashboard() {
                 {giftCodes.length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab("AI_ASSISTANT")}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition relative ${
+              activeTab === "AI_ASSISTANT" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#FFB84D] animate-pulse" />
+            <span>Secrétaire IA & Co-Pilote</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black border border-emerald-500/30">
+              Actif
+            </span>
           </button>
         </div>
 
@@ -1565,9 +1706,21 @@ function AdminDashboard() {
 
                     {/* Zone de rédaction de la réponse Administrateur */}
                     <div className="pt-3 border-t border-slate-800 space-y-3">
-                      <div className="text-xs font-bold text-white flex items-center gap-2">
-                        <Reply className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Répondre à {selectedTicket.userName} :</span>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-white">
+                        <div className="flex items-center gap-2">
+                          <Reply className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>Répondre à {selectedTicket.userName} :</span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={aiDraftLoading}
+                          onClick={handleGenerateAIDraft}
+                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-[11px] font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/30 disabled:opacity-60"
+                          title="L'IA Secrétaire analyse le problème et formule une proposition de réponse complète"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                          <span>{aiDraftLoading ? "Rédaction par l'IA..." : "Générer la réponse avec l'IA Secrétaire"}</span>
+                        </button>
                       </div>
 
                       <textarea
@@ -2148,12 +2301,301 @@ function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* CONTENU ONGLET 8 : SECRÉTAIRE IA & CO-PILOTE */}
+        {activeTab === "AI_ASSISTANT" && (
+          <div className="space-y-6">
+            {/* Bannière Exécutive IA */}
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 flex-shrink-0">
+                  <Bot className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black text-white">
+                      Secrétaire IA & Co-Pilote AddMe.io
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      En ligne 24/7
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                    Intelligence administrative connectée à l&apos;architecture d&apos;AddMe.io (chrono 20s, Sentinel Vision, Ledger immuable, SasPay Mobile Money, codes cadeaux et support client). Posez vos questions ou lancez un diagnostic.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRunAIAudit}
+                disabled={aiAuditLoading}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black transition flex items-center gap-2 shadow-lg shadow-amber-500/20 disabled:opacity-50 whitespace-nowrap self-start md:self-auto cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-slate-950" />
+                <span>
+                  {aiAuditLoading ? "Audit en cours..." : "Lancer un Diagnostic Global"}
+                </span>
+              </button>
+            </div>
+
+            {/* Rapport d'Audit Dynamique (si généré) */}
+            {aiAuditReport && (
+              <div className="p-5 rounded-2xl bg-slate-900 border border-amber-500/30 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Rapport d&apos;Audit & Diagnostic Synthétique du Système</span>
+                  </div>
+                  <button
+                    onClick={() => setAiAuditReport(null)}
+                    className="text-xs text-slate-400 hover:text-white transition"
+                  >
+                    Fermer le rapport
+                  </button>
+                </div>
+                <div className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap font-sans bg-slate-950/70 p-4 rounded-xl border border-slate-800/80 max-h-96 overflow-y-auto">
+                  {aiAuditReport}
+                </div>
+              </div>
+            )}
+
+            {/* Interface Deux Colonnes : Raccourcis Opérationnels + Console de Chat */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Colonne Gauche : Raccourcis Opérationnels en 1 clic */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
+                  Requêtes Fréquentes & Raccourcis
+                </h3>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendToAI(
+                        "Peux-tu me faire un bilan synthétique de l'activité sur la plateforme et de l'état des points en circulation ?"
+                      )
+                    }
+                    className="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-200 hover:text-white transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <span className="text-base">📊</span>
+                    <div>
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition">
+                        Bilan de santé & Métriques
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Statut des utilisateurs, campagnes actives et points
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendToAI(
+                        "Rappelle-moi le fonctionnement exact du robot anti-fraude, du chrono 20s et de la vérification Gemini Vision."
+                      )
+                    }
+                    className="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-200 hover:text-white transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <span className="text-base">🛡️</span>
+                    <div>
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition">
+                        Règles Anti-Fraude Sentinel
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Focus timer 20s, IA Vision & validation des tâches
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendToAI(
+                        "Quels sont les forfaits d'achat de points disponibles sur la boutique et les taux de conversion Mobile Money ?"
+                      )
+                    }
+                    className="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-200 hover:text-white transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <span className="text-base">💰</span>
+                    <div>
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition">
+                        Tarifs Forfaits SasPay
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        De 3 000 FCFA à 18 000 FCFA (Mobile Money)
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendToAI(
+                        "Comment fonctionnent les codes cadeaux partenaires, le bonus filleul et la prime influenceur ?"
+                      )
+                    }
+                    className="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-200 hover:text-white transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <span className="text-base">🎁</span>
+                    <div>
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition">
+                        Codes Cadeaux & Affiliation
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Bonus x4 / x10 et commission influenceur par compte vérifié
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendToAI(
+                        "Quelles sont les directives officielles pour répondre aux réclamations des utilisateurs sur les tâches ou paiements ?"
+                      )
+                    }
+                    className="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-200 hover:text-white transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <span className="text-base">💬</span>
+                    <div>
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition">
+                        Directives Support Client
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Politique de réponse aux réclamations et litiges
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendToAI(
+                        "Explique-moi comment la table LedgerEntry garantit l'immuabilité et l'absence de double-crédit."
+                      )
+                    }
+                    className="w-full text-left p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-200 hover:text-white transition group flex items-start gap-3 cursor-pointer"
+                  >
+                    <span className="text-base">🔒</span>
+                    <div>
+                      <div className="font-semibold text-white group-hover:text-indigo-300 transition">
+                        Intégrité Comptable Ledger
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Comptabilité en partie double et clés d&apos;idempotence
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Colonne Droite (2/3) : Console de Dialogue Interactive */}
+              <div className="lg:col-span-2 flex flex-col h-[650px] bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+                {/* En-tête Console */}
+                <div className="px-5 py-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-2">
+                        <span>Secrétaire Administrative & Support</span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Connectée à la base de connaissance AddMe.io & Gemini
+                      </div>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] text-slate-400 font-mono px-2 py-1 rounded bg-slate-900 border border-slate-800">
+                    SUPER_ADMIN CONSOLE
+                  </span>
+                </div>
+
+                {/* Fil des Messages */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                  {aiChatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex gap-3 ${
+                        msg.sender === "admin" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      {msg.sender === "ai" && (
+                        <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 mt-1 shadow-md">
+                          <Bot className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+
+                      <div
+                        className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
+                          msg.sender === "admin"
+                            ? "bg-indigo-600 text-white rounded-tr-none shadow-md"
+                            : "bg-slate-950 text-slate-200 border border-slate-800 rounded-tl-none shadow-sm"
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap font-sans">{msg.text}</div>
+                        <div
+                          className={`text-[9px] mt-2 font-mono ${
+                            msg.sender === "admin" ? "text-indigo-200 text-right" : "text-slate-500"
+                          }`}
+                        >
+                          {msg.time}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {aiLoading && (
+                    <div className="flex gap-3 items-center text-slate-400 text-xs italic">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-600/50 flex items-center justify-center text-white flex-shrink-0 animate-pulse">
+                        <Bot className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+                        <span>La Secrétaire IA analyse votre demande et rédige sa réponse...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Saisie de Message */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendToAI();
+                  }}
+                  className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={aiInputMessage}
+                    onChange={(e) => setAiInputMessage(e.target.value)}
+                    placeholder="Posez une question à la secrétaire IA ou demandez un conseil..."
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={aiLoading || !aiInputMessage.trim()}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-lg disabled:opacity-50 cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Envoyer</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default dynamic(() => Promise.resolve(AdminDashboard), {
-  ssr: false,
-});
+export default function AdminPage() {
+  return <AdminDashboard />;
+}
 
