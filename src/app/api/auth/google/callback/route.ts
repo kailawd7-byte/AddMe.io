@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { setSessionCookie, hashPassword } from "@/lib/auth";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
+import { rewardInfluencerIfVerified } from "@/lib/gift-codes";
 import crypto from "crypto";
 
 export async function GET(req: NextRequest) {
@@ -108,6 +109,13 @@ export async function GET(req: NextRequest) {
           data: { isEmailVerified: true },
         });
       }
+    }
+
+    // Récompense éventuelle de l'influenceur affilié si le compte est maintenant vérifié
+    try {
+      await rewardInfluencerIfVerified({ userId: user.id });
+    } catch (e) {
+      console.warn("[GoogleOAuth] Erreur rewardInfluencerIfVerified:", e);
     }
 
     // 4. Session cookie

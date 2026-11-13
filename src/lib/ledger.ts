@@ -65,7 +65,7 @@ export interface RecordTransactionParams {
   userId: string;
   amount: number; // Positif pour crédit, négatif pour débit
   type: keyof typeof LEDGER_TYPES;
-  referenceType?: "CAMPAIGN" | "TASK_COMPLETION" | "PAYMENT" | "AUDIT" | "SYSTEM";
+  referenceType?: "CAMPAIGN" | "TASK_COMPLETION" | "PAYMENT" | "AUDIT" | "SYSTEM" | "GIFT_CODE" | "GIFT_CODE_REFERRAL";
   referenceId?: string;
   idempotencyKey?: string;
   description: string;

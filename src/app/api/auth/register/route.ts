@@ -5,6 +5,7 @@ import { signUpSchema } from "@/lib/validation";
 import { generateSecureToken } from "@/lib/security";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
 import { sendEmailVerificationEmail } from "@/lib/email";
+import { validateGiftCode, applyGiftCodeRegistration } from "@/lib/gift-codes";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +22,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = parseResult.data;
+    const { email, password, giftCode } = parseResult.data;
+
+    // Validation préalable du code cadeau s'il est renseigné
+    let validatedGiftCode = null;
+    if (giftCode && giftCode.trim()) {
+      validatedGiftCode = await validateGiftCode(giftCode.trim());
+      if (!validatedGiftCode.valid) {
+        return NextResponse.json(
+          { error: validatedGiftCode.message },
+          { status: 400 }
+        );
+      }
+    }
 
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.user.findUnique({
@@ -92,18 +105,26 @@ export async function POST(req: NextRequest) {
       role: newUser.role,
     });
 
-    // Crédit immédiat des 50 points offerts à l'inscription dans le Ledger
-    await prisma.ledgerEntry.create({
-      data: {
+    // Attribution des points : Bonus x4 (+200 pts) si code cadeau valide, sinon bonus de bienvenue standard (+50 pts)
+    if (validatedGiftCode && giftCode) {
+      await applyGiftCodeRegistration({
         userId: newUser.id,
-        amount: SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS,
-        type: LEDGER_TYPES.WELCOME_BONUS,
-        referenceType: "SYSTEM",
-        referenceId: newUser.id,
-        idempotencyKey: `welcome-bonus-${newUser.id}`,
-        description: `Bonus de bienvenue offert dès l'inscription (+${SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS} points)`,
-      },
-    });
+        userEmail: newUser.email,
+        rawCode: giftCode,
+      });
+    } else {
+      await prisma.ledgerEntry.create({
+        data: {
+          userId: newUser.id,
+          amount: SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS,
+          type: LEDGER_TYPES.WELCOME_BONUS,
+          referenceType: "SYSTEM",
+          referenceId: newUser.id,
+          idempotencyKey: `welcome-bonus-${newUser.id}`,
+          description: `Bonus de bienvenue offert dès l'inscription (+${SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS} points)`,
+        },
+      });
+    }
 
     const origin =
       req.nextUrl.origin ||
@@ -120,15 +141,23 @@ export async function POST(req: NextRequest) {
       verificationUrl,
     });
 
+    const userBonusPoints = validatedGiftCode
+      ? (validatedGiftCode.bonusPoints ?? 200)
+      : SYSTEM_DEFAULTS.WELCOME_BONUS_POINTS;
+
     return NextResponse.json({
       success: true,
-      message: "Compte créé avec succès ! Un email de confirmation contenant votre code à 6 chiffres vous a été envoyé.",
+      message: validatedGiftCode
+        ? `Compte créé avec succès ! Bonus x${validatedGiftCode.multiplier ?? 4} (+${userBonusPoints} points) appliqué. Un email de confirmation contenant votre code à 6 chiffres vous a été envoyé.`
+        : "Compte créé avec succès ! Un email de confirmation contenant votre code à 6 chiffres vous a été envoyé.",
       user: {
         id: newUser.id,
         email: newUser.email,
         role: newUser.role,
         isEmailVerified: newUser.isEmailVerified,
       },
+      bonusPoints: userBonusPoints,
+      giftCodeApplied: Boolean(validatedGiftCode),
     });
   } catch (error) {
     console.error("Erreur registration:", error);

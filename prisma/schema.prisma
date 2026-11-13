@@ -35,6 +35,8 @@ model User {
   reportsReceived            Report[]          @relation("ReportedUser")
   auditLogsActed             AuditLog[]        @relation("AuditActor")
   auditLogsTargeted          AuditLog[]        @relation("AuditTarget")
+  giftCodesOwned             GiftCode[]        @relation("InfluencerCodes")
+  giftCodeUsage              GiftCodeUsage?    @relation("ReferredUser")
 
   createdAt                  DateTime          @default(now())
   updatedAt                  DateTime          @updatedAt
@@ -202,5 +204,39 @@ model RateLimit {
   attempts  Int      @default(1)
   resetAt   DateTime
   createdAt DateTime @default(now())
+}
+
+model GiftCode {
+  id              String          @id @default(uuid())
+  code            String          @unique // Code cadeau unique en majuscules (ex: "INFLUENCE2026")
+  influencerId    String          // Utilisateur affilié/influenceur propriétaire
+  influencer      User            @relation("InfluencerCodes", fields: [influencerId], references: [id], onDelete: Cascade)
+  description     String?         // Note descriptive (ex: "Partenariat TikTok @influenceur")
+  multiplier      Float           @default(4.0) // Multiplicateur pour le filleul (x4 = 200 pts)
+  influencerBonus Float           @default(100.0) // Points crédités à l'influenceur par filleul vérifié (100 pts)
+  userBonusPoints Float           @default(200.0) // Points de bienvenue reçus par le filleul
+  maxUses         Int?            // Plafond d'utilisations (null = illimité)
+  usesCount       Int             @default(0) // Nombre total d'inscriptions
+  verifiedCount   Int             @default(0) // Nombre total de comptes vérifiés
+  isActive        Boolean         @default(true) // Statut actif/inactif
+  expiresAt       DateTime?       // Date d'expiration optionnelle
+  usages          GiftCodeUsage[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model GiftCodeUsage {
+  id                 String    @id @default(uuid())
+  giftCodeId         String
+  giftCode           GiftCode  @relation(fields: [giftCodeId], references: [id], onDelete: Cascade)
+  userId             String    @unique // Nouvel utilisateur inscrit (1 code par utilisateur)
+  user               User      @relation("ReferredUser", fields: [userId], references: [id], onDelete: Cascade)
+  userBonusGiven     Float     @default(200.0)
+  isVerified         Boolean   @default(false)
+  verifiedAt         DateTime?
+  influencerRewarded Boolean   @default(false)
+  influencerPoints   Float     @default(100.0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 

@@ -31,6 +31,14 @@ import {
   Inbox,
   Reply,
   Headphones,
+  Gift,
+  Copy,
+  Plus,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+  Link2,
+  Sparkles,
 } from "lucide-react";
 
 interface AdminStats {
@@ -100,11 +108,26 @@ interface ReportItem {
 
 function AdminDashboard() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT" | "SUPPORT">("USERS");
+  const [activeTab, setActiveTab] = useState<"USERS" | "SOCIAL" | "REPORTS" | "SETTINGS" | "AUDIT" | "SUPPORT" | "GIFT_CODES">("USERS");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Onglet Codes Cadeaux & Influenceurs
+  const [giftCodes, setGiftCodes] = useState<any[]>([]);
+  const [giftCodesLoading, setGiftCodesLoading] = useState(false);
+  const [giftCodesSearch, setGiftCodesSearch] = useState("");
+  const [isCreateGiftModalOpen, setIsCreateGiftModalOpen] = useState(false);
+  const [newGiftCode, setNewGiftCode] = useState("");
+  const [newInfluencerEmail, setNewInfluencerEmail] = useState("");
+  const [newGiftDescription, setNewGiftDescription] = useState("");
+  const [newMultiplier, setNewMultiplier] = useState<number>(4.0);
+  const [newInfluencerBonus, setNewInfluencerBonus] = useState<number>(100.0);
+  const [newMaxUses, setNewMaxUses] = useState<string>("");
+  const [newExpiresAt, setNewExpiresAt] = useState<string>("");
+  const [createGiftSubmitting, setCreateGiftSubmitting] = useState(false);
+  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
   // Onglet Support Client (Répertoire & Messagerie)
   const [supportTickets, setSupportTickets] = useState<any[]>([]);
@@ -337,6 +360,131 @@ function AdminDashboard() {
     }
   };
 
+  const fetchGiftCodes = async () => {
+    setGiftCodesLoading(true);
+    try {
+      const res = await fetch("/api/admin/gift-codes");
+      if (res.ok) {
+        const data = await res.json();
+        setGiftCodes(data.codes || []);
+      }
+    } catch (err) {
+      console.error("Erreur fetchGiftCodes:", err);
+    } finally {
+      setGiftCodesLoading(false);
+    }
+  };
+
+  const handleCreateGiftCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGiftCode.trim() || !newInfluencerEmail.trim()) {
+      setFeedback({
+        type: "error",
+        text: "Le code cadeau et l'adresse email de l'influenceur affilié sont obligatoires.",
+      });
+      return;
+    }
+
+    setCreateGiftSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/gift-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: newGiftCode,
+          influencerEmail: newInfluencerEmail,
+          description: newGiftDescription,
+          multiplier: newMultiplier,
+          influencerBonus: newInfluencerBonus,
+          maxUses: newMaxUses ? Number(newMaxUses) : null,
+          expiresAt: newExpiresAt ? newExpiresAt : null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setFeedback({
+          type: "error",
+          text: data.error || "Impossible de créer le code cadeau.",
+        });
+      } else {
+        setFeedback({
+          type: "success",
+          text: data.message || `Code « ${newGiftCode} » créé avec succès !`,
+        });
+        setIsCreateGiftModalOpen(false);
+        setNewGiftCode("");
+        setNewInfluencerEmail("");
+        setNewGiftDescription("");
+        setNewMaxUses("");
+        setNewExpiresAt("");
+        await fetchGiftCodes();
+      }
+    } catch {
+      setFeedback({
+        type: "error",
+        text: "Erreur réseau lors de la création du code cadeau.",
+      });
+    } finally {
+      setCreateGiftSubmitting(false);
+    }
+  };
+
+  const handleToggleGiftCode = async (id: string, currentActive: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/gift-codes/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !currentActive }),
+      });
+      if (res.ok) {
+        setFeedback({
+          type: "success",
+          text: `Code ${!currentActive ? "activé" : "désactivé"} avec succès.`,
+        });
+        await fetchGiftCodes();
+      } else {
+        const d = await res.json();
+        setFeedback({ type: "error", text: d.error || "Erreur mise à jour statut." });
+      }
+    } catch {
+      setFeedback({ type: "error", text: "Erreur réseau lors de la mise à jour." });
+    }
+  };
+
+  const handleDeleteGiftCode = async (id: string, codeName: string) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le code « ${codeName} » ?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/gift-codes/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setFeedback({
+          type: "success",
+          text: `Code « ${codeName} » supprimé avec succès.`,
+        });
+        await fetchGiftCodes();
+      } else {
+        const d = await res.json();
+        setFeedback({ type: "error", text: d.error || "Erreur suppression code." });
+      }
+    } catch {
+      setFeedback({ type: "error", text: "Erreur réseau lors de la suppression." });
+    }
+  };
+
+  const handleCopyReferralLink = (code: string, id: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://addme.io";
+    const link = `${origin}/register?ref=${code}`;
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(link);
+    }
+    setCopiedCodeId(id);
+    setTimeout(() => setCopiedCodeId(null), 2500);
+  };
+
   useEffect(() => {
     setMounted(true);
     const init = async () => {
@@ -344,6 +492,7 @@ function AdminDashboard() {
       await fetchStats();
       await fetchUsers();
       await fetchSupportTickets();
+      await fetchGiftCodes();
       setLoading(false);
     };
     init();
@@ -355,6 +504,7 @@ function AdminDashboard() {
     if (activeTab === "SETTINGS") fetchSettings();
     if (activeTab === "AUDIT") fetchAuditLogs();
     if (activeTab === "SUPPORT") fetchSupportTickets();
+    if (activeTab === "GIFT_CODES") fetchGiftCodes();
   }, [activeTab]);
 
   const handleUpdateUserStatus = async (userId: string, newStatus: string) => {
@@ -676,6 +826,20 @@ function AdminDashboard() {
             {supportStats && supportStats.pendingTickets > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-[10px] font-black text-white">
                 {supportStats.pendingTickets}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("GIFT_CODES")}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition relative ${
+              activeTab === "GIFT_CODES" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Gift className="w-4 h-4 text-emerald-400" />
+            <span>Codes Cadeaux & Influenceurs</span>
+            {giftCodes.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black border border-emerald-500/30">
+                {giftCodes.length}
               </span>
             )}
           </button>
@@ -1447,6 +1611,508 @@ function AdminDashboard() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* CONTENU ONGLET 7 : CODES CADEAUX & MARKETING D'INFLUENCE */}
+        {activeTab === "GIFT_CODES" && (
+          <div className="space-y-6">
+            {/* Cartes de Métriques Clés */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span>Codes Actifs</span>
+                  <Gift className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-2xl font-black text-white">
+                  {giftCodes.filter((c) => c.isActive).length}{" "}
+                  <span className="text-xs text-slate-500 font-normal">/ {giftCodes.length} total</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  Codes cadeaux opérationnels pour l&apos;acquisition
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span>Inscriptions Filleuls</span>
+                  <Users className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div className="text-2xl font-black text-indigo-300">
+                  {giftCodes.reduce((sum, c) => sum + (c.usesCount || 0), 0)}
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  Utilisateurs inscrits grâce aux codes partenaires
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span>Filleuls Vérifiés</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-2xl font-black text-emerald-400">
+                  {giftCodes.reduce((sum, c) => sum + (c.verifiedCount || 0), 0)}
+                  <span className="text-xs text-emerald-500/80 font-normal ml-2">
+                    ({giftCodes.reduce((sum, c) => sum + (c.usesCount || 0), 0) > 0
+                      ? Math.round(
+                          (giftCodes.reduce((sum, c) => sum + (c.verifiedCount || 0), 0) /
+                            giftCodes.reduce((sum, c) => sum + (c.usesCount || 0), 0)) *
+                            100
+                        )
+                      : 0}
+                    % conv.)
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  Comptes vérifiés ayant débloqué la récompense influenceur
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400 font-semibold">
+                  <span>Points Distribués</span>
+                  <Coins className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-2xl font-black text-amber-300">
+                  {giftCodes
+                    .reduce((sum, c) => sum + (c.totalDistributedPoints || 0), 0)
+                    .toLocaleString("fr-FR")}
+                  <span className="text-xs text-slate-500 font-normal ml-1">pts</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  Grand Livre : bonus filleuls (x4) + primes d&apos;influenceurs
+                </p>
+              </div>
+            </div>
+
+            {/* Barre de Recherche & Bouton Nouveau Code */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+              <div className="flex items-center gap-3 flex-1 min-w-[260px]">
+                <Search className="w-4 h-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par code, email influenceur ou description..."
+                  value={giftCodesSearch}
+                  onChange={(e) => setGiftCodesSearch(e.target.value)}
+                  className="bg-transparent border-none text-xs text-white placeholder-slate-500 focus:outline-none w-full"
+                />
+                {giftCodesSearch && (
+                  <button
+                    onClick={() => setGiftCodesSearch("")}
+                    className="text-slate-500 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={fetchGiftCodes}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition"
+                  title="Rafraîchir la liste"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${giftCodesLoading ? "animate-spin" : ""}`} />
+                  <span>Actualiser</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCreateGiftModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-900/30 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Créer un Code Cadeau</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Note d'Information Anti-Fraude */}
+            <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-200 flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <b className="text-white block">Règle Anti-Fraude & Rémunération des Influenceurs :</b>
+                <p className="text-slate-300 leading-relaxed m-0">
+                  Le nouvel utilisateur reçoit immédiatement son bonus x4 (+200 pts) dès son inscription. En revanche, pour prévenir les robots et faux comptes, <strong>l&apos;influenceur affilié ne reçoit sa prime (+100 pts) qu&apos;une fois le compte filleul officiellement vérifié</strong> (adresse email validée). Tout code cadeau doit impérativement être rattaché à un compte utilisateur existant.
+                </p>
+              </div>
+            </div>
+
+            {/* Tableau des Codes Cadeaux */}
+            <div className="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300 border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                      <th className="py-3.5 px-4">Code & Lien Partenaire</th>
+                      <th className="py-3.5 px-4">Influenceur Affilié</th>
+                      <th className="py-3.5 px-4">Bonus Filleul</th>
+                      <th className="py-3.5 px-4">Gain Influenceur</th>
+                      <th className="py-3.5 px-4">Inscriptions & Conversion</th>
+                      <th className="py-3.5 px-4">Limites & Validité</th>
+                      <th className="py-3.5 px-4">Statut</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {giftCodesLoading ? (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center text-slate-500">
+                          <RotateCcw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-400" />
+                          Chargement des codes cadeaux...
+                        </td>
+                      </tr>
+                    ) : giftCodes.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-16 text-center text-slate-500 space-y-3">
+                          <Gift className="w-12 h-12 mx-auto text-slate-700" />
+                          <div>
+                            <b className="text-slate-300 text-sm block">Aucun code cadeau configuré</b>
+                            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                              Cliquez sur « Créer un Code Cadeau » pour générer votre premier code de marketing d&apos;influence affilié à un créateur.
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      giftCodes
+                        .filter((gc) => {
+                          if (!giftCodesSearch.trim()) return true;
+                          const t = giftCodesSearch.toLowerCase();
+                          return (
+                            gc.code.toLowerCase().includes(t) ||
+                            gc.influencer.email.toLowerCase().includes(t) ||
+                            (gc.description && gc.description.toLowerCase().includes(t))
+                          );
+                        })
+                        .map((gc) => {
+                          const isCopied = copiedCodeId === gc.id;
+                          return (
+                            <tr key={gc.id} className="hover:bg-slate-800/30 transition">
+                              {/* Code & Lien */}
+                              <td className="py-3.5 px-4">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 font-mono font-black text-xs tracking-wider">
+                                      {gc.code}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyReferralLink(gc.code, gc.id)}
+                                      className={`p-1.5 rounded-lg border transition ${
+                                        isCopied
+                                          ? "bg-emerald-600 text-white border-emerald-500"
+                                          : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                                      }`}
+                                      title="Copier le lien d'inscription affilié (?ref=...)"
+                                    >
+                                      {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                    </button>
+                                  </div>
+                                  {gc.description && (
+                                    <p className="text-[11px] text-slate-400 line-clamp-1 m-0">
+                                      {gc.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Influenceur */}
+                              <td className="py-3.5 px-4">
+                                <div className="space-y-0.5">
+                                  <span className="font-bold text-white block">
+                                    {gc.influencer.email}
+                                  </span>
+                                  <div className="flex items-center gap-2 text-[10px]">
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded font-bold ${
+                                        gc.influencer.status === "ACTIVE"
+                                          ? "bg-emerald-950 text-emerald-300"
+                                          : "bg-rose-950 text-rose-300"
+                                      }`}
+                                    >
+                                      {gc.influencer.status}
+                                    </span>
+                                    <span className="text-slate-400">
+                                      ⭐ Rép : {gc.influencer.reputationScore}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Bonus Filleul */}
+                              <td className="py-3.5 px-4">
+                                <span className="inline-flex items-center gap-1 font-bold text-indigo-300">
+                                  <Sparkles className="w-3 h-3 text-indigo-400" />
+                                  +{gc.userBonusPoints} pts (x{gc.multiplier})
+                                </span>
+                              </td>
+
+                              {/* Gain Influenceur */}
+                              <td className="py-3.5 px-4">
+                                <span className="inline-flex items-center gap-1 font-bold text-amber-300">
+                                  <Coins className="w-3 h-3 text-amber-400" />
+                                  +{gc.influencerBonus} pts / vérifié
+                                </span>
+                              </td>
+
+                              {/* Statistiques */}
+                              <td className="py-3.5 px-4">
+                                <div className="space-y-1">
+                                  <div className="text-xs font-semibold text-white">
+                                    {gc.usesCount} inscrit{gc.usesCount > 1 ? "s" : ""} ·{" "}
+                                    <span className="text-emerald-400">{gc.verifiedCount} vérifié{gc.verifiedCount > 1 ? "s" : ""}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                    <span>Taux : <strong className="text-white">{gc.conversionRate}%</strong></span>
+                                    <span>·</span>
+                                    <span>Total : <strong className="text-amber-300">{gc.totalDistributedPoints} pts</strong></span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Limites & Validité */}
+                              <td className="py-3.5 px-4 text-xs text-slate-400">
+                                <div className="space-y-0.5">
+                                  <div>
+                                    Quota :{" "}
+                                    <strong className="text-white">
+                                      {gc.maxUses ? `${gc.usesCount} / ${gc.maxUses}` : "Illimité"}
+                                    </strong>
+                                  </div>
+                                  <div>
+                                    Expire :{" "}
+                                    <strong className="text-white">
+                                      {gc.expiresAt
+                                        ? new Date(gc.expiresAt).toLocaleDateString("fr-FR")
+                                        : "Permanent"}
+                                    </strong>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Statut Toggle */}
+                              <td className="py-3.5 px-4">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleGiftCode(gc.id, gc.isActive)}
+                                  className={`px-3 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                                    gc.isActive
+                                      ? "bg-emerald-950/80 text-emerald-300 border border-emerald-600/50 hover:bg-emerald-900"
+                                      : "bg-slate-950 text-slate-400 border border-slate-800 hover:text-white"
+                                  }`}
+                                  title="Cliquer pour activer ou désactiver ce code"
+                                >
+                                  {gc.isActive ? (
+                                    <>
+                                      <ToggleRight className="w-4 h-4 text-emerald-400" />
+                                      <span>Actif</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ToggleLeft className="w-4 h-4 text-slate-500" />
+                                      <span>Inactif</span>
+                                    </>
+                                  )}
+                                </button>
+                              </td>
+
+                              {/* Actions */}
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyReferralLink(gc.code, gc.id)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-semibold flex items-center gap-1 transition"
+                                    title="Copier le lien public"
+                                  >
+                                    <Link2 className="w-3.5 h-3.5 text-indigo-400" />
+                                    <span>Lien</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteGiftCode(gc.id, gc.code)}
+                                    className="p-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 hover:text-rose-300 border border-rose-900/40 transition"
+                                    title="Supprimer ce code cadeau"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal de Création de Code Cadeau */}
+            {isCreateGiftModalOpen && (
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 space-y-5 shadow-2xl animate-up">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-emerald-400" />
+                      <span>Créer un Code Cadeau d&apos;Influenceur</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateGiftModalOpen(false)}
+                      className="text-slate-400 hover:text-white transition"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleCreateGiftCode} className="space-y-4">
+                    {/* Code Cadeau */}
+                    <div>
+                      <label className="text-xs text-slate-300 font-bold block mb-1">
+                        Code Cadeau <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newGiftCode}
+                        onChange={(e) =>
+                          setNewGiftCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))
+                        }
+                        placeholder="EX: TIKTOK200, INSTA50, PARTENAIRE"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono font-bold text-white uppercase placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                      />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Caractères alphanumériques majuscules uniquement (3 caractères minimum).
+                      </p>
+                    </div>
+
+                    {/* Email de l'influenceur (OBLIGATOIRE) */}
+                    <div>
+                      <label className="text-xs text-slate-300 font-bold block mb-1">
+                        Email de l&apos;Influenceur Affilié <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={newInfluencerEmail}
+                        onChange={(e) => setNewInfluencerEmail(e.target.value)}
+                        placeholder="influenceur@exemple.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                      />
+                      <p className="text-[10px] text-amber-400/90 mt-1">
+                        ⚠️ Ce compte doit impérativement exister sur AddMe.io. Il recevra 100 points à chaque fois qu&apos;un compte filleul sera vérifié.
+                      </p>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="text-xs text-slate-300 font-bold block mb-1">
+                        Description / Contexte du Partenariat
+                      </label>
+                      <input
+                        type="text"
+                        value={newGiftDescription}
+                        onChange={(e) => setNewGiftDescription(e.target.value)}
+                        placeholder="Ex: Campagne TikTok @influenceur_tech - Novembre 2026"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+
+                    {/* Grille Multiplicateur & Prime Influenceur */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-300 font-bold block mb-1">
+                          Multiplicateur Filleul
+                        </label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="1"
+                          max="10"
+                          value={newMultiplier}
+                          onChange={(e) => setNewMultiplier(Number(e.target.value) || 4.0)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500 font-bold"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">
+                          Défaut 4.0 = {Math.round(50 * newMultiplier)} pts offerts au nouvel inscrit.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-slate-300 font-bold block mb-1">
+                          Prime Influenceur (pts)
+                        </label>
+                        <input
+                          type="number"
+                          step="5"
+                          min="0"
+                          value={newInfluencerBonus}
+                          onChange={(e) => setNewInfluencerBonus(Number(e.target.value) || 100.0)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500 font-bold text-amber-300"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">
+                          Attribués à l&apos;influenceur dès vérification du compte filleul.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Grille Quota max & Date expiration */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-300 font-bold block mb-1">
+                          Quota Max d&apos;Utilisations
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={newMaxUses}
+                          onChange={(e) => setNewMaxUses(e.target.value)}
+                          placeholder="Illimité"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-slate-300 font-bold block mb-1">
+                          Date d&apos;Expiration
+                        </label>
+                        <input
+                          type="date"
+                          value={newExpiresAt}
+                          onChange={(e) => setNewExpiresAt(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Boutons d'action */}
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateGiftModalOpen(false)}
+                        className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={createGiftSubmitting || !newGiftCode.trim() || !newInfluencerEmail.trim()}
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg disabled:opacity-50"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>
+                          {createGiftSubmitting ? "Création en cours..." : "Créer et Lier le Code"}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
 import { getCurrentUser } from "@/lib/auth";
+import { rewardInfluencerIfVerified } from "@/lib/gift-codes";
 
 export async function GET() {
   try {
@@ -118,6 +119,13 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+
+      // 3. Si l'utilisateur s'est inscrit via un code cadeau d'influenceur,
+      // débloquer la récompense de 100 points pour l'influenceur (anti-fraude : compte désormais vérifié)
+      await rewardInfluencerIfVerified({
+        userId: user.id,
+        tx,
+      });
     });
 
     return NextResponse.json({

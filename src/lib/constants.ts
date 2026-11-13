@@ -48,6 +48,8 @@ export const TASK_COMPLETION_STATUS = {
 
 export const LEDGER_TYPES = {
   WELCOME_BONUS: "WELCOME_BONUS",
+  GIFT_CODE_BONUS: "GIFT_CODE_BONUS",
+  INFLUENCER_REWARD: "INFLUENCER_REWARD",
   CAMPAIGN_DEBIT: "CAMPAIGN_DEBIT",
   CAMPAIGN_REFUND: "CAMPAIGN_REFUND",
   TASK_REWARD: "TASK_REWARD",
@@ -56,7 +58,10 @@ export const LEDGER_TYPES = {
 } as const;
 
 export const SYSTEM_DEFAULTS = {
-  WELCOME_BONUS_POINTS: 50.0, // 50 points offerts à l'inscription
+  WELCOME_BONUS_POINTS: 50.0, // 50 points offerts à l'inscription standard
+  GIFT_CODE_MULTIPLIER: 4.0, // Multiplicateur de points via code cadeau (x4)
+  GIFT_CODE_BONUS_POINTS: 200.0, // 200 points reçus à l'inscription via code cadeau
+  INFLUENCER_BONUS_PER_USER: 100.0, // 100 points pour l'influenceur par filleul vérifié
   DEFAULT_REWARD_PER_TASK: 1.0,
   DEFAULT_COST_PER_TASK: 1.3,
   CAMPAIGN_DAILY_DURATION_FEE: 0.5, // 0.5 point par jour de diffusion

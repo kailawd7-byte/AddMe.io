@@ -13,6 +13,7 @@ export const signUpSchema = z.object({
     .max(128, { message: "Le mot de passe ne peut pas dépasser 128 caractères" })
     .regex(/[a-zA-Z]/, { message: "Le mot de passe doit contenir au moins une lettre" })
     .regex(/[0-9]/, { message: "Le mot de passe doit contenir au moins un chiffre" }),
+  giftCode: z.string().optional(),
 });
 
 export const signInSchema = z.object({
