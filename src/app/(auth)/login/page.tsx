@@ -32,9 +32,19 @@ export default function LoginPage() {
           setError(
             "Configuration Google requise : Veuillez vérifier que GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET sont bien renseignés."
           );
+        } else if (err === "missing_client_secret") {
+          setError(
+            "Configuration Vercel requise : La variable GOOGLE_CLIENT_SECRET est absente sur votre tableau de bord Vercel (Settings > Environment Variables)."
+          );
+        } else if (err === "account_banned") {
+          setError("Ce compte a été suspendu pour non-respect des règles.");
+        } else if (err.includes("client_secret")) {
+          setError(
+            "Clé secrète Google manquante : Google signale que GOOGLE_CLIENT_SECRET n'est pas transmis par le serveur."
+          );
         } else if (err === "google_token_failed") {
           setError(
-            "Échec de l'authentification Google (échange de token). Veuillez vérifier vos identifiants."
+            "Échec de l'authentification Google (échange de token). Veuillez vérifier vos identifiants Google Cloud."
           );
         } else if (err === "google_userinfo_failed") {
           setError("Impossible de récupérer les informations de votre profil Google.");

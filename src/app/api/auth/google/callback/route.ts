@@ -26,9 +26,16 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   const redirectUri = getGoogleRedirectUri(req);
+
+  if (!clientId || !clientSecret) {
+    console.error("[GoogleOAuth] Variable GOOGLE_CLIENT_ID ou GOOGLE_CLIENT_SECRET absente sur Vercel !");
+    return NextResponse.redirect(
+      new URL("/login?error=missing_client_secret", req.url)
+    );
+  }
 
   try {
     // 1. Échange du code d'autorisation contre un access token
@@ -37,20 +44,24 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
-        client_id: clientId || "",
-        client_secret: clientSecret || "",
+        client_id: clientId,
+        client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
     });
 
     if (!tokenRes.ok) {
-      console.error(
-        "[GoogleOAuth] Échec échange token :",
-        await tokenRes.text()
-      );
+      const errText = await tokenRes.text();
+      console.error("[GoogleOAuth] Échec échange token :", errText);
+      let errorDetail = "google_token_failed";
+      try {
+        const j = JSON.parse(errText);
+        if (j.error_description) errorDetail = j.error_description;
+        else if (j.error) errorDetail = j.error;
+      } catch {}
       return NextResponse.redirect(
-        new URL("/login?error=google_token_failed", req.url)
+        new URL(`/login?error=${encodeURIComponent(errorDetail)}`, req.url)
       );
     }
 
@@ -81,6 +92,12 @@ export async function GET(req: NextRequest) {
 
     // 3. Recherche ou création du compte
     let user = await prisma.user.findUnique({ where: { email } });
+
+    if (user && user.status === "BANNED") {
+      return NextResponse.redirect(
+        new URL("/login?error=account_banned", req.url)
+      );
+    }
 
     if (!user) {
       const randomPassword = crypto.randomBytes(32).toString("hex");

@@ -1,34 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { setSessionCookie, hashPassword, getGoogleRedirectUri } from "@/lib/auth";
+import {
+  setSessionCookie,
+  hashPassword,
+  getGoogleRedirectUri,
+} from "@/lib/auth";
 import { SYSTEM_DEFAULTS, LEDGER_TYPES } from "@/lib/constants";
 import crypto from "crypto";
 
 export async function GET(req: NextRequest) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   const redirectUri = getGoogleRedirectUri(req);
 
-  // 1. Si les identifiants réels Google Cloud sont configurés dans .env
-  if (clientId && clientId !== "your-google-client-id" && clientId.trim().length > 5) {
-    const scope = encodeURIComponent("openid email profile");
-    // prompt=select_account force Google à afficher la liste officielle des comptes Google du navigateur (ex: kmwmatthieu@gmail.com)
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
-      clientId.trim()
-    )}&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}&response_type=code&scope=${scope}&access_type=online&prompt=select_account`;
-
-    return NextResponse.redirect(googleAuthUrl);
+  // 1. Vérification que les identifiants Google sont bien configurés dans l'environnement
+  if (!clientId || clientId === "your-google-client-id" || clientId.length < 5) {
+    return NextResponse.redirect(
+      new URL("/login?error=google_not_configured", req.url)
+    );
   }
 
-  // 2. Si GOOGLE_CLIENT_ID n'est pas encore configuré dans .env :
-  // On NE crée AUCUN compte fictif artificiel. On redirige vers la page de connexion avec une explication claire.
-  return NextResponse.redirect(
-    new URL(
-      "/login?error=google_not_configured",
-      req.url
-    )
-  );
+  if (!clientSecret || clientSecret.length < 5) {
+    return NextResponse.redirect(
+      new URL("/login?error=missing_client_secret", req.url)
+    );
+  }
+
+  const scope = encodeURIComponent("openid email profile");
+  // prompt=select_account force Google à afficher la liste officielle des comptes Google du navigateur
+  const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+    clientId
+  )}&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&response_type=code&scope=${scope}&access_type=online&prompt=select_account`;
+
+  return NextResponse.redirect(googleAuthUrl);
 }
 
 export async function POST(req: NextRequest) {
