@@ -5,6 +5,7 @@ import type { PointPack } from "./constants.ts";
 import Stripe from "stripe";
 import {
   createSasPayCheckoutSession,
+  getSasPayCheckoutSessionStatus,
   isSasPayConfigured,
   verifySasPayPayment,
   verifySasPayWebhookSignature,
@@ -242,14 +243,19 @@ export async function completePaymentConfirmation(
   sessionId: string,
   paymentIntentId?: string | null
 ) {
-  // 1. Recherche du paiement en attente
-  const payment = await prisma.payment.findUnique({
-    where: { stripeSessionId: sessionId },
+  // 1. Recherche du paiement en attente (par session externe ou ID interne)
+  const payment = await prisma.payment.findFirst({
+    where: {
+      OR: [
+        { stripeSessionId: sessionId },
+        { id: sessionId },
+      ],
+    },
     include: { user: true },
   });
 
   if (!payment) {
-    throw new Error(`Paiement introuvable pour la session Stripe : ${sessionId}`);
+    throw new Error(`Paiement introuvable pour la session : ${sessionId}`);
   }
 
   // 2. Règle d'idempotence absolue : si déjà COMPLETED, on ne double jamais le crédit
@@ -449,13 +455,43 @@ export async function verifyAndDeliverSasPayPayment(paymentIdentifier: string) {
   // 3. Appel direct au endpoint officiel de vérification SasPay si l'API est configurée
   if (isSasPayConfigured()) {
     const sasPayTxId = payment.stripeSessionId || payment.id;
-    const verification = await verifySasPayPayment(sasPayTxId);
+    let isSuccess = false;
+    let externalRef = "";
+    let isFailed = false;
 
-    // Règle d'or absolue : Ne livrer les points QUE si SasPay renvoie "SUCCESS"
-    if (verification.status === "SUCCESS") {
+    // A. Si c'est une session de checkout hébergée (GET /checkout-sessions/{id}/status/)
+    try {
+      const sessionStatus = await getSasPayCheckoutSessionStatus(sasPayTxId);
+      if (sessionStatus.status === "PAID" || (sessionStatus as any).transaction_status === "SUCCESS") {
+        isSuccess = true;
+        externalRef = (sessionStatus as any).transaction_reference || (sessionStatus as any).transaction_id || sessionStatus.slug || sasPayTxId;
+      } else if (sessionStatus.status === "CANCELLED" || sessionStatus.status === "EXPIRED" || (sessionStatus as any).transaction_status === "FAILED") {
+        isFailed = true;
+      }
+    } catch {
+      // Si non trouvé sur /checkout-sessions/, ce peut être un paiement direct softpay
+    }
+
+    // B. Si pas encore validé, essai sur le endpoint de paiement direct (GET /payments/{id}/verify/)
+    if (!isSuccess && !isFailed) {
+      try {
+        const verification = await verifySasPayPayment(sasPayTxId);
+        if (verification.status === "SUCCESS") {
+          isSuccess = true;
+          externalRef = verification.reference || verification.id;
+        } else if (verification.status === "FAILED") {
+          isFailed = true;
+        }
+      } catch {
+        // En cours de traitement par le réseau
+      }
+    }
+
+    // Règle d'or absolue : Ne livrer les points QUE si la confirmation positive est avérée
+    if (isSuccess) {
       const confirmResult = await completePaymentConfirmation(
         payment.stripeSessionId || payment.id,
-        verification.reference || verification.id
+        externalRef
       );
       return {
         success: true,
@@ -464,13 +500,11 @@ export async function verifyAndDeliverSasPayPayment(paymentIdentifier: string) {
         paymentId: payment.id,
         pointsAmount: confirmResult.pointsAmount,
         newBalance: confirmResult.newBalance,
-        netAmount: verification.net_amount,
-        currency: verification.currency,
         message: "Paiement SasPay vérifié avec succès et points crédités !",
       };
     }
 
-    if (verification.status === "FAILED") {
+    if (isFailed) {
       await prisma.payment.update({
         where: { id: payment.id },
         data: { status: "FAILED" },
@@ -536,8 +570,13 @@ export async function processSasPayWebhookEvent(
     };
   }
 
-  if (event === "transaction.success" || data.status === "SUCCESS") {
-    const transactionId = data.id || data.reference;
+  if (
+    event === "transaction.success" ||
+    event === "checkout_session.paid" ||
+    data.status === "SUCCESS" ||
+    data.status === "PAID"
+  ) {
+    const transactionId = data.id || data.reference || data.slug;
     if (!transactionId) {
       throw new Error("Identifiant de transaction manquant dans l'événement SasPay.");
     }
@@ -549,6 +588,9 @@ export async function processSasPayWebhookEvent(
           { stripeSessionId: transactionId },
           { id: transactionId },
           { stripeSessionId: data.reference },
+          { stripeSessionId: data.slug },
+          { stripeSessionId: data.id },
+          ...(data.metadata?.paymentId ? [{ id: data.metadata.paymentId }] : []),
         ],
       },
     });
