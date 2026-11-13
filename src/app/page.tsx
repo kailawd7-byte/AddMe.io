@@ -25,7 +25,7 @@ import {
 import { POINT_PACKS } from "@/lib/constants";
 import DiscordIcon from "@/components/DiscordIcon";
 
-const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/addme";
+const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/9TJNnr39bK";
 
 /**
  * Moteur Graphique Canvas 60 FPS : "Lac de Couleurs Vivant" (Liquid Color Lake)

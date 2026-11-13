@@ -48,7 +48,7 @@ const APP_ROUTE_PREFIXES = [
   "/admin",
 ];
 
-const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/addme";
+const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/9TJNnr39bK";
 
 export default function Navbar({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
