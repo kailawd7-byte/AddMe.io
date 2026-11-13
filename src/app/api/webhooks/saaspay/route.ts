@@ -1,49 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { completePaymentConfirmation } from "@/lib/payments";
-import { prisma } from "@/lib/prisma";
+import { processSasPayWebhookEvent } from "@/lib/payments";
 
+/**
+ * Endpoint Webhook SasPay : /api/webhooks/saaspay (et /api/webhooks/saspay)
+ *
+ * Règles absolues de sécurité :
+ * 1. Extraction du corps BRUT (raw body) via req.text(), jamais de req.json() avant vérification.
+ * 2. Vérification cryptographique HMAC-SHA256 sur f"{timestamp}.{body}" avec timingSafeEqual.
+ * 3. Contrôle strict de l'horodatage X-Webhook-Timestamp : rejet si > 300 secondes.
+ * 4. Traitement idempotent : les événements dupliqués ne doublent jamais le crédit de points.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+    const signature =
+      req.headers.get("x-webhook-signature") ||
+      req.headers.get("X-Webhook-Signature");
+    const timestamp =
+      req.headers.get("x-webhook-timestamp") ||
+      req.headers.get("X-Webhook-Timestamp");
+    const event =
+      req.headers.get("x-webhook-event") ||
+      req.headers.get("X-Webhook-Event");
 
-    // SasPay webhook events: transaction.success, transaction.created, etc.
-    const eventType = body.event || body.type || "transaction.success";
+    // Traitement complet avec vérification cryptographique
+    const result = await processSasPayWebhookEvent(rawBody, signature, timestamp);
 
-    if (eventType === "transaction.success" || body.status === "SUCCESS" || body.status === "completed") {
-      const sessionId = body.session_id || body.data?.session_id || body.reference || body.data?.reference || body.id;
-      const transactionId = body.transaction_id || body.data?.id || `sp_tx_${Date.now()}`;
-
-      if (!sessionId) {
-        return NextResponse.json({ error: "Identifiant de session manquant" }, { status: 400 });
-      }
-
-      // Recherche par stripeSessionId (utilisé comme identifiant de session unique de paiement)
-      const payment = await prisma.payment.findFirst({
-        where: {
-          OR: [
-            { stripeSessionId: sessionId },
-            { id: sessionId },
-          ],
-        },
-      });
-
-      if (!payment) {
-        return NextResponse.json({ error: "Paiement introuvable" }, { status: 404 });
-      }
-
-      const result = await completePaymentConfirmation(payment.stripeSessionId || payment.id, transactionId);
-
-      return NextResponse.json({
-        received: true,
-        success: true,
-        paymentId: payment.id,
-        pointsCredited: result.pointsAmount,
-      });
-    }
-
-    return NextResponse.json({ received: true, ignored: true, event: eventType });
+    return NextResponse.json({
+      received: true,
+      success: true,
+      event: event || (result as any).eventType || "handled",
+      details: result,
+    });
   } catch (error: any) {
-    console.error("Erreur webhook SaasPay:", error);
-    return NextResponse.json({ error: error.message || "Erreur interne webhook" }, { status: 500 });
+    console.error("Échec validation webhook SasPay :", error.message);
+    const isSecurityError =
+      error.message?.includes("Signature webhook") ||
+      error.message?.includes("Horodatage") ||
+      error.message?.includes("Secret");
+
+    return NextResponse.json(
+      { error: error.message || "Erreur traitement webhook SasPay" },
+      { status: isSecurityError ? 403 : 400 }
+    );
   }
 }

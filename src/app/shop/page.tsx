@@ -28,6 +28,7 @@ function ShopContent() {
   const sessionIdParam = searchParams.get("session_id");
   const isSuccessParam = searchParams.get("success") === "true";
   const isCanceledParam = searchParams.get("canceled") === "true";
+  const providerParam = searchParams.get("provider");
 
   const [paymentMethod, setPaymentMethod] = useState<"SAASPAY" | "STRIPE">(
     "SAASPAY"
@@ -75,18 +76,46 @@ function ShopContent() {
 
   useEffect(() => {
     if (isSuccessParam && sessionIdParam) {
-      setFeedback({
-        type: "success",
-        text: "Paiement validé avec succès ! Vos points ont été crédités à votre solde.",
-      });
-      fetchShopData();
+      if (providerParam === "saaspay" || providerParam === "saspay") {
+        // Règle d'or : Vérification auprès de l'API SasPay avant affichage définitif
+        fetch(`/api/shop/saaspay/verify?sessionId=${encodeURIComponent(sessionIdParam)}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.status === "SUCCESS") {
+              setFeedback({
+                type: "success",
+                text: "Paiement Mobile Money SasPay validé avec succès ! Vos points ont été crédités à votre solde.",
+              });
+            } else if (data.status === "FAILED") {
+              setFeedback({
+                type: "error",
+                text: "Le paiement SasPay a échoué ou a été refusé par l'opérateur.",
+              });
+            } else {
+              setFeedback({
+                type: "success",
+                text: "Paiement en attente de confirmation finale. Vos points apparaîtront dès confirmation par le réseau.",
+              });
+            }
+            fetchShopData();
+          })
+          .catch(() => {
+            fetchShopData();
+          });
+      } else {
+        setFeedback({
+          type: "success",
+          text: "Paiement validé avec succès ! Vos points ont été crédités à votre solde.",
+        });
+        fetchShopData();
+      }
     } else if (isCanceledParam) {
       setFeedback({
         type: "error",
         text: "Le paiement a été interrompu. Aucun montant n'a été prélevé.",
       });
     }
-  }, [isSuccessParam, isCanceledParam, sessionIdParam]);
+  }, [isSuccessParam, isCanceledParam, sessionIdParam, providerParam]);
 
   const handleBuyPack = async (pack: PointPack) => {
     setPurchasingPackId(pack.id);

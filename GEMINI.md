@@ -412,5 +412,22 @@ Chaque section, titre, panneau et carte de la page doit apparaître progressivem
   - Module `validateVideoPublicationUrl` étendu avec normalisation d'URL et extraction d'identifiants pour chaque plateforme.
   - Bandeau Marquee 60 FPS perpétuel et grille d'écosystème enrichis de logos SVG dédiés et de micro-interactions dynamiques.
 
+---
+
+### N. Intégration Officielle SasPay API (Mobile Money & Cartes en Afrique)
+- **Spécifications Officielles & Architecture Backend** :
+  - Base URL : `https://api.saspay.me/api/v1` (OpenAPI 3.1 & `/llms.txt`).
+  - Toutes les requêtes SasPay s'effectuent **exclusivement depuis le backend** (`src/lib/saspay.ts`, `src/lib/payments.ts`).
+  - La clé secrète est injectée via la variable d'environnement `SASPAY_API_KEY` (`sk_test_...` en dev/test, `sk_live_...` en production). Ne jamais l'exposer côté client ni dans les logs.
+  - Le secret de webhook est injecté via `SASPAY_WEBHOOK_SECRET` (`whsec_...`).
+- **Règles d'Ingénierie SasPay Immuables** :
+  1. **Montants Décimaux Stricts** : Chaînes à deux décimales (`"2500.00"`, `"3000.00"`), formatées via `formatDecimalAmount()`. Aucun entier ou flottant brut n'est envoyé à SasPay.
+  2. **En-tête `Idempotency-Key` Obligatoire** : Requis sur `POST /payments/softpay/`, `POST /payouts/initialize/`, `POST /wallet-transfers/` et `POST /payments/{id}/retry/`.
+  3. **Règle d'Or de Livraison** : Ne livrer les points et créditer le Ledger que lorsque le paiement est vérifié avec le statut `"SUCCESS"` (via `GET /payments/{id}/verify/` ou webhook authentifié).
+  4. **Redirection Softpay Impérative** : Si `checkout_url` est non vide (ex: Wave, Orange, Cartes), l'application redirige automatiquement le client vers cette URL. Si vide (ex: MTN Bénin), l'application attend la confirmation USSD push.
+  5. **Vérification HMAC-SHA256 des Webhooks** : Contrôle cryptographique en temps constant (`crypto.timingSafeEqual`) sur le corps brut (`${timestamp}.${rawBody}`) via `X-Webhook-Signature` et `X-Webhook-Timestamp`, avec rejet systématique si l'écart d'horodatage dépasse 300 secondes (`TOLERANCE_SECONDS = 300`).
+  6. **Retraits & Payouts Sécurisés** : L'initialisation d'un retrait nécessite que l'adresse IP du serveur soit préalablement whitelistée sur le dashboard SasPay sous peine d'erreur `403 ip_not_whitelisted`.
+
+
 
 

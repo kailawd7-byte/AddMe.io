@@ -3,6 +3,14 @@ import { recordLedgerTransaction } from "./ledger.ts";
 import { POINT_PACKS, getPackById } from "./constants.ts";
 import type { PointPack } from "./constants.ts";
 import Stripe from "stripe";
+import {
+  createSasPayCheckoutSession,
+  isSasPayConfigured,
+  verifySasPayPayment,
+  verifySasPayWebhookSignature,
+  formatDecimalAmount,
+  SasPayApiError,
+} from "./saspay.ts";
 
 // Instanciation conditionnelle du client Stripe
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
@@ -54,63 +62,60 @@ export async function createCheckoutSession(
     throw new Error("Votre compte est suspendu ou restreint. Vous ne pouvez pas acheter de points.");
   }
 
-  // 1. PAIEMENT MOBILE MONEY VIA SAASPAY (Wave, Orange, MTN, Moov)
+  // 1. PAIEMENT MOBILE MONEY & CARTE VIA SASPAY (Wave, Orange, MTN, Moov, etc.)
   if (provider === "SAASPAY") {
-    const saaspayApiKey = process.env.SAASPAY_API_KEY || "";
-    const isRealSaasPay = saaspayApiKey.startsWith("sk_");
-
-    if (isRealSaasPay) {
+    // Si la clé API SasPay est configurée, appel officiel vers l'API SasPay (POST /checkout-sessions/)
+    if (isSasPayConfigured()) {
       try {
-        const response = await fetch("https://api.saspay.me/api/v1/checkout-sessions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${saaspayApiKey}`,
-          },
-          body: JSON.stringify({
-            amount: pack.priceInFcfa,
+        const payment = await prisma.payment.create({
+          data: {
+            userId: user.id,
+            packId: pack.id,
+            pointsAmount: pack.points,
+            amountInCents: pack.priceInFcfa * 100,
             currency: "XOF",
-            customer_email: user.email,
-            reference: `addme_${user.id}_${Date.now()}`,
-            return_url: `${originUrl}/shop?success=true&provider=saaspay`,
-            metadata: {
-              userId: user.id,
-              packId: pack.id,
-              pointsAmount: pack.points,
-            },
-          }),
+            provider: "SAASPAY",
+            status: "PENDING",
+          },
         });
 
-        const data = await response.json();
-        if (response.ok && data.url) {
-          const payment = await prisma.payment.create({
-            data: {
-              userId: user.id,
-              packId: pack.id,
-              pointsAmount: pack.points,
-              amountInCents: pack.priceInFcfa * 100,
-              currency: "XOF",
-              provider: "SAASPAY",
-              stripeSessionId: data.session_id || data.id,
-              status: "PENDING",
-            },
-          });
-
-          return {
-            url: data.url,
-            sessionId: data.session_id || data.id,
+        const sasPaySession = await createSasPayCheckoutSession({
+          amount: formatDecimalAmount(pack.priceInFcfa),
+          currency: "XOF",
+          customer_email: user.email,
+          customer_name: user.email.split("@")[0] || "Client AddMe",
+          description: `AddMe.io — ${pack.name} (${pack.points} points)`,
+          return_url: `${originUrl}/shop?success=true&provider=saspay&session_id=${payment.id}`,
+          metadata: {
+            userId: user.id,
+            packId: pack.id,
             paymentId: payment.id,
-            pack,
-            isMock: false,
-            provider: "SAASPAY",
-          };
-        }
+            pointsAmount: pack.points,
+          },
+        });
+
+        // Mise à jour avec l'ID réel de la session SasPay
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            stripeSessionId: sasPaySession.id,
+          },
+        });
+
+        return {
+          url: sasPaySession.checkout_url,
+          sessionId: sasPaySession.id,
+          paymentId: payment.id,
+          pack,
+          isMock: false,
+          provider: "SAASPAY",
+        };
       } catch (err: any) {
-        console.warn("Échec appel direct API SaasPay (mode simulation Mobile Money activé) :", err.message);
+        console.warn("Échec appel direct API SasPay (mode simulation Mobile Money activé) :", err.message);
       }
     }
 
-    // Mode simulation / bac à sable Mobile Money pour SaasPay
+    // Mode simulation / bac à sable Mobile Money pour SasPay (en développement sans clé API)
     const mockSessionId = `sp_mock_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const payment = await prisma.payment.create({
       data: {
@@ -253,7 +258,11 @@ export async function completePaymentConfirmation(
 
   const pack = getPackById(payment.packId);
   const packName = pack ? pack.name : "Pack de points";
-  const idempotencyKey = `stripe-payment-${payment.id}`;
+  const idempotencyKey = `payment-${payment.provider.toLowerCase()}-${payment.id}`;
+  const formattedPrice =
+    payment.currency === "XOF"
+      ? `${(payment.amountInCents / 100).toLocaleString("fr-FR")} FCFA`
+      : `${(payment.amountInCents / 100).toFixed(2)} €`;
 
   // 3. Transaction atomique : Validation du paiement + Écriture dans le Ledger
   const result = await prisma.$transaction(async (tx) => {
@@ -266,7 +275,7 @@ export async function completePaymentConfirmation(
         referenceType: "PAYMENT",
         referenceId: payment.id,
         idempotencyKey,
-        description: `Achat ${packName} (+${payment.pointsAmount} pts) pour ${(payment.amountInCents / 100).toFixed(2)} €`,
+        description: `Achat ${packName} (+${payment.pointsAmount} pts) pour ${formattedPrice}`,
       },
       tx
     );
@@ -385,7 +394,10 @@ export async function getUserPaymentHistory(userId: string) {
       packId: p.packId,
       packName: pack?.name || "Pack de points",
       pointsAmount: p.pointsAmount,
-      amountFormatted: (p.amountInCents / 100).toFixed(2) + " €",
+      amountFormatted:
+        p.currency === "XOF"
+          ? `${(p.amountInCents / 100).toLocaleString("fr-FR")} FCFA`
+          : `${(p.amountInCents / 100).toFixed(2)} €`,
       currency: p.currency,
       provider: p.provider,
       status: p.status,
@@ -393,4 +405,196 @@ export async function getUserPaymentHistory(userId: string) {
       createdAt: p.createdAt,
     };
   });
+}
+
+/**
+ * Vérifie le statut réel auprès de l'API SasPay (GET /payments/{payment_id}/verify/)
+ * et ne crédite les points au Ledger QUE SI le statut renvoyé est "SUCCESS".
+ */
+export async function verifyAndDeliverSasPayPayment(paymentIdentifier: string) {
+  // 1. Recherche du paiement en base (par session SasPay ou ID interne)
+  const payment = await prisma.payment.findFirst({
+    where: {
+      OR: [
+        { stripeSessionId: paymentIdentifier },
+        { id: paymentIdentifier },
+      ],
+    },
+    include: { user: true },
+  });
+
+  if (!payment) {
+    throw new Error(`Paiement introuvable pour la référence : ${paymentIdentifier}`);
+  }
+
+  // 2. Si déjà complété, idempotence absolue
+  if (payment.status === "COMPLETED") {
+    return {
+      success: true,
+      alreadyProcessed: true,
+      status: "COMPLETED",
+      paymentId: payment.id,
+      pointsAmount: payment.pointsAmount,
+      message: "Paiement déjà validé et points crédités.",
+    };
+  }
+
+  // 3. Appel direct au endpoint officiel de vérification SasPay si l'API est configurée
+  if (isSasPayConfigured()) {
+    const sasPayTxId = payment.stripeSessionId || payment.id;
+    const verification = await verifySasPayPayment(sasPayTxId);
+
+    // Règle d'or absolue : Ne livrer les points QUE si SasPay renvoie "SUCCESS"
+    if (verification.status === "SUCCESS") {
+      const confirmResult = await completePaymentConfirmation(
+        payment.stripeSessionId || payment.id,
+        verification.reference || verification.id
+      );
+      return {
+        success: true,
+        alreadyProcessed: false,
+        status: "SUCCESS",
+        paymentId: payment.id,
+        pointsAmount: confirmResult.pointsAmount,
+        newBalance: confirmResult.newBalance,
+        netAmount: verification.net_amount,
+        currency: verification.currency,
+        message: "Paiement SasPay vérifié avec succès et points crédités !",
+      };
+    }
+
+    if (verification.status === "FAILED") {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: "FAILED" },
+      });
+      return {
+        success: false,
+        status: "FAILED",
+        paymentId: payment.id,
+        message: "Le paiement a été rejeté ou a échoué côté opérateur.",
+      };
+    }
+
+    return {
+      success: true,
+      status: "PENDING",
+      paymentId: payment.id,
+      message: "Paiement en attente de validation par le réseau Mobile Money.",
+    };
+  }
+
+  // Mode simulation de test local (si aucune clé SasPay réelle n'est renseignée)
+  const confirmResult = await completePaymentConfirmation(
+    payment.stripeSessionId || payment.id,
+    `sim_ref_${Date.now()}`
+  );
+  return {
+    success: true,
+    alreadyProcessed: false,
+    status: "SUCCESS",
+    paymentId: payment.id,
+    pointsAmount: confirmResult.pointsAmount,
+    newBalance: confirmResult.newBalance,
+    message: "Simulation de paiement SasPay validée en environnement local.",
+  };
+}
+
+/**
+ * Traite les événements de webhook SasPay avec vérification cryptographique HMAC
+ * sur le corps brut et respect de la fenêtre temporelle de 300 secondes.
+ */
+export async function processSasPayWebhookEvent(
+  rawBody: string,
+  signatureHeader: string | null | undefined,
+  timestampHeader: string | null | undefined
+) {
+  // 1. Vérification cryptographique de la signature HMAC sur le corps brut
+  const validation = verifySasPayWebhookSignature(rawBody, signatureHeader, timestampHeader);
+  if (!validation.isValid) {
+    throw new Error(`Signature webhook SasPay invalide : ${validation.error}`);
+  }
+
+  const payload = JSON.parse(rawBody);
+  const event = payload.event;
+  const data = payload.data || {};
+
+  // 2. Traitement des événements du catalogue officiel SasPay
+  if (event === "webhook.test") {
+    return {
+      success: true,
+      handled: true,
+      eventType: "webhook.test",
+      message: "Webhook test SasPay validé avec succès.",
+    };
+  }
+
+  if (event === "transaction.success" || data.status === "SUCCESS") {
+    const transactionId = data.id || data.reference;
+    if (!transactionId) {
+      throw new Error("Identifiant de transaction manquant dans l'événement SasPay.");
+    }
+
+    // Recherche de la commande correspondante
+    const payment = await prisma.payment.findFirst({
+      where: {
+        OR: [
+          { stripeSessionId: transactionId },
+          { id: transactionId },
+          { stripeSessionId: data.reference },
+        ],
+      },
+    });
+
+    if (!payment) {
+      // Si la transaction n'est pas trouvée par ID direct, tenter par metadata
+      const metaPaymentId = data.metadata?.paymentId;
+      if (metaPaymentId) {
+        const paymentByMeta = await prisma.payment.findUnique({ where: { id: metaPaymentId } });
+        if (paymentByMeta) {
+          return await completePaymentConfirmation(
+            paymentByMeta.stripeSessionId || paymentByMeta.id,
+            transactionId
+          );
+        }
+      }
+      return {
+        success: false,
+        message: `Paiement introuvable pour la transaction SasPay ${transactionId}`,
+      };
+    }
+
+    return await completePaymentConfirmation(
+      payment.stripeSessionId || payment.id,
+      transactionId
+    );
+  }
+
+  if (event === "transaction.failed" || event === "transaction.cancelled" || data.status === "FAILED") {
+    const transactionId = data.id || data.reference;
+    if (transactionId) {
+      await prisma.payment.updateMany({
+        where: {
+          OR: [
+            { stripeSessionId: transactionId },
+            { id: transactionId },
+          ],
+        },
+        data: { status: "FAILED" },
+      });
+    }
+
+    return {
+      success: true,
+      handled: true,
+      eventType: event,
+      message: "Transaction échouée ou annulée enregistrée.",
+    };
+  }
+
+  return {
+    success: true,
+    unhandled: true,
+    eventType: event,
+  };
 }
