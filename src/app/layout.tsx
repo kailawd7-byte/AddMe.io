@@ -36,12 +36,21 @@ export const metadata: Metadata = {
     siteName: "AddMe.io",
     locale: "fr_FR",
     type: "website",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Logo AddMe.io",
+      },
+    ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "AddMe.io — Donnez de l'attention. Recevez-en.",
     description:
       "La première plateforme d'échange d'attention équitable pour créateurs sur TikTok et YouTube.",
+    images: ["/icon-512.png"],
   },
   robots: {
     index: true,
@@ -55,9 +64,17 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
     shortcut: "/favicon.ico",
-    apple: "/icon.svg",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   verification: {
     google: "ZmE886oh7gl5SEg34B-jJtPisFVTbYEVK90cTHYOzEQ",

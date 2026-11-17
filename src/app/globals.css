@@ -26,8 +26,11 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+/* Navigation inertielle fluide et ultra-réactive sur smartphone et PC */
+@media (prefers-reduced-motion: no-preference) {
+  html:focus-within {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
