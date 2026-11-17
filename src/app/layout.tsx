@@ -94,6 +94,37 @@ export default function RootLayout({
           name="google-site-verification"
           content="ZmE886oh7gl5SEg34B-jJtPisFVTbYEVK90cTHYOzEQ"
         />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        {/* Données structurées Google (Site Name & Logo officiel) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "AddMe.io",
+              alternateName: ["AddMe", "AddMe App"],
+              url: baseUrl,
+              image: `${baseUrl}/icon-512.png`,
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "AddMe.io",
+              url: baseUrl,
+              logo: `${baseUrl}/icon-512.png`,
+            }),
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
