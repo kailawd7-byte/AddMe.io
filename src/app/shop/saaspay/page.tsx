@@ -44,7 +44,7 @@ function SasPayCheckoutContent() {
 
   const packId = searchParams.get("pack_id") || "PACK_STARTER";
   const amount = searchParams.get("amount") || "3000";
-  const points = searchParams.get("points") || "2000";
+  const points = searchParams.get("points") || "500";
   const sessionId = searchParams.get("session_id") || "";
 
   const [selectedCountry, setSelectedCountry] = useState<string>("BJ");

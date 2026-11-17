@@ -219,7 +219,7 @@ describe("🎯 AUDIT COMPLET & EXHAUSTIF DE LA PLATEFORME ADDME.IO", () => {
   // --------------------------------------------------------------------------
   // ÉTAPE 3 : CRÉATEUR, BOUTIQUE DE POINTS & RECHARGE
   // --------------------------------------------------------------------------
-  test("3. Inscription du créateur et recharge de 10 000 points (Pack Créateur)", async () => {
+  test("3. Inscription du créateur et recharge de 2 000 points (Pack Créateur)", async () => {
     // Création du créateur
     const creatorHash = await hashPassword(plainPassword);
     const creator = await prisma.user.create({
@@ -233,7 +233,7 @@ describe("🎯 AUDIT COMPLET & EXHAUSTIF DE LA PLATEFORME ADDME.IO", () => {
     });
     creatorId = creator.id;
 
-    // Création d'une session d'achat pour le Pack Créateur (10 000 points)
+    // Création d'une session d'achat pour le Pack Créateur (2 000 points)
     const session = await createCheckoutSession(
       creatorId,
       "PACK_CREATOR",
@@ -248,11 +248,11 @@ describe("🎯 AUDIT COMPLET & EXHAUSTIF DE LA PLATEFORME ADDME.IO", () => {
       `pi_test_${timestamp}`
     );
     assert.equal(confirmation.success, true);
-    assert.equal(confirmation.pointsAmount, 10000);
+    assert.equal(confirmation.pointsAmount, 2000);
 
     // Vérification du solde du créateur
     const creatorBalance = await getUserBalance(creatorId);
-    assert.equal(creatorBalance, 10000, "Le créateur doit avoir un solde de 10 000 points");
+    assert.equal(creatorBalance, 2000, "Le créateur doit avoir un solde de 2 000 points");
 
     // Vérification de l'idempotence stricte (aucun double crédit si le paiement est reconfirmé)
     const replayConfirmation = await completePaymentConfirmation(
@@ -262,8 +262,8 @@ describe("🎯 AUDIT COMPLET & EXHAUSTIF DE LA PLATEFORME ADDME.IO", () => {
     assert.equal(replayConfirmation.alreadyProcessed, true);
 
     const balanceAfterReplay = await getUserBalance(creatorId);
-    assert.equal(balanceAfterReplay, 10000, "Le solde ne doit pas avoir bougé après rejeu");
-    console.log(`   ✔ Recharge validée (10 000 pts crédités) | Idempotence confirmée`);
+    assert.equal(balanceAfterReplay, 2000, "Le solde ne doit pas avoir bougé après rejeu");
+    console.log(`   ✔ Recharge validée (2 000 pts crédités) | Idempotence confirmée`);
   });
 
   // --------------------------------------------------------------------------
@@ -307,7 +307,7 @@ describe("🎯 AUDIT COMPLET & EXHAUSTIF DE LA PLATEFORME ADDME.IO", () => {
 
     // Vérification que les points ont été débités du solde
     const balanceAfterCampaign = await getUserBalance(creatorId);
-    assert.equal(balanceAfterCampaign, 10000 - campaign.totalCost, "Le coût total doit être débité du créateur");
+    assert.equal(balanceAfterCampaign, 2000 - campaign.totalCost, "Le coût total doit être débité du créateur");
 
     // Vérification que 5 tâches AVAILABLE ont été générées
     const tasksCount = await prisma.task.count({

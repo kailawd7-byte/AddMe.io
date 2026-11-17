@@ -56,6 +56,9 @@ function LiquidColorLake({
     let isVisibleOnScreen = true;
     let isScrolling = false;
     let scrollTimeout: NodeJS.Timeout;
+    let lastRenderTime = 0;
+    const targetFps = 30; // 30 FPS pour un arrière-plan fluide sans saturer Opera GX ou Chrome
+    const frameInterval = 1000 / targetFps;
 
     // Détection de visibilité : Ne rend le canvas QUE lorsqu'il est réellement visible à l'écran !
     const observer = new IntersectionObserver(
@@ -77,110 +80,109 @@ function LiquidColorLake({
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
-      }, 100);
+      }, 90);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    const width = 480;
-    const height = 300;
+    const width = 360;
+    const height = 220;
     canvas.width = width;
     canvas.height = height;
 
     const darkOrbs = [
-      { r: 91, g: 61, b: 245, radius: 240, speedX: 0.55, speedY: 0.45, phaseX: 0, phaseY: 1.0 },
-      { r: 236, g: 72, b: 153, radius: 210, speedX: -0.5, speedY: 0.65, phaseX: 2.1, phaseY: 0.5 },
-      { r: 255, g: 184, b: 77, radius: 200, speedX: 0.65, speedY: -0.5, phaseX: 4.2, phaseY: 2.5 },
-      { r: 6, g: 182, b: 212, radius: 220, speedX: -0.45, speedY: -0.55, phaseX: 1.5, phaseY: 3.8 },
-      { r: 139, g: 92, b: 246, radius: 250, speedX: 0.4, speedY: 0.7, phaseX: 3.2, phaseY: 5.1 },
+      { r: 91, g: 61, b: 245, radius: 190, speedX: 0.55, speedY: 0.45, phaseX: 0, phaseY: 1.0 },
+      { r: 236, g: 72, b: 153, radius: 170, speedX: -0.5, speedY: 0.65, phaseX: 2.1, phaseY: 0.5 },
+      { r: 255, g: 184, b: 77, radius: 160, speedX: 0.65, speedY: -0.5, phaseX: 4.2, phaseY: 2.5 },
+      { r: 6, g: 182, b: 212, radius: 180, speedX: -0.45, speedY: -0.55, phaseX: 1.5, phaseY: 3.8 },
     ];
 
     const lightOrbs = [
-      { r: 124, g: 58, b: 237, radius: 250, speedX: 0.55, speedY: 0.45, phaseX: 0, phaseY: 1.0 },
-      { r: 245, g: 158, b: 11, radius: 220, speedX: -0.5, speedY: 0.6, phaseX: 2.2, phaseY: 0.4 },
-      { r: 236, g: 72, b: 153, radius: 230, speedX: 0.6, speedY: -0.5, phaseX: 4.1, phaseY: 2.7 },
-      { r: 14, g: 165, b: 233, radius: 240, speedX: -0.45, speedY: -0.55, phaseX: 1.3, phaseY: 3.9 },
+      { r: 124, g: 58, b: 237, radius: 200, speedX: 0.55, speedY: 0.45, phaseX: 0, phaseY: 1.0 },
+      { r: 245, g: 158, b: 11, radius: 180, speedX: -0.5, speedY: 0.6, phaseX: 2.2, phaseY: 0.4 },
+      { r: 236, g: 72, b: 153, radius: 190, speedX: 0.6, speedY: -0.5, phaseX: 4.1, phaseY: 2.7 },
     ];
 
     const orbs = mode === "dark" ? darkOrbs : lightOrbs;
 
-    const render = () => {
+    const render = (now: number) => {
       if (!isVisibleOnScreen) return;
-
-      if (!isScrolling) {
-        time += 0.016;
-
-        ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = mode === "dark" ? "#0B0A14" : "#F3F0FF";
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.globalCompositeOperation = mode === "dark" ? "screen" : "source-over";
-
-        orbs.forEach((orb, idx) => {
-          const x =
-            width * 0.5 +
-            Math.sin(time * orb.speedX + orb.phaseX) * (width * 0.38) +
-            Math.cos(time * 0.45 + idx) * (width * 0.12);
-          const y =
-            height * 0.5 +
-            Math.cos(time * orb.speedY + orb.phaseY) * (height * 0.36) +
-            Math.sin(time * 0.55 + idx) * (height * 0.12);
-
-          const dynamicRadius =
-            orb.radius * (1 + 0.2 * Math.sin(time * 1.1 + idx * 1.5));
-
-          const shiftR = Math.min(255, Math.max(0, Math.round(orb.r + Math.sin(time * 0.8 + idx) * 30)));
-          const shiftG = Math.min(255, Math.max(0, Math.round(orb.g + Math.cos(time * 0.6 + idx) * 30)));
-          const shiftB = Math.min(255, Math.max(0, Math.round(orb.b + Math.sin(time * 1.0 + idx * 2) * 30)));
-
-          const gradient = ctx.createRadialGradient(x, y, 0, x, y, dynamicRadius);
-          if (mode === "dark") {
-            gradient.addColorStop(0, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.75)`);
-            gradient.addColorStop(0.5, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.35)`);
-            gradient.addColorStop(1, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0)`);
-          } else {
-            gradient.addColorStop(0, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.40)`);
-            gradient.addColorStop(0.6, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.16)`);
-            gradient.addColorStop(1, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0)`);
-          }
-
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(x, y, dynamicRadius, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        // 2 Vagues fluides légères de surface
-        ctx.globalCompositeOperation = "source-over";
-        for (let w = 0; w < 2; w++) {
-          ctx.beginPath();
-          const waveYBase = height * (0.3 + w * 0.3);
-          ctx.moveTo(0, height);
-          for (let x = 0; x <= width; x += 24) {
-            const y =
-              waveYBase +
-              Math.sin(x * 0.013 + time * (1.2 + w * 0.3) + w * 2) * 36 +
-              Math.cos(x * 0.009 - time * 0.9 + w) * 24;
-            ctx.lineTo(x, y);
-          }
-          ctx.lineTo(width, height);
-          ctx.closePath();
-
-          const waveGrad = ctx.createLinearGradient(0, waveYBase - 40, width, height);
-          if (mode === "dark") {
-            waveGrad.addColorStop(0, w === 0 ? "rgba(91, 61, 245, 0.25)" : "rgba(255, 184, 77, 0.20)");
-            waveGrad.addColorStop(0.5, w === 0 ? "rgba(236, 72, 153, 0.20)" : "rgba(139, 92, 246, 0.20)");
-            waveGrad.addColorStop(1, "rgba(11, 10, 20, 0.45)");
-          } else {
-            waveGrad.addColorStop(0, "rgba(139, 92, 246, 0.15)");
-            waveGrad.addColorStop(0.5, "rgba(255, 184, 77, 0.12)");
-            waveGrad.addColorStop(1, "rgba(247, 247, 251, 0.35)");
-          }
-          ctx.fillStyle = waveGrad;
-          ctx.fill();
-        }
-      }
-
       animationFrameId = requestAnimationFrame(render);
+
+      if (isScrolling) return;
+
+      const elapsed = now - lastRenderTime;
+      if (elapsed < frameInterval) return;
+      lastRenderTime = now - (elapsed % frameInterval);
+
+      time += 0.033;
+
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = mode === "dark" ? "#0B0A14" : "#F3F0FF";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.globalCompositeOperation = mode === "dark" ? "screen" : "source-over";
+
+      orbs.forEach((orb, idx) => {
+        const x =
+          width * 0.5 +
+          Math.sin(time * orb.speedX + orb.phaseX) * (width * 0.38) +
+          Math.cos(time * 0.45 + idx) * (width * 0.12);
+        const y =
+          height * 0.5 +
+          Math.cos(time * orb.speedY + orb.phaseY) * (height * 0.36) +
+          Math.sin(time * 0.55 + idx) * (height * 0.12);
+
+        const dynamicRadius =
+          orb.radius * (1 + 0.18 * Math.sin(time * 1.1 + idx * 1.5));
+
+        const shiftR = Math.min(255, Math.max(0, Math.round(orb.r + Math.sin(time * 0.8 + idx) * 28)));
+        const shiftG = Math.min(255, Math.max(0, Math.round(orb.g + Math.cos(time * 0.6 + idx) * 28)));
+        const shiftB = Math.min(255, Math.max(0, Math.round(orb.b + Math.sin(time * 1.0 + idx * 2) * 28)));
+
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, dynamicRadius);
+        if (mode === "dark") {
+          gradient.addColorStop(0, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.72)`);
+          gradient.addColorStop(0.5, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.32)`);
+          gradient.addColorStop(1, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0)`);
+        } else {
+          gradient.addColorStop(0, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.38)`);
+          gradient.addColorStop(0.6, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0.15)`);
+          gradient.addColorStop(1, `rgba(${shiftR}, ${shiftG}, ${shiftB}, 0)`);
+        }
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, dynamicRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 1 Vague fluide légère de surface
+      ctx.globalCompositeOperation = "source-over";
+      ctx.beginPath();
+      const waveYBase = height * 0.45;
+      ctx.moveTo(0, height);
+      for (let x = 0; x <= width; x += 28) {
+        const y =
+          waveYBase +
+          Math.sin(x * 0.013 + time * 1.3) * 32 +
+          Math.cos(x * 0.009 - time * 0.9) * 20;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(width, height);
+      ctx.closePath();
+
+      const waveGrad = ctx.createLinearGradient(0, waveYBase - 40, width, height);
+      if (mode === "dark") {
+        waveGrad.addColorStop(0, "rgba(91, 61, 245, 0.22)");
+        waveGrad.addColorStop(0.5, "rgba(236, 72, 153, 0.18)");
+        waveGrad.addColorStop(1, "rgba(11, 10, 20, 0.45)");
+      } else {
+        waveGrad.addColorStop(0, "rgba(139, 92, 246, 0.14)");
+        waveGrad.addColorStop(0.5, "rgba(255, 184, 77, 0.10)");
+        waveGrad.addColorStop(1, "rgba(247, 247, 251, 0.35)");
+      }
+      ctx.fillStyle = waveGrad;
+      ctx.fill();
     };
 
     const startRender = () => {
@@ -206,9 +208,10 @@ function LiquidColorLake({
         style={{
           filter:
             mode === "dark"
-              ? "blur(10px) saturate(140%)"
-              : "blur(10px) saturate(130%)",
+              ? "blur(12px) saturate(140%)"
+              : "blur(12px) saturate(130%)",
           transform: "translateZ(0)",
+          willChange: "transform",
         }}
       />
     </div>
@@ -404,7 +407,7 @@ export default function HomePage() {
     },
     {
       q: "Puis-je recharger mes points par Mobile Money en Afrique ?",
-      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs (150, 500 et 2 000 points) sont proposés au meilleur tarif.",
+      a: "Oui ! Vous pouvez régler vos packs en FCFA via Orange Money, MTN Mobile Money, Wave ou Moov Money, ainsi que par carte bancaire. Les points de tous nos packs (500, 2 000 et 10 000 points) sont proposés au meilleur tarif.",
     },
     {
       q: "Dois-je donner le mot de passe de mon compte TikTok, Instagram ou YouTube ?",
@@ -1352,13 +1355,13 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/85 backdrop-blur-md border border-[#D9D2FF] text-xs font-extrabold uppercase tracking-widest text-[#5B3DF5]">
-                  Boutique de Points · 2 000, 10 000 & 25 000 pts
+                  Boutique de Points · 500, 2 000 & 10 000 pts
                 </span>
                 <h2 className="text-[34px] sm:text-[44px] font-extrabold text-[#12122A] mt-2 mb-1">
                   Tarifs
                 </h2>
                 <p className="text-[#3A3A52] text-base font-medium">
-                  Packs de points (2 000, 10 000 et 25 000 pts), sans abonnement obligatoire. Paiement
+                  Packs de points (500, 2 000 et 10 000 pts), sans abonnement obligatoire. Paiement
                   instantané par Mobile Money (Orange, MTN, Wave, Moov en FCFA). Carte Bancaire bientôt disponible.
                 </p>
               </div>

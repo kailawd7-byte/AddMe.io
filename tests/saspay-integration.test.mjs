@@ -138,5 +138,5 @@ test("Catalogue - Rétablissement du tarif initial du Pack Découverte à 3 000 
   assert.ok(starter);
   assert.equal(starter.priceInFcfa, 3000);
   assert.equal(starter.priceFcfaFormatted, "3 000 FCFA");
-  assert.equal(starter.points, 2000);
+  assert.equal(starter.points, 500);
 });

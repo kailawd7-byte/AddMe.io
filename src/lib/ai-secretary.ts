@@ -63,9 +63,9 @@ export const ADDME_KNOWLEDGE_BASE = `
 - **Fournisseur principal** : SasPay (Mobile Money en Afrique subsaharienne).
 - **Réseaux pris en charge** : Wave, Orange Money, MTN MoMo, Moov Money au Bénin, Côte d'Ivoire, Sénégal, Cameroun, Burkina Faso, Togo.
 - **Packs disponibles** :
-  - Pack Découverte : 2 000 points = 3 000 FCFA (4,99 €)
-  - Pack Créateur Populaire : 10 000 points = 8 500 FCFA (12,99 €)
-  - Pack Influenceur Pro : 25 000 points = 18 000 FCFA (27,99 €)
+  - Pack Découverte : 500 points = 3 000 FCFA (4,99 €)
+  - Pack Créateur Populaire : 2 000 points = 8 500 FCFA (12,99 €)
+  - Pack Influence : 10 000 points = 22 500 FCFA (34,99 €)
 - **Crédit immédiat** : Les points sont crédités dès validation de la session par SasPay ou réception du Webhook sécurisé HMAC-SHA256.
 - **Carte Bancaire (Stripe)** : Temporairement indisponible. Un bandeau clair invite l'usager à privilégier le paiement instantané par Mobile Money.
 
@@ -492,9 +492,9 @@ AddMe.io intègre la passerelle africaine **SasPay** pour permettre l'achat inst
 
 * **Opérateurs supportés** : Orange Money, MTN MoMo, Wave, Moov Money (Bénin, Côte d'Ivoire, Sénégal, Cameroun, Burkina Faso, Togo).
 * **Catalogue des Packs en vigueur** :
-  1. **Pack Découverte** : **2 000 points** pour **3 000 FCFA** (4,99 €)
-  2. **Pack Créateur Populaire** : **10 000 points** pour **8 500 FCFA** (12,99 €)
-  3. **Pack Influenceur Pro** : **25 000 points** pour **18 000 FCFA** (27,99 €)
+  1. **Pack Découverte** : **500 points** pour **3 000 FCFA** (4,99 €)
+  2. **Pack Créateur Populaire** : **2 000 points** pour **8 500 FCFA** (12,99 €)
+  3. **Pack Influence** : **10 000 points** pour **22 500 FCFA** (34,99 €)
 * **Sécurisation des transactions** :
   - Chaque notification de paiement est vérifiée par signature cryptographique HMAC-SHA256 (\`x-saspay-signature\`).
   - Le crédit des points dans la table \`LedgerEntry\` est immédiat et protégé par clé d'idempotence unique (\`saspay_payment_\${reference}\`).
@@ -923,9 +923,9 @@ Vous pouvez consulter votre historique complet à tout moment dans votre **Table
 Voici comment recharger des points instantanément dans la **« Boutique »** :
 
 ### 📦 Nos 3 Packs de Points :
-1. **Pack Découverte** : **2 000 points** pour **3 000 FCFA** (~4,99 €)
-2. **Pack Créateur Populaire** : **10 000 points** pour **8 500 FCFA** (~12,99 €)
-3. **Pack Pro** : **25 000 points** pour **18 000 FCFA** (~27,99 €)
+1. **Pack Découverte** : **500 points** pour **3 000 FCFA** (~4,99 €)
+2. **Pack Créateur Populaire** : **2 000 points** pour **8 500 FCFA** (~12,99 €)
+3. **Pack Influence** : **10 000 points** pour **22 500 FCFA** (~34,99 €)
 
 ### 📲 Paiement Mobile Money via SasPay :
 * **Réseaux disponibles** : Wave, Orange Money, MTN MoMo, Moov Money.
