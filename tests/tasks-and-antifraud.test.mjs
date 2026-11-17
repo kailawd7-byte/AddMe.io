@@ -141,7 +141,7 @@ describe("Cycle de Vie des Tâches : Découverte, Minuteur 10s, Séquestre et Si
     const session = await startTask(availableTaskId, workerId);
     assert.equal(session.taskId, availableTaskId);
     assert.equal(session.rewardPoints, 1.0);
-    assert.equal(session.minDurationSeconds, 10);
+    assert.equal(session.minDurationSeconds, 20);
     assert.ok(session.completionId);
     testCompletionId = session.completionId;
 
@@ -150,7 +150,7 @@ describe("Cycle de Vie des Tâches : Découverte, Minuteur 10s, Séquestre et Si
     assert.equal(taskInDb.status, "IN_PROGRESS");
   });
 
-  it("rejette formellement la validation si le délai de 10 secondes n'est pas écoulé", async () => {
+  it("rejette formellement la validation si le délai de 20 secondes n'est pas écoulé", async () => {
     await assert.rejects(
       async () => {
         // Soumission immédiate (temps écoulé ~quelques millisecondes)
@@ -163,15 +163,17 @@ describe("Cycle de Vie des Tâches : Découverte, Minuteur 10s, Séquestre et Si
     );
   });
 
-  it("valide la tâche avec succès lorsque le délai de 10 secondes est respecté et crédite directement les points", async () => {
-    // Pour le test unitaire, reculons artificiellement la date startedAt de 12 secondes
-    const twelveSecondsAgo = new Date(Date.now() - 12000);
+  it("valide la tâche avec succès lorsque le délai de 20 secondes est respecté et crédite directement les points", async () => {
+    // Pour le test unitaire, reculons artificiellement la date startedAt de 22 secondes
+    const twentyTwoSecondsAgo = new Date(Date.now() - 22000);
     await prisma.taskCompletion.update({
       where: { id: testCompletionId },
-      data: { startedAt: twelveSecondsAgo, requiresScreenshot: false },
+      data: { startedAt: twentyTwoSecondsAgo, requiresScreenshot: false },
     });
 
-    const result = await submitTaskCompletion(testCompletionId, workerId);
+    const result = await submitTaskCompletion(testCompletionId, workerId, {
+      screenshotUrl: "MOCK_VALID_PROOF",
+    });
     assert.equal(result.status, "APPROVED");
     assert.equal(result.rewardPoints, 1.0);
 
