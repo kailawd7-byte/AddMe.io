@@ -59,6 +59,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/icon.svg",
   },
+  verification: {
+    google: "ZmE886oh7gl5SEg34B-jJtPisFVTbYEVK90cTHYOzEQ",
+  },
 };
 
 
@@ -70,6 +73,10 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
+        <meta
+          name="google-site-verification"
+          content="ZmE886oh7gl5SEg34B-jJtPisFVTbYEVK90cTHYOzEQ"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
