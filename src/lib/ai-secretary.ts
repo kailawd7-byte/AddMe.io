@@ -200,9 +200,11 @@ Consignes pour la réponse :
   // 1. Cascade Gemini officielle (Modèles actifs ultra-rapides sans délai de réflexion)
   if (geminiKey) {
     const candidateModels = [
+      "gemini-flash-lite-latest",
       "gemini-3.1-flash-lite",
-      "gemini-3.5-flash",
-      "gemini-3.8-flash",
+      "gemini-flash-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-2.5-flash",
     ];
 
     for (const model of candidateModels) {
@@ -628,7 +630,13 @@ Réponds à l'utilisateur de manière naturelle, agréable et utile :`;
 
   // 1. Appel Gemini
   if (geminiKey) {
-    const candidateModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"];
+    const candidateModels = [
+      "gemini-flash-lite-latest",
+      "gemini-3.1-flash-lite",
+      "gemini-flash-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-2.5-flash",
+    ];
     for (const model of candidateModels) {
       try {
         const geminiRes = await fetch(
@@ -700,82 +708,390 @@ Réponds à l'utilisateur de manière naturelle, agréable et utile :`;
     }
   }
 
-  // 3. Fallback déterministe intelligent pour l'utilisateur
+  // 3. Moteur Déterministe Intelligent & Encyclopédique pour le Support AddMe.io
+  // Couvre 100 % des fonctionnalités de la plateforme sans répéter de message générique
   const q = userMessage.toLowerCase().trim();
+  const fullText = `${subject || ""} ${userMessage}`.toLowerCase().trim();
 
-  // Détection des questions hors-sujet
+  // A. Politesse, Remerciements & Clôture
+  if (/^(merci|thx|super|parfait|c'est bon|d'accord|dac|ok|impeccable|top|cool)/i.test(q)) {
+    return `Avec grand plaisir ${userName} ! 😊
+
+Je reste à votre entière disposition si vous avez la moindre autre question sur vos campagnes, vos points ou vos réseaux sociaux. Excellente session sur AddMe.io !`;
+  }
+
+  // B. Détection des questions hors-sujet
   const offTopicKeywords = [
     "météo", "meteo", "recette", "gâteau", "gateau", "cuisine", "politique",
     "élection", "président", "film", "cinema", "football", "match", "devoirs",
     "maths", "poème", "blague", "qui es-tu", "raconte une histoire"
   ];
-  if (offTopicKeywords.some((kw) => q.includes(kw)) && !q.includes("addme") && !q.includes("point")) {
+  if (offTopicKeywords.some((kw) => q.includes(kw)) && !fullText.includes("addme") && !fullText.includes("point") && !fullText.includes("campagne")) {
     return `Bonjour ${userName} ! 😊
 
-En tant qu'assistant officiel d'AddMe.io, je suis programmé pour vous accompagner exclusivement sur le fonctionnement de notre plateforme (vos points, vos campagnes TikTok/YouTube, vos retraits, ou vos paiements SasPay).
+En tant que chatbot officiel d'AddMe.io, mon rôle est de vous guider et de vous assister exclusivement sur l'utilisation de notre plateforme (création de campagnes, gain de points, liaison de comptes, paiements SasPay ou signalement de bugs).
 
-Je ne peux donc pas répondre à des questions hors de ce cadre. Comment puis-je vous aider à développer votre visibilité sur AddMe.io aujourd'hui ?`;
+Je ne suis pas programmé pour aborder des sujets extérieurs. Que souhaitez-vous accomplir ou savoir sur AddMe.io aujourd'hui ?`;
   }
 
-  if (q.includes("gagner") || q.includes("mission") || q.includes("tâche") || q.includes("action")) {
-    return `Bonjour ${userName} ! 
+  // C. Points en attente / Rétention de sécurité 24h
+  if (
+    fullText.includes("point en attente") ||
+    fullText.includes("points en attente") ||
+    fullText.includes("rétention") ||
+    fullText.includes("retention") ||
+    (fullText.includes("point") && (fullText.includes("bloqu") || fullText.includes("pas reçu") || fullText.includes("en attente")))
+  ) {
+    return `Bonjour ${userName} ! 💰
 
-Pour **gagner des points gratuitement** sur AddMe.io :
-1. Rendez-vous dans la section **« Gagner des points »**.
-2. Choisissez une mission (Like, Commentaire ou Abonnement sur TikTok ou YouTube).
+Voici les explications sur le calcul de votre **solde** et la période de **points en attente** :
+
+### ⏳ Pourquoi certains points sont-ils « En attente » ?
+Pour protéger les créateurs contre les abus (par exemple, quelqu'un qui aimerait une vidéo puis retirerait son Like 5 minutes plus tard après avoir encaissé les points) :
+* Les points gagnés lors des missions sont placés en **rétention de sécurité pendant 24 heures**.
+* Dès que ce délai de vérification est écoulé, les points sont **automatiquement libérés** et basculent dans votre solde disponible.
+
+### 🔒 Intégrité de votre solde (Grand Livre Ledger) :
+* Sur AddMe.io, votre solde est calculé de manière inaltérable grâce à notre système de grand livre comptable.
+* Chaque point gagné, dépensé ou remboursé possède un identifiant unique d'idempotence. Aucun point ne peut disparaître !
+
+Vous pouvez consulter votre historique complet à tout moment dans votre **Tableau de bord**.`;
+  }
+
+  // D. Signalement de BUGS & INCIDENTS TECHNIQUES (avec escalade admin explicite pour test)
+  if (
+    fullText.includes("bug") ||
+    fullText.includes("erreur") ||
+    fullText.includes("bloqué") ||
+    fullText.includes("bloque") ||
+    fullText.includes("bloquer") ||
+    fullText.includes("plante") ||
+    fullText.includes("planté") ||
+    fullText.includes("crash") ||
+    fullText.includes("panne") ||
+    fullText.includes("ne marche pas") ||
+    fullText.includes("ne fonctionne pas") ||
+    fullText.includes("problème") ||
+    fullText.includes("probleme") ||
+    fullText.includes("impossible") ||
+    fullText.includes("page blanche") ||
+    fullText.includes("cassé") ||
+    fullText.includes("casse") ||
+    fullText.includes("dysfonction") ||
+    fullText.includes("souci") ||
+    fullText.includes("anomalie")
+  ) {
+    return `🚨 Bonjour ${userName},
+
+J'ai bien analysé votre signalement technique concernant : **« ${subject || userMessage} »**.
+
+### 🛠️ Prise en charge & Transmission à l'Administrateur :
+1. **Signalement enregistré** : Votre message a été automatiquement identifié et classé en **Incident Technique (BUG)**.
+2. **Notification dans le Panel Administrateur** : L'administrateur d'AddMe.io a été immédiatement notifié dans sa console de supervision.
+3. **Investigation & Test par l'Administrateur** : L'administrateur va personnellement tester et tenter de reproduire la situation pour vérifier s'il s'agit d'une anomalie technique du système ou d'une mauvaise manipulation/erreur de paramétrage, afin d'apporter le correctif approprié.
+
+### 📋 Pour nous aider à tester et résoudre plus rapidement :
+Pourriez-vous préciser en répondant directement ici :
+* **La page ou l'action concernée** (ex : création de campagne, validation d'une tâche, liaison de profil, paiement...)
+* **Le lien ou l'identifiant** de la publication concernée (si applicable)
+* **Votre appareil & navigateur** (ex : smartphone Chrome/Safari, ou PC)
+* **Une capture d'écran** ou le libellé exact si un message d'erreur est survenu.
+
+L'administrateur reviendra vers vous directement sur ce ticket dès que ses tests auront été menés. Merci pour votre patience et votre aide !`;
+  }
+
+  // D. LE MENU CAMPAGNE & CRÉATION DE CAMPAGNES
+  if (
+    fullText.includes("campagne") ||
+    fullText.includes("menu campagne") ||
+    fullText.includes("mes campagnes") ||
+    fullText.includes("nouvelle campagne") ||
+    fullText.includes("booster") ||
+    fullText.includes("visibilité") ||
+    fullText.includes("diffusion") ||
+    fullText.includes("publier") ||
+    fullText.includes("lancer une campagne")
+  ) {
+    return `Bonjour ${userName} ! 🚀
+
+Voici tout ce qu'il faut savoir sur le **menu « Campagnes »** et son fonctionnement sur AddMe.io :
+
+### 🎯 À quoi sert le menu Campagnes ?
+Ce menu vous permet de diffuser vos propres publications (vidéos, posts, Reels, Shorts, tweets) auprès de notre communauté pour recevoir de véritables interactions (Likes, Commentaires ou Abonnements) réalisées manuellement par de vrais créateurs.
+
+### 📝 Comment créer une nouvelle campagne étape par étape :
+1. **Ouvrez le menu « Nouvelle campagne »**.
+2. **Sélectionnez votre compte social lié** correspondant à la publication à promouvoir.
+3. **Collez le lien direct de votre publication** :
+   * ⚠️ **Règle essentielle** : Fournissez toujours l'URL directe d'un post ou d'une vidéo (ex: \`https://www.tiktok.com/@user/video/...\` ou \`https://instagram.com/p/...\`), et **jamais un simple lien de profil**.
+4. **Choisissez le type d'action souhaitée** : Like, Commentaire personnalisé ou Abonnement.
+5. **Définissez vos paramètres** :
+   * **Nombre de personnes** : combien de créateurs uniques vous souhaitez voir interagir (ex: 50 personnes).
+   * **Points par action** : la récompense que vous offrez par action (ex: 2 pts/action. Plus ce montant est élevé, plus votre campagne apparaît en priorité en haut du flux des autres membres !).
+   * **Durée de diffusion** : le nombre de jours où votre campagne reste active (facturé à 0,5 pt par jour).
+
+### 💰 Formule de calcul du coût total :
+> **Coût total en points = (Nombre de personnes × Points par action) + (Durée en jours × 0,5 pt)**
+
+### 🛡️ Sécurité & Remboursement automatique :
+* Vos points sont placés sous séquestre sécurisé dès le lancement de la campagne.
+* Si vous décidez de mettre en pause ou d'annuler votre campagne avant la fin, **tous les points non consommés vous sont intégralement et immédiatement restitués sur votre solde** !`;
+  }
+
+  // E. GAGNER DES POINTS, MISSIONS & CHRONOMÈTRE 20 SECONDES
+  if (
+    fullText.includes("gagner") ||
+    fullText.includes("mission") ||
+    fullText.includes("tâche") ||
+    fullText.includes("tache") ||
+    fullText.includes("faire une tâche") ||
+    fullText.includes("réaliser") ||
+    fullText.includes("chrono") ||
+    fullText.includes("20 seconde") ||
+    fullText.includes("20s") ||
+    fullText.includes("disparu") ||
+    fullText.includes("disparaît")
+  ) {
+    return `Bonjour ${userName} ! ⭐
+
+Voici comment **gagner des points gratuitement** en accomplissant des missions sur AddMe.io :
+
+### 📋 Comment réaliser une tâche :
+1. Rendez-vous dans la rubrique **« Gagner des points »**.
+2. Parcourez le flux des publications disponibles (vous pouvez filtrer par réseau social et par type d'action : Like, Commentaire, Abonnement).
 3. Cliquez sur **« Réaliser la tâche »** : la publication s'ouvre dans un nouvel onglet.
-4. **Important** : Restez actif au moins **20 secondes** sur la page pour que notre robot anti-fraude valide votre action.
-5. Vos points sont crédités dès validation ! Si un réseau tarde à mettre à jour ses compteurs, vous pouvez téléverser une capture d'écran pour validation immédiate par notre IA Vision.`;
+4. **⏱️ Règle impérative des 20 secondes** :
+   * Vous devez rester actif et maintenir le focus sur la publication pendant au moins **20 secondes**.
+   * Si vous revenez trop vite sur AddMe.io, le chronomètre se met automatiquement en pause pour garantir un engagement réel.
+5. Effectuez l'action demandée (Liker, Commenter ou S'abonner) sur le réseau social.
+6. Revenez sur AddMe.io et cliquez sur **« Valider la tâche »** : notre robot anti-fraude vérifie instantanément l'action.
+
+### ❓ Pourquoi une tâche disparaît-elle de mon flux ?
+Pour empêcher le spam, **chaque créateur ne peut réaliser qu'une seule interaction unique par publication**. Dès que vous avez accompli une tâche, elle disparaît définitivement de votre flux pour laisser la place à de nouvelles opportunités.
+
+### 📸 En cas de compteur réseau arrondi :
+Si TikTok ou Instagram arrondit ses compteurs (ex: 10,4k) et que le robot tarde à valider, vous pouvez téléverser une **capture d'écran de preuve** : notre IA Vision Sentinel inspectera l'image pour valider vos points !`;
   }
 
-  if (q.includes("compte") || q.includes("lier") || q.includes("bio") || q.includes("tiktok") || q.includes("youtube")) {
-    return `Bonjour ${userName} ! 
+  // F. SOLDE, POINTS EN ATTENTE & RÉTENTION 24H
+  if (
+    fullText.includes("point en attente") ||
+    fullText.includes("attente") ||
+    fullText.includes("rétention") ||
+    fullText.includes("retention") ||
+    fullText.includes("solde") ||
+    fullText.includes("mon solde") ||
+    fullText.includes("crédité") ||
+    fullText.includes("pas reçu") ||
+    fullText.includes("combien de point")
+  ) {
+    return `Bonjour ${userName} ! 💰
 
-Pour **lier et vérifier un compte social** (TikTok ou YouTube) en toute sécurité sans jamais donner votre mot de passe :
-1. Allez dans **« Comptes liés »**.
-2. Indiquez votre @pseudo TikTok ou votre identifiant de chaîne YouTube.
-3. Le système vous génère un code unique (ex : \`ADDME-XXXXX\`).
-4. Collez temporairement ce code dans votre **biographie** sur le réseau social.
-5. Revenez cliquer sur **« Vérifier mon compte »** : la détection est instantanée ! Une fois validé, vous pouvez retirer le code de votre bio.`;
+Voici les explications sur le calcul de votre **solde** et la période de **points en attente** :
+
+### ⏳ Pourquoi certains points sont-ils « En attente » ?
+Pour protéger les créateurs contre les abus (par exemple, quelqu'un qui aimerait une vidéo puis retirerait son Like 5 minutes plus tard après avoir encaissé les points) :
+* Les points gagnés lors des missions sont placés en **rétention de sécurité pendant 24 heures**.
+* Dès que ce délai de vérification est écoulé, les points sont **automatiquement libérés** et basculent dans votre solde disponible.
+
+### 🔒 Intégrité de votre solde (Grand Livre Ledger) :
+* Sur AddMe.io, votre solde est calculé de manière inaltérable grâce à notre système de grand livre comptable.
+* Chaque point gagné, dépensé ou remboursé possède un identifiant unique d'idempotence. Aucun point ne peut disparaître !
+
+Vous pouvez consulter votre historique complet à tout moment dans votre **Tableau de bord**.`;
   }
 
-  if (q.includes("saspay") || q.includes("achat") || q.includes("payer") || q.includes("mobile money") || q.includes("pack")) {
-    return `Bonjour ${userName} ! 
+  // G. BOUTIQUE, PACKS & PAIEMENTS SASPAY / MOBILE MONEY
+  if (
+    fullText.includes("saspay") ||
+    fullText.includes("achat") ||
+    fullText.includes("acheter") ||
+    fullText.includes("payer") ||
+    fullText.includes("paiement") ||
+    fullText.includes("mobile money") ||
+    fullText.includes("orange") ||
+    fullText.includes("mtn") ||
+    fullText.includes("wave") ||
+    fullText.includes("moov") ||
+    fullText.includes("boutique") ||
+    fullText.includes("pack") ||
+    fullText.includes("carte") ||
+    fullText.includes("stripe")
+  ) {
+    return `Bonjour ${userName} ! 💳
 
-Pour **acheter des points via Mobile Money** (Orange Money, MTN MoMo, Wave, Moov) :
-1. Ouvrez l'onglet **« Boutique »**.
-2. Choisissez parmi nos 3 packs disponibles :
-   * **Pack Découverte** : 2 000 pts (3 000 FCFA / ~4,99 €)
-   * **Pack Populaire** : 10 000 pts (8 500 FCFA / ~12,99 €)
-   * **Pack Influenceur Pro** : 25 000 pts (18 000 FCFA / ~27,99 €)
-3. Sélectionnez SasPay pour régler en quelques secondes avec votre numéro de téléphone. Le crédit sur votre solde est immédiat !`;
+Voici comment recharger des points instantanément dans la **« Boutique »** :
+
+### 📦 Nos 3 Packs de Points :
+1. **Pack Découverte** : **2 000 points** pour **3 000 FCFA** (~4,99 €)
+2. **Pack Créateur Populaire** : **10 000 points** pour **8 500 FCFA** (~12,99 €)
+3. **Pack Pro** : **25 000 points** pour **18 000 FCFA** (~27,99 €)
+
+### 📲 Paiement Mobile Money via SasPay :
+* **Réseaux disponibles** : Wave, Orange Money, MTN MoMo, Moov Money.
+* **Fonctionnement** :
+  1. Choisissez votre pack dans la Boutique.
+  2. Sélectionnez SasPay et entrez votre numéro de téléphone.
+  3. Validez l'invite USSD sur votre téléphone avec votre code secret Mobile Money.
+  4. Dès confirmation, vos points sont **crédités immédiatement** sur votre solde !
+
+*ℹ️ Note sur la Carte Bancaire (Stripe) : Le module carte bancaire fait l'objet d'une maintenance technique. Nous vous recommandons de privilégier le paiement instantané par Mobile Money (SasPay).*`;
   }
 
-  if (q.includes("code") || q.includes("cadeau") || q.includes("parrain") || q.includes("invit")) {
-    return `Bonjour ${userName} ! 
+  // H. COMPTES SOCIAUX, LIAISON & CODE BIO ADDME-XXXXX
+  if (
+    fullText.includes("compte") ||
+    fullText.includes("lier") ||
+    fullText.includes("bio") ||
+    fullText.includes("code bio") ||
+    fullText.includes("addme-") ||
+    fullText.includes("mot de passe") ||
+    fullText.includes("sécurité") ||
+    fullText.includes("securite") ||
+    fullText.includes("profil")
+  ) {
+    return `Bonjour ${userName} ! 🔐
 
-Les **codes cadeaux** vous permettent de bénéficier d'avantages exclusifs :
-* Lors de votre inscription, renseigner un code cadeau officiel (comme un code d'influenceur partenaire) multiplie vos points de bienvenue (par exemple jusqu'à **+500 points offerts** au lieu de 50).
-* Si vous partagez votre propre code partenaire, vous gagnez également des commissions de points dès que vos filleuls vérifient leur compte !`;
+Voici comment **lier et vérifier vos comptes sociaux** en toute sécurité sur AddMe.io :
+
+### 🛡️ Règle d'or : Zéro mot de passe demandé
+AddMe.io ne vous demandera **JAMAIS** votre mot de passe de réseau social ni aucun accès confidentiel à votre compte.
+
+### 📋 Procédure de vérification par code de Bio :
+1. Allez dans la section **« Comptes liés »** (depuis le menu de votre tableau de bord).
+2. Choisissez votre plateforme (TikTok, YouTube, Instagram, Facebook, Threads, Snapchat, LinkedIn, X...).
+3. Saisissez votre **@pseudo** ou identifiant public.
+4. Le système vous attribue un code unique au format : \`ADDME-XXXXX\`.
+5. Ouvrez votre application (ex: TikTok ou Instagram) et **collez temporairement ce code dans votre biographie ou description**.
+6. Revenez sur AddMe.io et cliquez sur **« Vérifier la propriété »**.
+7. Notre robot détecte le code en quelques secondes et valide votre compte.
+8. 🎉 **Une fois validé, vous pouvez effacer le code de votre bio !** Votre compte reste enregistré sur la plateforme.`;
   }
 
-  if (q.includes("discord") || q.includes("communauté") || q.includes("communaute")) {
-    return `Bonjour ${userName} ! 
+  // I. CODES CADEAUX, PARRAINAGE & AFFILIATION
+  if (
+    fullText.includes("code cadeau") ||
+    fullText.includes("cadeau") ||
+    fullText.includes("parrain") ||
+    fullText.includes("parrainage") ||
+    fullText.includes("affili") ||
+    fullText.includes("filleul") ||
+    fullText.includes("invit")
+  ) {
+    return `Bonjour ${userName} ! 🎁
 
-Rejoignez notre **communauté officielle Discord** pour échanger avec d'autres créateurs, découvrir les nouvelles campagnes en avant-première et obtenir de l'aide directe :
-👉 **Lien d'invitation officiel** : https://discord.gg/9TJNnr39bK`;
+Voici tout ce qu'il faut savoir sur les **Codes Cadeaux & le Parrainage** :
+
+### 🎟️ Codes Cadeaux d'Influenceurs :
+* Les codes cadeaux sont réservés à l'inscription.
+* Lorsqu'un nouvel arrivant entre le code partenaire d'un influenceur, il bénéficie d'un multiplicateur de points (par exemple **+500 points offerts** au lieu des 50 points standards de bienvenue).
+* **Règle de non-cumul** : Si vous avez profité d'un code cadeau à l'inscription, votre solde de départ est déjà maximisé (la validation d'email ne cumule pas de points supplémentaires).
+
+### 🤝 Programme d'Affiliation / Parrainage :
+* Vous touchez une commission de points pour chaque créateur parrainé.
+* Pour protéger le réseau contre les faux comptes, votre commission est validée dès que votre filleul confirme son adresse email ou lie un compte social actif.`;
   }
 
-  // Réponse générale de bienvenue et d'aide
+  // J. RÉPUTATION, SANCTIONS & SIGNALEMENT DE TRICHE
+  if (
+    fullText.includes("réputation") ||
+    fullText.includes("reputation") ||
+    fullText.includes("score") ||
+    fullText.includes("signalement") ||
+    fullText.includes("signaler") ||
+    fullText.includes("triche") ||
+    fullText.includes("fraude") ||
+    fullText.includes("sanction")
+  ) {
+    return `Bonjour ${userName} ! ⚖️
+
+La confiance et l'authenticité sont les piliers d'AddMe.io :
+
+### ⭐ Le Score de Réputation (sur 100) :
+* Tout utilisateur commence avec une réputation élevée (100/100).
+* Chaque tâche accomplie sérieusement maintient votre profil au sommet de la plateforme.
+
+### 🚫 Que se passe-t-il en cas de triche ou d'annulation ?
+* Si un membre accomplit une tâche (ex: un Like ou un Abonnement), encaisse les points, puis retire son action ultérieurement, le créateur lésé peut **signaler la tâche**.
+* L'administrateur arbitre le litige dans son panneau de contrôle. Si la fraude est confirmée :
+  * Le tricheur perd **-10 points de réputation**.
+  * Ses points indûment perçus lui sont retirés.
+  * En cas de récidive, son compte peut être suspendu définitivement.`;
+  }
+
+  // K. RÉSEAUX COMPATIBLES (12 Plateformes)
+  if (
+    fullText.includes("réseau") ||
+    fullText.includes("reseau") ||
+    fullText.includes("plateforme") ||
+    fullText.includes("compatible") ||
+    fullText.includes("supporté") ||
+    fullText.includes("liste")
+  ) {
+    return `Bonjour ${userName} ! 🌐
+
+AddMe.io est compatible avec l'écosystème complet des **12 plateformes d'attention et d'influence** :
+
+1. **TikTok** (Vidéos, Reels, Abonnements)
+2. **Instagram** (Posts, Reels, Abonnements)
+3. **YouTube** (Vidéos longues, Shorts, Abonnements chaîne)
+4. **Facebook** (Posts, Vidéos, Pages)
+5. **Threads** (Posts, Discussions)
+6. **Snapchat** (Spotlight, Stories)
+7. **LinkedIn** (Posts professionnels)
+8. **X (Twitter)** (Tweets, Reposts)
+9. **Spotify** (Titres, Playlists)
+10. **SoundCloud** (Pistes musicales)
+11. **Reddit** (Posts, Threads)
+12. **Sites Web** (Visites de pages de créateurs)
+
+Chaque interaction est garantie 100 % humaine et vérifiée sans bot.`;
+  }
+
+  // L. COMMUNAUTÉ DISCORD
+  if (
+    fullText.includes("discord") ||
+    fullText.includes("communauté") ||
+    fullText.includes("communaute") ||
+    fullText.includes("groupe")
+  ) {
+    return `Bonjour ${userName} ! 💬
+
+Rejoignez notre **communauté officielle Discord** pour échanger avec d'autres créateurs, découvrir les nouvelles fonctionnalités en avant-première et obtenir une assistance rapide :
+
+👉 **Rejoindre le Discord AddMe.io** : https://discord.gg/9TJNnr39bK`;
+  }
+
+  // M. CONTACT ADMINISTRATEUR & SUPPORT HUMAIN
+  if (
+    fullText.includes("admin") ||
+    fullText.includes("administrateur") ||
+    fullText.includes("humain") ||
+    fullText.includes("équipe") ||
+    fullText.includes("equipe") ||
+    fullText.includes("contacter")
+  ) {
+    return `Bonjour ${userName} ! 👤
+
+Vous êtes actuellement en contact direct avec le **Support Officiel d'AddMe.io** :
+
+* **Prise en charge** : Tous les messages échangés ici sont centralisés dans le panneau de contrôle de l'administrateur.
+* **Arbitrage & Vérifications** : Si votre situation nécessite une intervention manuelle (vérification de transaction SasPay, litige de tâche ou examen d'un bug), l'administrateur peut intervenir directement sur votre ticket.
+* **Délai de réponse** : Les dossiers prioritaires et techniques sont traités rapidement. N'hésitez pas à décrire précisément votre besoin !`;
+  }
+
+  // N. SALUTATION & QUESTION OUVERTE CONTEXTUELLE
   return `Bonjour ${userName} ! 
 
-Je suis votre **Assistant IA AddMe.io**. Je suis là pour répondre à toutes vos questions sur la plateforme :
-* Gagner des points avec les missions TikTok et YouTube
-* Créer et diffuser vos propres campagnes pour booster vos vidéos
-* Lier vos comptes sociaux en insérant le code temporaire dans votre bio
-* Acheter des points via Mobile Money (SasPay)
-* Les parrainages et codes cadeaux
+J'ai bien pris connaissance de votre message : *« ${userMessage} »*.
 
-Que souhaitez-vous savoir ou accomplir aujourd'hui ?`;
+Pour vous aider au mieux, pouvez-vous me préciser votre besoin parmi les sujets suivants ?
+* 🎯 **Campagnes** : Créer, booster une publication ou comprendre le coût en points.
+* ⭐ **Gagner des points** : Fonctionnement des missions, règle des 20 secondes ou preuve de capture.
+* 🔐 **Comptes liés** : Comment vérifier un profil avec le code bio \`ADDME-XXXXX\` (sans mot de passe).
+* 💳 **Boutique & SasPay** : Acheter des points par Mobile Money (Orange, MTN, Wave, Moov).
+* 🚨 **Signaler un bug** : Si vous rencontrez une anomalie technique, décrivez-la pour que je la transmette immédiatement à l'administrateur.
+
+Dites-moi simplement ce que vous souhaitez accomplir !`;
 }
 

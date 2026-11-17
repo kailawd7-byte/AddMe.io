@@ -57,27 +57,35 @@ function generateAISupportDiagnosis({
       !text.includes("campagne"));
 
   if (isVague) {
-    return `🤖 Bonjour ${displayName},
+    return `🚨 Bonjour ${displayName},
 
-J'ai bien pris note de votre signalement technique concernant « ${subject.trim()} ».
+J'ai bien analysé votre signalement technique concernant : « ${subject.trim()} ».
 
-Afin que l'équipe technique puisse identifier précisément l'origine du problème et le résoudre rapidement, pourriez-vous m'apporter quelques précisions en répondant simplement à ce message :
+### 🛠️ Prise en charge & Transmission à l'Administrateur :
+1. **Signalement enregistré** : Votre ticket a été automatiquement classé en **Incident Technique Prioritaire (BUG)**.
+2. **Notification dans le Panel Administrateur** : L'administrateur d'AddMe.io a été immédiatement notifié dans sa console de supervision.
+3. **Investigation & Test par l'Administrateur** : L'administrateur va personnellement tester et tenter de reproduire la situation pour vérifier si l'anomalie est fondée techniquement ou s'il s'agit d'une mauvaise manipulation, et apporter le correctif approprié.
 
-1. 📱 **Fonctionnalité concernée** : S'agit-il du lancement d'une campagne, de la réalisation d'une tâche P2P, de la liaison d'un compte réseau social (TikTok, Instagram, YouTube), d'un achat de points SasPay ou d'un code cadeau ?
-2. 🔗 **Identifiant ou lien** : Avez-vous le lien de la publication ou l'ID de la tâche/campagne concernée ?
-3. ⚠️ **Comportement constaté** : Que se passe-t-il exactement ? (Ex : chrono 20s bloqué, bouton grisé ou inactif, solde non mis à jour, message d'erreur affiché...)
-4. 💻 **Appareil & navigateur** : Utilisez-vous un smartphone, une tablette ou un ordinateur (avec Chrome, Safari, etc.) ?
+### 📋 Pour nous aider à tester et reproduire au plus vite :
+Pourriez-vous apporter ces quelques précisions en répondant simplement à ce message :
+* 📱 **Fonctionnalité concernée** : S'agit-il du menu Campagnes, d'une tâche (Like/Abonnement), de la liaison d'un compte social (TikTok, Instagram...), ou d'un paiement SasPay ?
+* 🔗 **Identifiant ou lien direct** de la publication concernée (si applicable).
+* ⚠️ **Comportement exact constaté** (ex : chronomètre 20s bloqué, bouton inactif, message d'erreur précis affiché...).
+* 💻 **Votre appareil & navigateur** (ex : smartphone Chrome/Safari, ou PC).
 
-Dès réception de vos détails (ou d'une capture d'écran), votre dossier sera transmis avec tous ces éléments pour investigation. Merci de votre retour !`;
+L'administrateur ou l'équipe technique reviendra vers vous directement ici dès que les vérifications auront été effectuées. Merci pour votre patience !`;
   }
 
-  return `🤖 Bonjour ${displayName},
+  return `🚨 Bonjour ${displayName},
 
-Merci d'avoir pris le temps de nous transmettre ces informations détaillées concernant « ${subject.trim()} ».
+Merci d'avoir transmis ces informations détaillées concernant : « ${subject.trim()} ».
 
-Votre signalement technique a été enregistré avec tous ces éléments de contexte et classé en priorité d'assistance pour l'administrateur et l'équipe technique d'AddMe.io.
+### 🛠️ Prise en charge & Transmission à l'Administrateur :
+1. **Signalement technique enregistré** : Votre ticket a été classé en **Incident Technique (BUG)** avec tous vos éléments de contexte.
+2. **Notification dans le Panel Administrateur** : L'incident est désormais visible en priorité haute dans la console d'administration d'AddMe.io.
+3. **Investigation & Test par l'Administrateur** : L'administrateur va personnellement tester et reproduire le problème sur la plateforme pour isoler l'origine de l'anomalie et appliquer le correctif nécessaire.
 
-Vous recevrez une notification ainsi qu'une réponse directement ici dès que la vérification aura été effectuée. Merci de votre confiance !`;
+Vous recevrez une réponse directement sur ce fil de discussion dès que les vérifications et tests auront été réalisés. Merci de votre confiance !`;
 }
 
 /**

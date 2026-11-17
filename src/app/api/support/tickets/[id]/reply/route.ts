@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 import { getSupportTicketById, replyToSupportTicket } from "@/lib/support";
 import { askUserSupportAI } from "@/lib/ai-secretary";
 
@@ -47,6 +48,41 @@ export async function POST(
     // Si c'est l'utilisateur qui a écrit, faire répondre l'IA en temps réel
     if (user.role !== "ADMIN") {
       try {
+        // Si l'utilisateur mentionne un bug dans sa réponse, élever automatiquement le ticket
+        const isBugSignal = [
+          "bug",
+          "erreur",
+          "bloqué",
+          "bloque",
+          "bloquer",
+          "plante",
+          "planté",
+          "crash",
+          "panne",
+          "ne marche pas",
+          "ne fonctionne pas",
+          "problème",
+          "probleme",
+          "impossible",
+          "page blanche",
+          "cassé",
+          "casse",
+          "fail",
+          "souci",
+          "anomalie",
+        ].some((kw) => content.toLowerCase().includes(kw));
+
+        if (isBugSignal && (!ticket.isTechnicalBug || ticket.category !== "BUG")) {
+          await prisma.supportTicket.update({
+            where: { id },
+            data: {
+              isTechnicalBug: true,
+              category: "BUG",
+              priority: "HIGH",
+            },
+          });
+        }
+
         const history = (updated.messages || []).map((m) => ({
           senderRole: m.senderRole,
           content: m.content,
