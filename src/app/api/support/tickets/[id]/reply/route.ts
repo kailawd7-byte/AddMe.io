@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getSupportTicketById, replyToSupportTicket } from "@/lib/support";
+import { askUserSupportAI } from "@/lib/ai-secretary";
 
 export async function POST(
   req: NextRequest,
@@ -43,6 +44,41 @@ export async function POST(
       content: content.trim(),
     });
 
+    // Si c'est l'utilisateur qui a écrit, faire répondre l'IA en temps réel
+    if (user.role !== "ADMIN") {
+      try {
+        const history = (updated.messages || []).map((m) => ({
+          senderRole: m.senderRole,
+          content: m.content,
+        }));
+
+        const aiReply = await askUserSupportAI({
+          userMessage: content.trim(),
+          history,
+          userName: user.email.split("@")[0],
+          subject: ticket.subject,
+        });
+
+        const finalTicket = await replyToSupportTicket({
+          ticketId: id,
+          senderRole: "ADMIN",
+          senderId: "system_ai_secretary",
+          senderName: "Assistant IA AddMe.io",
+          senderEmail: "support@addme.io",
+          content: aiReply,
+          newStatus: "ANSWERED",
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Réponse envoyée avec succès.",
+          ticket: finalTicket,
+        });
+      } catch (aiErr) {
+        console.error("[SupportAI] Erreur réponse automatique IA :", aiErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: "Réponse envoyée avec succès.",
@@ -52,3 +88,4 @@ export async function POST(
     return NextResponse.json({ error: err.message || "Erreur envoi réponse" }, { status: 500 });
   }
 }
+

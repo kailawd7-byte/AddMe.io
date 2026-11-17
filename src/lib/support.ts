@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import prisma from "./prisma.ts";
+import { askUserSupportAI } from "./ai-secretary.ts";
 
 export interface SupportMessage {
   id: string;
@@ -156,19 +157,32 @@ export async function createSupportTicket(params: {
     },
   ];
 
+  let aiContent = "";
   if (isBug) {
-    const aiMessageId = `msg_ai_${crypto.randomBytes(6).toString("hex")}`;
-    const aiContent = generateAISupportDiagnosis({
+    aiContent = generateAISupportDiagnosis({
       displayName,
       subject: params.subject,
       message: params.message,
     });
+  } else {
+    try {
+      aiContent = await askUserSupportAI({
+        userMessage: params.message,
+        userName: displayName,
+        subject: params.subject,
+      });
+    } catch {
+      aiContent = `Bonjour ${displayName} ! J'ai bien reçu votre message concernant « ${params.subject.trim()} ». Comment puis-je vous aider plus précisément sur AddMe.io ?`;
+    }
+  }
 
+  if (aiContent) {
+    const aiMessageId = `msg_ai_${crypto.randomBytes(6).toString("hex")}`;
     messagesToCreate.push({
       id: aiMessageId,
       senderRole: "ADMIN",
       senderId: "system_ai_secretary",
-      senderName: "Secrétaire IA AddMe.io",
+      senderName: "Assistant IA AddMe.io",
       senderEmail: "support@addme.io",
       content: aiContent,
     });
@@ -182,7 +196,7 @@ export async function createSupportTicket(params: {
       userName: displayName,
       subject: params.subject.trim(),
       category: isBug ? "BUG" : params.category || "GENERAL",
-      status: isBug ? "ANSWERED" : "OPEN",
+      status: "ANSWERED",
       priority: isBug ? "HIGH" : "NORMAL",
       isTechnicalBug: isBug,
       messages: {

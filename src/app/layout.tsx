@@ -2,16 +2,65 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://addme-steel.vercel.app";
+
 export const metadata: Metadata = {
-  title: "AddMe.io — Donnez de l'attention. Recevez-en.",
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "AddMe.io — Donnez de l'attention. Recevez-en.",
+    template: "%s | AddMe.io",
+  },
   description:
     "Propulsez vos contenus sur vos réseaux (TikTok, Instagram, YouTube) en échange d'engagement 100% réel. Gagnez des points immédiatement, lancez vos campagnes sur-mesure.",
+  keywords: [
+    "AddMe",
+    "AddMe.io",
+    "engagement tiktok",
+    "croissance youtube",
+    "visibilité réseaux sociaux",
+    "échange likes tiktok",
+    "abonnés réels",
+    "marketing influence",
+  ],
+  authors: [{ name: "AddMe.io Team" }],
+  creator: "AddMe.io",
+  publisher: "AddMe.io",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "AddMe.io — Donnez de l'attention. Recevez-en.",
+    description:
+      "Propulsez vos contenus sur vos réseaux (TikTok, Instagram, YouTube) en échange d'engagement 100% réel et humain.",
+    url: baseUrl,
+    siteName: "AddMe.io",
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AddMe.io — Donnez de l'attention. Recevez-en.",
+    description:
+      "La première plateforme d'échange d'attention équitable pour créateurs sur TikTok et YouTube.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: "/icon.svg",
     shortcut: "/favicon.ico",
     apple: "/icon.svg",
   },
 };
+
 
 export default function RootLayout({
   children,

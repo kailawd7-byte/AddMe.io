@@ -578,3 +578,204 @@ N'hésitez pas à préciser votre question ou à cliquer sur l'un des raccourcis
     source: "knowledge-base",
   };
 }
+
+/**
+ * Assistant Conversationnel Utilisateur pour le Support Client d'AddMe.io
+ * Permet aux utilisateurs d'échanger naturellement avec l'IA comme un chatbot moderne,
+ * tout en restant strictement focalisé sur les fonctionnalités, services et règles d'AddMe.io.
+ */
+export async function askUserSupportAI({
+  userMessage,
+  history = [],
+  userName = "Créateur",
+  subject,
+}: {
+  userMessage: string;
+  history?: Array<{ senderRole: "USER" | "ADMIN"; content: string }>;
+  userName?: string;
+  subject?: string;
+}): Promise<string> {
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const openaiKey = process.env.OPENAI_API_KEY?.trim();
+
+  const userPromptSystem = `Tu es l'Assistant IA Officiel d'AddMe.io, disponible au sein du support client pour aider et conseiller les créateurs.
+Tu t'exprimes avec convivialité, clarté, bienveillance et rigueur, exactement comme les meilleures IA modernes (ChatGPT, Claude, Gemini).
+
+BASE DE CONNAISSANCES COMPLÈTE D'ADDME.IO :
+${ADDME_KNOWLEDGE_BASE}
+
+DIRECTIVES CRUCIALES POUR TA RÉPONSE :
+1. PÉRIMÈTRE STRICT - ADDME.IO UNIQUEMENT :
+   Tu es conçu EXCLUSIVEMENT pour répondre aux demandes portant sur AddMe.io (fonctionnalités, points, campagnes, tâches, réseaux sociaux TikTok/Instagram/YouTube, paiements SasPay Mobile Money, codes cadeaux influenceurs, communauté Discord).
+   Si l'utilisateur te pose une question TOTALEMENT HORS-SUJET (ex : météo, cuisine, devoirs scolaires, programmation sans rapport, politique, blagues hors contexte), décline poliment et avec le sourire en lui rappelant que tu es l'assistant dédié d'AddMe.io, et invite-le à te poser une question sur la plateforme.
+
+2. CAS DES BUGS & PROBLÈMES TECHNIQUES :
+   Si l'utilisateur te signale un bug sans donner assez d'éléments, ne dis JAMAIS "nous procédons à reproduire le bug". Pose-lui plutôt avec bienveillance les 4 questions de cadrage pour comprendre (la fonctionnalité, le lien/ID, le comportement exact constaté, l'appareil/navigateur).
+
+3. STYLE ET FORMAT :
+   Réponds directement à l'usager, salue-le par son prénom/pseudo (${userName}) si c'est le début de l'échange. Sois synthétique, utilise des puces claires et évite les réponses trop longues et indigestes. Reste toujours orienté solution.`;
+
+  // Construire l'historique conversationnel
+  const historyText = history
+    .slice(-6)
+    .map((m) => `${m.senderRole === "ADMIN" ? "Assistant AddMe.io" : userName} : ${m.content}`)
+    .join("\n");
+
+  const fullUserPrompt = `${historyText ? `Historique récent de la conversation :\n${historyText}\n\n` : ""}${subject ? `Objet du ticket : ${subject}\n` : ""}Dernier message de l'utilisateur (${userName}) :
+"${userMessage}"
+
+Réponds à l'utilisateur de manière naturelle, agréable et utile :`;
+
+  // 1. Appel Gemini
+  if (geminiKey) {
+    const candidateModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"];
+    for (const model of candidateModels) {
+      try {
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+            geminiKey
+          )}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: userPromptSystem }, { text: fullUserPrompt }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 1000,
+                thinkingConfig: { thinkingBudget: 0 },
+              },
+            }),
+            signal: AbortSignal.timeout(8000),
+          }
+        );
+
+        if (geminiRes.ok) {
+          const data = await geminiRes.json();
+          const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (replyText && replyText.trim().length > 0) {
+            return replyText.trim();
+          }
+        }
+      } catch (err) {
+        // Poursuite de la cascade
+      }
+    }
+  }
+
+  // 2. Appel OpenAI
+  if (openaiKey && openaiKey.startsWith("sk-")) {
+    try {
+      const openAiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: userPromptSystem },
+            { role: "user", content: fullUserPrompt },
+          ],
+          temperature: 0.3,
+          max_tokens: 1000,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (openAiRes.ok) {
+        const openAiData = await openAiRes.json();
+        const replyText = openAiData?.choices?.[0]?.message?.content;
+        if (replyText && replyText.trim().length > 0) {
+          return replyText.trim();
+        }
+      }
+    } catch {
+      // Poursuite vers le fallback local
+    }
+  }
+
+  // 3. Fallback déterministe intelligent pour l'utilisateur
+  const q = userMessage.toLowerCase().trim();
+
+  // Détection des questions hors-sujet
+  const offTopicKeywords = [
+    "météo", "meteo", "recette", "gâteau", "gateau", "cuisine", "politique",
+    "élection", "président", "film", "cinema", "football", "match", "devoirs",
+    "maths", "poème", "blague", "qui es-tu", "raconte une histoire"
+  ];
+  if (offTopicKeywords.some((kw) => q.includes(kw)) && !q.includes("addme") && !q.includes("point")) {
+    return `Bonjour ${userName} ! 😊
+
+En tant qu'assistant officiel d'AddMe.io, je suis programmé pour vous accompagner exclusivement sur le fonctionnement de notre plateforme (vos points, vos campagnes TikTok/YouTube, vos retraits, ou vos paiements SasPay).
+
+Je ne peux donc pas répondre à des questions hors de ce cadre. Comment puis-je vous aider à développer votre visibilité sur AddMe.io aujourd'hui ?`;
+  }
+
+  if (q.includes("gagner") || q.includes("mission") || q.includes("tâche") || q.includes("action")) {
+    return `Bonjour ${userName} ! 
+
+Pour **gagner des points gratuitement** sur AddMe.io :
+1. Rendez-vous dans la section **« Gagner des points »**.
+2. Choisissez une mission (Like, Commentaire ou Abonnement sur TikTok ou YouTube).
+3. Cliquez sur **« Réaliser la tâche »** : la publication s'ouvre dans un nouvel onglet.
+4. **Important** : Restez actif au moins **20 secondes** sur la page pour que notre robot anti-fraude valide votre action.
+5. Vos points sont crédités dès validation ! Si un réseau tarde à mettre à jour ses compteurs, vous pouvez téléverser une capture d'écran pour validation immédiate par notre IA Vision.`;
+  }
+
+  if (q.includes("compte") || q.includes("lier") || q.includes("bio") || q.includes("tiktok") || q.includes("youtube")) {
+    return `Bonjour ${userName} ! 
+
+Pour **lier et vérifier un compte social** (TikTok ou YouTube) en toute sécurité sans jamais donner votre mot de passe :
+1. Allez dans **« Comptes liés »**.
+2. Indiquez votre @pseudo TikTok ou votre identifiant de chaîne YouTube.
+3. Le système vous génère un code unique (ex : \`ADDME-XXXXX\`).
+4. Collez temporairement ce code dans votre **biographie** sur le réseau social.
+5. Revenez cliquer sur **« Vérifier mon compte »** : la détection est instantanée ! Une fois validé, vous pouvez retirer le code de votre bio.`;
+  }
+
+  if (q.includes("saspay") || q.includes("achat") || q.includes("payer") || q.includes("mobile money") || q.includes("pack")) {
+    return `Bonjour ${userName} ! 
+
+Pour **acheter des points via Mobile Money** (Orange Money, MTN MoMo, Wave, Moov) :
+1. Ouvrez l'onglet **« Boutique »**.
+2. Choisissez parmi nos 3 packs disponibles :
+   * **Pack Découverte** : 2 000 pts (3 000 FCFA / ~4,99 €)
+   * **Pack Populaire** : 10 000 pts (8 500 FCFA / ~12,99 €)
+   * **Pack Influenceur Pro** : 25 000 pts (18 000 FCFA / ~27,99 €)
+3. Sélectionnez SasPay pour régler en quelques secondes avec votre numéro de téléphone. Le crédit sur votre solde est immédiat !`;
+  }
+
+  if (q.includes("code") || q.includes("cadeau") || q.includes("parrain") || q.includes("invit")) {
+    return `Bonjour ${userName} ! 
+
+Les **codes cadeaux** vous permettent de bénéficier d'avantages exclusifs :
+* Lors de votre inscription, renseigner un code cadeau officiel (comme un code d'influenceur partenaire) multiplie vos points de bienvenue (par exemple jusqu'à **+500 points offerts** au lieu de 50).
+* Si vous partagez votre propre code partenaire, vous gagnez également des commissions de points dès que vos filleuls vérifient leur compte !`;
+  }
+
+  if (q.includes("discord") || q.includes("communauté") || q.includes("communaute")) {
+    return `Bonjour ${userName} ! 
+
+Rejoignez notre **communauté officielle Discord** pour échanger avec d'autres créateurs, découvrir les nouvelles campagnes en avant-première et obtenir de l'aide directe :
+👉 **Lien d'invitation officiel** : https://discord.gg/9TJNnr39bK`;
+  }
+
+  // Réponse générale de bienvenue et d'aide
+  return `Bonjour ${userName} ! 
+
+Je suis votre **Assistant IA AddMe.io**. Je suis là pour répondre à toutes vos questions sur la plateforme :
+* Gagner des points avec les missions TikTok et YouTube
+* Créer et diffuser vos propres campagnes pour booster vos vidéos
+* Lier vos comptes sociaux en insérant le code temporaire dans votre bio
+* Acheter des points via Mobile Money (SasPay)
+* Les parrainages et codes cadeaux
+
+Que souhaitez-vous savoir ou accomplir aujourd'hui ?`;
+}
+
