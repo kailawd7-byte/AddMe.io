@@ -136,12 +136,16 @@ export default function SupportWidget() {
 
   return (
     <>
-      {/* Bouton Flottant : Icône seule au repos / Révèle le texte au survol sur PC / Icône seule sur mobile */}
-      <aside aria-label="Support client" className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
+      {/* Bouton Flottant : Cercle pur sans conteneur carré opaque */}
+      <div
+        role="region"
+        aria-label="Support client"
+        className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 !bg-transparent !border-0 !shadow-none !p-0 !m-0 pointer-events-auto rounded-full"
+      >
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="group relative flex items-center justify-center h-12 w-12 sm:h-auto sm:w-auto sm:min-h-[48px] sm:min-w-[48px] p-0 sm:py-3 sm:px-3.5 sm:hover:px-4 rounded-full bg-gradient-to-r from-[#5B3DF5] to-[#7B5EFA] text-white shadow-xl shadow-[#5B3DF5]/35 hover:shadow-2xl hover:shadow-[#5B3DF5]/50 hover:scale-105 active:scale-95 transition-all duration-300"
+          className="group relative flex items-center justify-center h-12 w-12 sm:h-auto sm:w-auto sm:min-h-[48px] sm:min-w-[48px] p-0 sm:py-3 sm:px-3.5 sm:hover:px-4 rounded-full bg-gradient-to-r from-[#5B3DF5] to-[#7B5EFA] text-white shadow-xl shadow-[#5B3DF5]/35 hover:shadow-2xl hover:shadow-[#5B3DF5]/50 hover:scale-105 active:scale-95 transition-all duration-300 border-0 outline-none"
           aria-label="Ouvrir le support client"
           title="Support client"
         >
@@ -163,7 +167,7 @@ export default function SupportWidget() {
             </span>
           )}
         </button>
-      </aside>
+      </div>
 
       {/* Modal / Tiroir Flottant de Support */}
       {isOpen && (

@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { POINT_PACKS } from "@/lib/constants";
 import DiscordIcon from "@/components/DiscordIcon";
+import SocialCommunityIcons from "@/components/SocialCommunityIcons";
+import { formatPoints, formatNumber } from "@/lib/format";
 
 const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/9TJNnr39bK";
 
@@ -388,9 +390,9 @@ export default function HomePage() {
       {/* =====================================================================
           SECTION 1 : HEADER & HERO CINÉMATOGRAPHIQUE — LAC DE COULEURS VIVANT
          ===================================================================== */}
-      <section className="bg-[#0B0A14] text-white overflow-hidden pt-28 pb-16 md:pt-36 md:pb-28 relative">
-        {/* Lac de couleurs animé façon vidéo 60fps */}
-        <LiquidColorLake mode="dark" />
+      <section className="bg-[#0E0D14] text-white overflow-hidden pt-28 pb-16 md:pt-36 md:pb-28 relative">
+        {/* Lac de couleurs animé façon vidéo 60fps (opacité réduite à ~0.35 sur mobile, fond sombre #0E0D14) */}
+        <LiquidColorLake mode="dark" className="opacity-35 md:opacity-100" />
         <div className="cyber-grid-dark pointer-events-none absolute inset-0" />
 
         <div className="max-w-[1140px] mx-auto px-6 relative z-10">
@@ -409,7 +411,13 @@ export default function HomePage() {
                 </span>
               </h1>
 
-              <p className="text-base sm:text-[19px] leading-[1.65] text-white/90 max-w-xl mx-auto md:mx-0 m-0 px-1 md:px-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              {/* Version courte mobile (2-3 lignes, sans la liste des 12 réseaux) */}
+              <p className="sm:hidden text-sm sm:text-base leading-relaxed text-white/90 max-w-xl mx-auto m-0 px-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+                Propulsez vos contenus en échange d’engagement réel et vérifié. Interagissez avec d’autres créateurs, gagnez des points immédiatement et boostez votre visibilité sans bot.
+              </p>
+
+              {/* Version complète PC/Desktop */}
+              <p className="hidden sm:block text-base sm:text-[19px] leading-[1.65] text-white/90 max-w-xl mx-auto md:mx-0 m-0 px-1 md:px-0 drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
                 Propulsez vos contenus sur vos 12 réseaux et plateformes d’attention en échange d’engagement réel.
                 Interagissez manuellement avec les publications d’autres
                 créateurs, gagnez des points immédiatement, puis réinvestissez-les
@@ -422,12 +430,12 @@ export default function HomePage() {
                   <>
                     <Link
                       href="/dashboard"
-                      className="addme-btn addme-btn-primary text-sm sm:text-base px-5 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto"
+                      className="addme-btn addme-btn-primary text-sm sm:text-base px-5 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto min-h-[44px]"
                     >
                       <span>
                         Accéder à mon Dashboard (
                         <strong className="text-[#FFB84D]">
-                          {userBalance.toFixed(0)} pts
+                          {formatPoints(userBalance)}
                         </strong>
                         )
                       </span>
@@ -435,7 +443,7 @@ export default function HomePage() {
                     </Link>
                     <Link
                       href="/tasks"
-                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-[#FFB84D] hover:bg-black/50 px-5 sm:px-6 py-3.5 sm:py-4 text-sm w-full sm:w-auto"
+                      className="addme-btn text-white bg-[#18162A] hover:bg-[#221F38] border border-[#3E3B5C] hover:border-[#FFB84D] px-5 sm:px-6 py-3.5 sm:py-4 text-sm w-full sm:w-auto shadow-sm min-h-[44px]"
                     >
                       Gagner des points
                     </Link>
@@ -443,7 +451,7 @@ export default function HomePage() {
                       href={DISCORD_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="addme-btn bg-[#5865F2]/25 hover:bg-[#5865F2]/40 text-white backdrop-blur-xl border border-[#5865F2]/50 hover:border-[#5865F2] text-sm px-4 sm:px-5 py-3 sm:py-4 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                      className="addme-btn bg-[#24274C] hover:bg-[#2F3363] text-white border border-[#5865F2]/60 hover:border-[#5865F2] text-sm px-4 sm:px-5 py-3 sm:py-4 transition-all flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm min-h-[44px]"
                     >
                       <DiscordIcon className="h-4 w-4 text-[#8EA1FF] shrink-0" />
                       <span>Rejoindre le Discord</span>
@@ -453,7 +461,7 @@ export default function HomePage() {
                   <>
                     <Link
                       href="/register"
-                      className="addme-btn addme-btn-primary text-sm sm:text-base px-5 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto"
+                      className="addme-btn addme-btn-primary text-sm sm:text-base px-5 sm:px-7 py-3.5 sm:py-4 shadow-[0_14px_34px_-6px_rgba(91,61,245,0.75)] w-full sm:w-auto min-h-[44px]"
                     >
                       <span>Créer mon compte <span className="hidden sm:inline">· 50 points offerts</span><span className="sm:hidden">(+50 pts offerts)</span></span>
                       <ArrowRight className="h-4 w-4 shrink-0" />
@@ -462,14 +470,14 @@ export default function HomePage() {
                       href={DISCORD_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="addme-btn bg-[#5865F2]/25 hover:bg-[#5865F2]/40 text-white backdrop-blur-xl border border-[#5865F2]/50 hover:border-[#5865F2] text-sm px-4 sm:px-5 py-3.5 sm:py-4 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                      className="addme-btn bg-[#24274C] hover:bg-[#2F3363] text-white border border-[#5865F2]/60 hover:border-[#5865F2] text-sm px-4 sm:px-5 py-3.5 sm:py-4 transition-all flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm min-h-[44px]"
                     >
                       <DiscordIcon className="h-4 w-4 text-[#8EA1FF] shrink-0" />
                       <span>Communauté Discord</span>
                     </a>
                     <a
                       href="#how"
-                      className="addme-btn text-white bg-black/35 backdrop-blur-xl border border-white/25 hover:border-white hover:bg-black/50 px-5 sm:px-6 py-3.5 sm:py-4 text-sm w-full sm:w-auto"
+                      className="addme-btn text-white bg-[#18162A] hover:bg-[#221F38] border border-[#3E3B5C] hover:border-white px-5 sm:px-6 py-3.5 sm:py-4 text-sm w-full sm:w-auto shadow-sm min-h-[44px]"
                     >
                       Fonctionnement
                     </a>
@@ -477,25 +485,25 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* 3 Piliers */}
-              <div className="mt-9 pt-7 border-t border-white/15 grid grid-cols-3 gap-4 max-w-lg mx-auto md:mx-0 text-xs text-white/85">
-                <div className="group">
-                  <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
+              {/* 3 Piliers : 3 colonnes de même hauteur, titres sur une seule ligne */}
+              <div className="mt-8 pt-6 border-t border-white/15 grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto md:mx-0 text-white/85 items-stretch">
+                <div className="group flex flex-col justify-between py-1">
+                  <div className="font-extrabold text-white text-sm sm:text-base group-hover:text-[#FFB84D] transition-colors whitespace-nowrap">
                     0 Bot
                   </div>
-                  <div className="opacity-80">100% interactions réelles</div>
+                  <div className="opacity-80 text-[10px] sm:text-xs leading-tight mt-1">100% réel</div>
                 </div>
-                <div className="group">
-                  <div className="font-extrabold text-[#FFB84D] text-base">
+                <div className="group flex flex-col justify-between py-1 border-x border-white/10 px-2 sm:px-3">
+                  <div className="font-extrabold text-[#FFB84D] text-sm sm:text-base whitespace-nowrap">
                     Immédiat
                   </div>
-                  <div className="opacity-80">Crédit direct sans attente</div>
+                  <div className="opacity-80 text-[10px] sm:text-xs leading-tight mt-1">Sans attente 24h</div>
                 </div>
-                <div className="group">
-                  <div className="font-extrabold text-white text-base group-hover:text-[#FFB84D] transition-colors">
+                <div className="group flex flex-col justify-between py-1">
+                  <div className="font-extrabold text-white text-xs sm:text-base group-hover:text-[#FFB84D] transition-colors whitespace-nowrap">
                     12 Plateformes
                   </div>
-                  <div className="opacity-80">TikTok, IG, YT, Spotify, Web...</div>
+                  <div className="opacity-80 text-[10px] sm:text-xs leading-tight mt-1 truncate">Tous réseaux</div>
                 </div>
               </div>
             </div>
@@ -645,8 +653,8 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Pièce d'or rotative */}
-                <div className="coin-spin-3d absolute -top-2 right-2 w-[76px] h-[76px] rounded-full bg-gradient-to-br from-[#FFD479] via-[#FFB84D] to-[#E5941A] text-[#0E0D14] font-extrabold flex items-center justify-center text-[22px] shadow-[0_10px_30px_rgba(255,184,77,0.55)] border-4 border-[#FFE0A3] select-none">
+                {/* Pièce d'or rotative : compacte sur mobile pour ne pas déborder ni couvrir la carte */}
+                <div className="coin-spin-3d absolute top-1 right-2 sm:-top-2 sm:right-2 w-12 h-12 sm:w-[76px] sm:h-[76px] rounded-full bg-gradient-to-br from-[#FFD479] via-[#FFB84D] to-[#E5941A] text-[#0E0D14] font-extrabold flex items-center justify-center text-sm sm:text-[22px] shadow-[0_8px_20px_rgba(255,184,77,0.45)] border-2 sm:border-4 border-[#FFE0A3] select-none z-20 pointer-events-none">
                   pts
                 </div>
               </div>
@@ -707,7 +715,7 @@ export default function HomePage() {
               </div>
 
               {/* Instagram */}
-              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-white transition-all duration-300 group cursor-default">
+              <div className="flex items-center gap-2.5 text-[#8E8CA0] hover:text-[#E1306C] transition-all duration-300 group cursor-default">
                 <svg className="h-6 w-6 fill-none stroke-current stroke-2 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
@@ -1029,27 +1037,34 @@ export default function HomePage() {
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#A5A2BA] mb-2">
                         2. Action souhaitée
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                         {[
-                          { id: "LIKE", label: "Like", icon: Heart },
-                          { id: "COMMENT", label: "Commentaire", icon: MessageCircle },
-                          { id: "SUBSCRIBE", label: "Abonnement", icon: UserPlus },
-                        ].map((act) => (
-                          <button
-                            key={act.id}
-                            type="button"
-                            onClick={() =>
-                              setSimAction(act.id as "LIKE" | "COMMENT" | "SUBSCRIBE")
-                            }
-                            className={`py-2.5 px-2 rounded-xl text-xs font-bold border transition-all ${
-                              simAction === act.id
-                                ? "bg-[#5B3DF5] text-white border-[#5B3DF5] shadow-md scale-[1.03]"
-                                : "bg-[#181726] text-[#D6D3E9] border-white/10 hover:border-[#5B3DF5] hover:text-white"
-                            }`}
-                          >
-                            {act.label}
-                          </button>
-                        ))}
+                          { id: "LIKE", label: "Like", shortLabel: "Like", icon: Heart },
+                          { id: "COMMENT", label: "Commentaire", shortLabel: "Comment.", icon: MessageCircle },
+                          { id: "SUBSCRIBE", label: "Abonnement", shortLabel: "Abonner", icon: UserPlus },
+                        ].map((act) => {
+                          const Icon = act.icon;
+                          const isSelected = simAction === act.id;
+                          return (
+                            <button
+                              key={act.id}
+                              type="button"
+                              onClick={() =>
+                                setSimAction(act.id as "LIKE" | "COMMENT" | "SUBSCRIBE")
+                              }
+                              className={`py-2.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold border transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-h-[44px] overflow-hidden ${
+                                isSelected
+                                  ? "bg-[#5B3DF5] text-white border-[#5B3DF5] shadow-md"
+                                  : "bg-[#181726] text-[#D6D3E9] border-white/10 hover:border-[#5B3DF5] hover:text-white"
+                              }`}
+                              title={act.label}
+                            >
+                              <Icon className="h-3.5 w-3.5 shrink-0 hidden xs:inline" />
+                              <span className="hidden sm:inline truncate">{act.label}</span>
+                              <span className="sm:hidden truncate">{act.shortLabel}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1314,7 +1329,7 @@ export default function HomePage() {
                 </h2>
                 <p className="text-[#3A3A52] text-base font-medium">
                   Packs de points (2 000, 10 000 et 25 000 pts), sans abonnement obligatoire. Paiement
-                  Mobile Money (FCFA) & Carte Bancaire (EUR).
+                  instantané par Mobile Money (Orange, MTN, Wave, Moov en FCFA). Carte Bancaire bientôt disponible.
                 </p>
               </div>
 
@@ -1323,9 +1338,9 @@ export default function HomePage() {
                   <Smartphone className="h-3.5 w-3.5 text-amber-600" />
                   Mobile Money : Orange · MTN · Wave · Moov
                 </span>
-                <span className="payment-pill-card inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/95 border border-[#E3E3EE] text-[#12122A] shadow-2xs backdrop-blur-md font-bold">
+                <span className="payment-pill-card inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-[#E3E3EE] text-[#5A5A70] shadow-2xs backdrop-blur-md font-semibold text-xs">
                   <CreditCard className="h-3.5 w-3.5 text-[#5B3DF5]" />
-                  Carte : Visa · Mastercard
+                  <span>Carte (Bientôt)</span>
                 </span>
               </div>
             </div>
@@ -1355,11 +1370,11 @@ export default function HomePage() {
                     <div>
                       <div className="flex items-center justify-between gap-2">
                         <b className="text-lg font-extrabold text-white group-hover:text-[#FFB84D] transition-colors">
-                          {pack.name} {isPopular ? "· Populaire" : ""}
+                          {pack.name}
                         </b>
                         {isPopular && (
                           <span className="px-3 py-1 rounded-full bg-[#5B3DF5] text-white text-xs font-extrabold shadow-xs">
-                            Recommandé
+                            {pack.badge || "Populaire"}
                           </span>
                         )}
                       </div>
@@ -1375,7 +1390,7 @@ export default function HomePage() {
 
                       <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#5B3DF5]/20 border border-[#5B3DF5]/40 text-[#FFB84D] font-extrabold text-sm mb-4">
                         <Sparkles className="h-3.5 w-3.5 text-[#FFB84D]" />
-                        <span>+{pack.points} points crédités</span>
+                        <span>+{formatNumber(pack.points)} points crédités</span>
                       </div>
 
                       <p className="text-sm text-[#D6D3E9] leading-relaxed mb-6">
@@ -1385,11 +1400,11 @@ export default function HomePage() {
                       <ul className="space-y-2.5 text-xs text-[#E2DFFA] mb-6 pt-4 border-t border-white/10">
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
-                          <span>Jusqu&apos;à {pack.points} actions uniques</span>
+                          <span>Jusqu&apos;à {formatNumber(pack.points)} actions uniques</span>
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
-                          <span>Paiement Mobile Money ou Carte Bancaire</span>
+                          <span>Paiement Mobile Money (Orange, MTN, Wave, Moov)</span>
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-[#5B3DF5] shrink-0" />
@@ -1400,13 +1415,13 @@ export default function HomePage() {
 
                     <Link
                       href={isAuthenticated ? "/shop" : "/register"}
-                      className={`addme-btn w-full ${
+                      className={`addme-btn w-full min-h-[44px] ${
                         isPopular
                           ? "addme-btn-primary"
                           : "bg-white/10 hover:bg-white/20 text-white border border-white/15"
                       }`}
                     >
-                      <span>Choisir ce pack ({pack.points} pts)</span>
+                      <span>Choisir ce pack ({formatPoints(pack.points)})</span>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
@@ -1532,8 +1547,8 @@ export default function HomePage() {
           PIED DE PAGE SOMBRE
          ===================================================================== */}
       <footer className="bg-[#0B0A14] text-white py-10 mt-auto border-t border-[#2E2C40]">
-        <div className="max-w-[1140px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
+        <div className="max-w-[1140px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
             <Link href="/" className="flex items-center gap-2">
               <img src="/icon.svg" alt="AddMe.io" className="h-6 w-6 rounded-md" />
               <b className="text-xl font-extrabold">
@@ -1544,18 +1559,12 @@ export default function HomePage() {
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               Système Opérationnel
             </span>
-            <a
-              href={DISCORD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/40 text-xs font-semibold text-[#8EA1FF] hover:text-white transition-all"
-            >
-              <DiscordIcon className="h-3.5 w-3.5 text-[#5865F2]" />
-              <span>Communauté Discord</span>
-            </a>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4 text-sm text-[#C9C6DB]">
+          {/* Icônes cliquables des réseaux de la communauté */}
+          <SocialCommunityIcons />
+
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 text-sm text-[#C9C6DB]">
             <Link href="/legal/terms" className="hover:text-white transition-colors">
               CGU
             </Link>

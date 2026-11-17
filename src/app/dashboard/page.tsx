@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import DiscordIcon from "@/components/DiscordIcon";
 import { DISCORD_INVITE_URL } from "@/lib/constants";
+import { formatPoints, formatNumber } from "@/lib/format";
 
 const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || DISCORD_INVITE_URL;
 
@@ -175,14 +176,43 @@ export default function DashboardPage() {
   };
 
   const formatPlatformLabel = (platform: string) => {
-    if (platform === "TIKTOK") return "TikTok";
-    if (platform === "INSTAGRAM") return "Instagram";
-    if (platform === "YOUTUBE") return "YouTube";
-    return platform;
+    const names: Record<string, string> = {
+      TIKTOK: "TikTok",
+      INSTAGRAM: "Instagram",
+      YOUTUBE: "YouTube",
+      FACEBOOK: "Facebook",
+      THREADS: "Threads",
+      SNAPCHAT: "Snapchat",
+      LINKEDIN: "LinkedIn",
+      X: "X",
+      SPOTIFY: "Spotify",
+      SOUNDCLOUD: "SoundCloud",
+      REDDIT: "Reddit",
+      WEBSITE: "Site Web",
+    };
+    return names[platform] || platform;
+  };
+
+  const getPlatformShortCode = (platform: string) => {
+    const shorts: Record<string, string> = {
+      TIKTOK: "TT",
+      INSTAGRAM: "IG",
+      YOUTUBE: "YT",
+      FACEBOOK: "FB",
+      THREADS: "TH",
+      SNAPCHAT: "SC",
+      LINKEDIN: "IN",
+      X: "X",
+      SPOTIFY: "SP",
+      SOUNDCLOUD: "SC",
+      REDDIT: "RD",
+      WEBSITE: "WEB",
+    };
+    return shorts[platform] || "PUB";
   };
 
   return (
-    <div className="flex-1 p-6 sm:p-8 max-w-[1160px] w-full mx-auto space-y-6">
+    <div className="flex-1 p-4 sm:p-8 max-w-[1160px] w-full mx-auto space-y-6 pb-28">
       {/* Alertes prioritaires (Email non vérifié / Aucun compte lié) */}
       {!profile.isEmailVerified && (
         <div className="p-4 rounded-2xl bg-[#EEEAFF] border border-[#D9D2FF] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -250,71 +280,71 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 4 Cartes de Statistiques (Style exact Dashboard.dc.html) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4 items-stretch">
+      {/* 4 Cartes de Statistiques (Grille 2 colonnes compacte sur mobile, 4 colonnes sur desktop) */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4 items-stretch">
         {/* Carte 1 : Solde (#5B3DF5 - Reste TOUJOURS Violet en clair comme en sombre) */}
         <div
-          className="addme-card addme-card-solde animate-up flex flex-col justify-between"
+          className="col-span-2 xl:col-span-1 addme-card addme-card-solde animate-up flex flex-col justify-between"
           style={{ background: "#5B3DF5", borderColor: "#5B3DF5", color: "#FFFFFF" }}
         >
           <div>
             <div className="text-xs sm:text-sm font-medium opacity-90 text-white">Solde disponible</div>
             <div className="text-2xl sm:text-3xl xl:text-[34px] font-extrabold leading-tight my-1.5 text-white">
-              {profile.balance.toFixed(1)} pts
+              {formatPoints(profile.balance)}
             </div>
           </div>
           <Link
             href="/shop"
-            className="btn-solde-shop addme-btn bg-white text-[#3A22C8] hover:bg-[#F7F7FB] text-xs py-2 px-3.5 sm:py-2.5 sm:px-4 w-fit mt-2 font-bold shadow-xs"
+            className="btn-solde-shop addme-btn bg-white text-[#3A22C8] hover:bg-[#F7F7FB] text-xs py-2 px-3.5 sm:py-2.5 sm:px-4 w-fit mt-2 font-bold shadow-xs min-h-[44px]"
           >
             Acheter des points
           </Link>
         </div>
 
         {/* Carte 2 : Tâches effectuées / Points gagnés */}
-        <div className="addme-card animate-up-1 flex flex-col justify-between">
+        <div className="col-span-1 addme-card animate-up-1 flex flex-col justify-between p-3.5 sm:p-6">
           <div>
-            <div className="text-xs sm:text-sm text-[#5A5A70] font-medium">
+            <div className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A3A1BD] font-medium leading-tight">
               Tâches (Aujourd’hui)
             </div>
-            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] mt-1.5">
-              +{profile.dailyTasksCompleted}
+            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] dark:text-white mt-1.5">
+              +{formatNumber(profile.dailyTasksCompleted)}
             </div>
           </div>
-          <div className="text-[11px] sm:text-xs text-emerald-600 font-semibold mt-2.5 flex items-center gap-1">
+          <div className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-2.5 flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-            <span>Crédit direct sans attente 24h</span>
+            <span className="truncate">Crédit direct</span>
           </div>
         </div>
 
         {/* Carte 3 : Interactions reçues / Campagnes */}
-        <div className="addme-card animate-up-2 flex flex-col justify-between">
+        <div className="col-span-1 addme-card animate-up-2 flex flex-col justify-between p-3.5 sm:p-6">
           <div>
-            <div className="text-xs sm:text-sm text-[#5A5A70] font-medium">
-              Actions reçues ({activeCampaigns.length} actives)
+            <div className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A3A1BD] font-medium leading-tight">
+              Actions reçues <span className="hidden sm:inline">({activeCampaigns.length} actives)</span>
             </div>
-            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] mt-1.5">
-              {totalReceivedActions}
+            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] dark:text-white mt-1.5">
+              {formatNumber(totalReceivedActions)}
             </div>
           </div>
           <Link
             href="/campaigns"
-            className="text-[11px] sm:text-xs font-bold text-[#5B3DF5] hover:underline mt-2.5 inline-flex items-center gap-1"
+            className="text-[11px] sm:text-xs font-bold text-[#5B3DF5] dark:text-[#A38EFF] hover:underline mt-2.5 inline-flex items-center gap-1"
           >
-            <span>Gérer mes campagnes</span>
+            <span>Mes campagnes</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
         {/* Carte 4 : Réputation */}
-        <div className="addme-card animate-up-3 flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-1 addme-card animate-up-3 flex flex-col justify-between p-3.5 sm:p-6">
           <div>
-            <div className="text-xs sm:text-sm text-[#5A5A70] font-medium">Réputation</div>
-            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] mt-1.5">
-              {profile.reputationScore.toFixed(0)}/100
+            <div className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A3A1BD] font-medium leading-tight">Réputation</div>
+            <div className="text-xl sm:text-2xl xl:text-[28px] font-extrabold text-[#12122A] dark:text-white mt-1.5">
+              {formatNumber(profile.reputationScore)}/100
             </div>
           </div>
-          <div className="text-[11px] sm:text-xs text-[#5A5A70] mt-2.5">
+          <div className="text-[11px] sm:text-xs text-[#5A5A70] dark:text-[#A3A1BD] mt-2.5">
             Indice de fiabilité communautaire
           </div>
         </div>
@@ -349,7 +379,7 @@ export default function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div>
+            <div className="space-y-3 mt-3">
               {campaigns.slice(0, 4).map((camp, idx) => {
                 const pct = Math.min(
                   100,
@@ -359,46 +389,58 @@ export default function DashboardPage() {
                       100
                   )
                 );
-                const isShort = camp.platform === "TIKTOK" ? "TT" : camp.platform === "INSTAGRAM" ? "IG" : "YT";
+                const isShort = getPlatformShortCode(camp.platform);
 
                 return (
-                  <div key={camp.id} className="addme-row">
-                    <div className="addme-thumb">{isShort}</div>
-                    <div className="flex-1 min-w-0">
-                      <b className="block text-sm font-bold text-[#12122A] truncate">
-                        Publication #{idx + 1} · {formatPlatformLabel(camp.platform)}
-                      </b>
-                      <div className="text-xs text-[#5A5A70] mt-0.5 flex items-center gap-2">
-                        <span>
-                          {formatPlatformLabel(camp.platform)} ·{" "}
-                          {formatActionLabel(camp.actionType)}
-                        </span>
-                        <span>•</span>
-                        <span className="font-semibold text-[#5B3DF5]">
-                          {camp.rewardPerUnit ?? camp.rewardPerTask ?? 1} pt/pers.
-                        </span>
+                  <div
+                    key={camp.id}
+                    className="p-3.5 sm:p-4 rounded-2xl border border-[#E3E3EE] dark:border-[#26243A] bg-white dark:bg-[#151426] space-y-2.5 transition-all hover:border-[#5B3DF5]/40"
+                  >
+                    {/* Ligne 1 : Thumbnail + Titre / Type d'action + Récompense */}
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="addme-thumb shrink-0 !w-9 !h-9 sm:!w-10 sm:!h-10 !text-xs rounded-xl">
+                          {isShort}
+                        </div>
+                        <div className="min-w-0">
+                          <b className="block text-xs sm:text-sm font-bold text-[#12122A] dark:text-white truncate">
+                            Publication #{idx + 1} · {formatPlatformLabel(camp.platform)}
+                          </b>
+                          <div className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD] truncate">
+                            {formatPlatformLabel(camp.platform)} · {formatActionLabel(camp.actionType)}
+                          </div>
+                        </div>
                       </div>
+
+                      <span className="shrink-0 px-2 py-1 rounded-lg bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#5B3DF5] dark:text-[#A38EFF] text-[11px] font-extrabold whitespace-nowrap">
+                        {camp.rewardPerUnit ?? camp.rewardPerTask ?? 1} pt/pers.
+                      </span>
                     </div>
 
+                    {/* Ligne 2 : Progression claire sur toute la largeur */}
                     {camp.status === "ACTIVE" ? (
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="text-xs font-extrabold text-[#12122A]">
-                            {camp.completedQuantity}/{camp.totalQuantity}
-                          </div>
-                          <div className="text-[11px] text-[#5A5A70]">{pct}%</div>
+                      <div className="space-y-1.5 pt-1.5 border-t border-[#E3E3EE]/60 dark:border-[#26243A]/60">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-[#5A5A70] dark:text-[#A3A1BD] font-medium">
+                            Avancement
+                          </span>
+                          <span className="font-extrabold text-[#12122A] dark:text-white">
+                            {formatNumber(camp.completedQuantity)} / {formatNumber(camp.totalQuantity)} ({pct}%)
+                          </span>
                         </div>
-                        <i className="block w-[110px] h-2 rounded-full bg-[#E3E3EE] overflow-hidden">
-                          <b
-                            className="block h-full bg-[#5B3DF5] rounded-full transition-all duration-700"
+                        <div className="w-full h-2 rounded-full bg-[#E3E3EE] dark:bg-[#26243A] overflow-hidden">
+                          <div
+                            className="h-full bg-[#5B3DF5] rounded-full transition-all duration-700"
                             style={{ width: `${pct}%` }}
                           />
-                        </i>
+                        </div>
                       </div>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full bg-[#F7F7FB] border border-[#E3E3EE] text-xs font-semibold text-[#5A5A70]">
-                        {camp.status === "COMPLETED" ? "Terminée" : "Annulée"}
-                      </span>
+                      <div className="flex justify-end pt-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#F7F7FB] dark:bg-[#1E1D32] border border-[#E3E3EE] dark:border-[#26243A] text-[11px] font-semibold text-[#5A5A70] dark:text-[#A3A1BD]">
+                          {camp.status === "COMPLETED" ? "Terminée" : "Annulée"}
+                        </span>
+                      </div>
                     )}
                   </div>
                 );
@@ -443,7 +485,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <span className="text-[#5B3DF5] font-extrabold text-base">
-                      +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
+                      +{formatPoints(task.rewardPoints)}
                     </span>
                   </div>
                 ))}
@@ -650,12 +692,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {profile.socialAccounts.map((acc) => {
               const isVerified = acc.status === "VERIFIED";
-              const shortCode =
-                acc.platform === "TIKTOK"
-                  ? "TT"
-                  : acc.platform === "INSTAGRAM"
-                  ? "IG"
-                  : "YT";
+              const shortCode = getPlatformShortCode(acc.platform);
 
               return (
                 <div

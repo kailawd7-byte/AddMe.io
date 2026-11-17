@@ -13,6 +13,11 @@ export async function GET(req: NextRequest) {
     | "TIKTOK"
     | "YOUTUBE"
     | "INSTAGRAM"
+    | "FACEBOOK"
+    | "THREADS"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X"
     | null;
   const actionType = searchParams.get("actionType") as "LIKE" | "COMMENT" | "SUBSCRIBE" | null;
 

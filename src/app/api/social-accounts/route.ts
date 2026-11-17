@@ -97,13 +97,29 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const platformLabels: Record<string, string> = {
+      TIKTOK: "TikTok",
+      YOUTUBE: "YouTube",
+      INSTAGRAM: "Instagram",
+      FACEBOOK: "Facebook",
+      THREADS: "Threads",
+      SNAPCHAT: "Snapchat",
+      LINKEDIN: "LinkedIn",
+      X: "X (Twitter)",
+      SPOTIFY: "Spotify",
+      SOUNDCLOUD: "SoundCloud",
+      REDDIT: "Reddit",
+      WEBSITE: "Site Web",
+    };
+    const platformName = platformLabels[platform] || platform;
+
     return NextResponse.json({
       success: true,
-      message: `Compte ${platform} ajouté avec succès ! Copiez le code ci-dessous et insérez-le dans votre bio/description.`,
+      message: `Compte ${platformName} ajouté avec succès ! Copiez le code ci-dessous et insérez-le dans votre bio/description.`,
       account: newAccount,
       instructions: {
         code: verificationCode,
-        step1: `Ouvrez votre profil ${platform === "TIKTOK" ? "TikTok" : "YouTube"}.`,
+        step1: `Ouvrez votre profil ${platformName}.`,
         step2: `Ajoutez la mention "${verificationCode}" dans votre bio ou description de profil.`,
         step3: `Revenez sur cette page et cliquez sur "Vérifier la propriété". Une fois validé, vous pourrez effacer le code de votre bio.`,
       },

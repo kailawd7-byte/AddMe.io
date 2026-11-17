@@ -80,9 +80,24 @@ export const linkSocialAccountSchema = z.object({
 
 export const createCampaignSchema = z.object({
   socialAccountId: z.string().min(1, { message: "Veuillez sélectionner un compte social vérifié" }),
-  platform: z.enum(["TIKTOK", "YOUTUBE", "INSTAGRAM"], {
-    errorMap: () => ({ message: "Choisissez TikTok, YouTube ou Instagram." }),
-  }),
+  platform: z.enum(
+    [
+      "TIKTOK",
+      "YOUTUBE",
+      "INSTAGRAM",
+      "FACEBOOK",
+      "THREADS",
+      "SNAPCHAT",
+      "LINKEDIN",
+      "X",
+    ],
+    {
+      errorMap: () => ({
+        message:
+          "Choisissez une plateforme supportée (TikTok, YouTube, Instagram, Facebook, Threads, Snapchat, LinkedIn, X).",
+      }),
+    }
+  ),
   actionType: z.enum(["LIKE", "COMMENT", "SUBSCRIBE"]),
   videoUrl: z.string().url({ message: "L'URL de la publication est invalide" }),
   commentTemplate: z.string().max(280).optional(),

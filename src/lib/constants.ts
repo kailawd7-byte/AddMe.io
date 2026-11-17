@@ -2,6 +2,11 @@ export const PLATFORMS = {
   TIKTOK: "TIKTOK",
   YOUTUBE: "YOUTUBE",
   INSTAGRAM: "INSTAGRAM",
+  FACEBOOK: "FACEBOOK",
+  THREADS: "THREADS",
+  SNAPCHAT: "SNAPCHAT",
+  LINKEDIN: "LINKEDIN",
+  X: "X",
 } as const;
 
 export type PlatformType = keyof typeof PLATFORMS;
@@ -104,7 +109,7 @@ export const POINT_PACKS: PointPack[] = [
   },
   {
     id: "PACK_CREATOR",
-    name: "Pack Créateur Populaire",
+    name: "Pack Créateur",
     points: 10000,
     priceInCents: 1299,
     priceFormatted: "12,99 €",
@@ -112,7 +117,7 @@ export const POINT_PACKS: PointPack[] = [
     priceFcfaFormatted: "8 500 FCFA",
     description: "Le pack recommandé pour déclencher les algorithmes sur une publication clé.",
     popular: true,
-    badge: "Le plus populaire",
+    badge: "Populaire",
     equivalentLikes: 10000,
     equivalentComments: 7500,
   },

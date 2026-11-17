@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { PointPack } from "@/lib/constants";
+import { formatPoints, formatNumber } from "@/lib/format";
 
 interface PaymentHistoryItem {
   id: string;
@@ -209,11 +210,11 @@ function ShopContent() {
   };
 
   return (
-    <div suppressHydrationWarning className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-6">
+    <div suppressHydrationWarning className="flex-1 max-w-[1100px] w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28 space-y-6">
       {/* En-tête */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
+          <h1 className="text-[28px] sm:text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
             Boutique de points
           </h1>
           <p className="text-sm text-[#5A5A70] mt-0.5">
@@ -222,10 +223,10 @@ function ShopContent() {
           </p>
         </div>
 
-        <span className="addme-card-static py-2.5 px-5 inline-flex items-center gap-2">
+        <span className="hidden sm:inline-flex addme-card-static py-2.5 px-5 items-center gap-2">
           <span className="text-xs text-[#5A5A70] font-medium">Solde :</span>
           <b className="text-[#5B3DF5] font-extrabold text-lg">
-            {balance.toFixed(1)} pts
+            {formatPoints(balance)}
           </b>
         </span>
       </div>
@@ -349,7 +350,7 @@ function ShopContent() {
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <b className="text-base sm:text-lg font-extrabold text-[#12122A]">
-                      {pack.name} {isPopular ? "· Populaire" : ""}
+                      {pack.name}
                     </b>
                     {isPopular && (
                       <span className="px-2.5 py-0.5 rounded-full bg-[#EEEAFF] text-[#3A22C8] text-xs font-extrabold">
@@ -381,7 +382,7 @@ function ShopContent() {
                   </div>
 
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#EEEAFF] text-[#3A22C8] font-extrabold text-sm mb-4">
-                    +{pack.points} points
+                    +{formatNumber(pack.points)} points
                   </div>
 
                   <p className="text-sm text-[#5A5A70] leading-relaxed mb-6">
@@ -437,7 +438,7 @@ function ShopContent() {
                   ) : (
                     <>
                       <span>
-                        Choisir ({pack.points} pts • {pack.priceFcfaFormatted})
+                        Choisir ({formatPoints(pack.points)} • {pack.priceFcfaFormatted})
                       </span>
                       <ArrowRight className="h-4 w-4" />
                     </>

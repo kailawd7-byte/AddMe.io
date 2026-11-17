@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   PauseCircle,
 } from "lucide-react";
+import { formatPoints, formatNumber } from "@/lib/format";
 
 interface QuotaInfo {
   dailyTasksCompleted: number;
@@ -27,7 +28,16 @@ interface QuotaInfo {
 interface TaskItem {
   taskId: string;
   campaignId: string;
-  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  platform:
+    | "TIKTOK"
+    | "YOUTUBE"
+    | "INSTAGRAM"
+    | "FACEBOOK"
+    | "THREADS"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X"
+    | string;
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   videoUrl: string;
   commentTemplate: string | null;
@@ -44,7 +54,16 @@ interface ActiveSession {
   taskId: string;
   campaignId?: string;
   videoUrl: string;
-  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  platform:
+    | "TIKTOK"
+    | "YOUTUBE"
+    | "INSTAGRAM"
+    | "FACEBOOK"
+    | "THREADS"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X"
+    | string;
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   commentTemplate: string | null;
   rewardPoints: number;
@@ -466,9 +485,17 @@ export default function TasksPage() {
   };
 
   const formatPlatform = (platform: string) => {
-    if (platform === "TIKTOK") return "TikTok";
-    if (platform === "INSTAGRAM") return "Instagram";
-    return "YouTube";
+    const names: Record<string, string> = {
+      TIKTOK: "TikTok",
+      INSTAGRAM: "Instagram",
+      YOUTUBE: "YouTube",
+      FACEBOOK: "Facebook",
+      THREADS: "Threads",
+      SNAPCHAT: "Snapchat",
+      LINKEDIN: "LinkedIn",
+      X: "X",
+    };
+    return names[platform] || platform;
   };
 
   const formatAction = (action: string) => {
@@ -480,11 +507,11 @@ export default function TasksPage() {
   const minDur = activeSession?.minDurationSeconds || REQUIRED_DURATION_SEC;
 
   return (
-    <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-5">
+    <div className="flex-1 max-w-[1100px] w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28 space-y-5">
       {/* En-tête : Titre + Carte Solde */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
+          <h1 className="text-[28px] sm:text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
             Gagner des points
           </h1>
           {quota && (
@@ -499,98 +526,183 @@ export default function TasksPage() {
           <button
             type="button"
             onClick={fetchBalanceAndTasks}
-            className="addme-btn addme-btn-ghost py-2.5 px-3.5 text-xs"
+            className="addme-btn addme-btn-ghost py-2.5 px-3.5 text-xs min-h-[44px]"
             title="Actualiser la liste"
           >
             <RefreshCw className="h-4 w-4 text-[#5A5A70]" />
             <span>Actualiser</span>
           </button>
 
-          <span className="addme-card-static py-2.5 px-5 inline-flex items-center gap-2">
+          <span className="hidden sm:inline-flex addme-card-static py-2.5 px-5 items-center gap-2">
             <span className="text-xs text-[#5A5A70] font-medium">Solde :</span>
             <b className="text-[#5B3DF5] font-extrabold text-lg">
-              {balance.toFixed(1)} pts
+              {formatPoints(balance)}
             </b>
           </span>
         </div>
       </div>
 
-      {/* Filtres Chips */}
-      <div className="flex flex-wrap items-center gap-2.5 my-4">
-        <button
-          type="button"
-          onClick={() => {
-            setPlatformFilter("ALL");
-            setActionFilter("ALL");
-          }}
-          className={`addme-chip ${
-            platformFilter === "ALL" && actionFilter === "ALL" ? "on" : ""
-          }`}
-        >
-          Tous
-        </button>
+      {/* Filtres : 2 rangées distinctes (Réseaux et Actions) */}
+      <div className="space-y-3.5 my-4">
+        {/* Rangée 1 : Réseaux compatibles */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD]">
+            <span>1. Réseau social ({platformFilter === "ALL" ? "Tous" : formatPlatform(platformFilter)})</span>
+            <span className="text-[11px] font-normal normal-case opacity-70 hidden sm:inline">Défilement horizontal</span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none -mx-1 px-1">
+            <button
+              type="button"
+              onClick={() => setPlatformFilter("ALL")}
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "ALL" ? "on" : ""
+              }`}
+            >
+              Tous les réseaux
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "TIKTOK" ? "ALL" : "TIKTOK")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "TIKTOK" ? "on" : ""
+              }`}
+            >
+              TikTok
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(
+                  platformFilter === "INSTAGRAM" ? "ALL" : "INSTAGRAM"
+                )
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "INSTAGRAM" ? "on" : ""
+              }`}
+            >
+              Instagram
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "YOUTUBE" ? "ALL" : "YOUTUBE")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "YOUTUBE" ? "on" : ""
+              }`}
+            >
+              YouTube
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "FACEBOOK" ? "ALL" : "FACEBOOK")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "FACEBOOK" ? "on" : ""
+              }`}
+            >
+              Facebook
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "THREADS" ? "ALL" : "THREADS")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "THREADS" ? "on" : ""
+              }`}
+            >
+              Threads
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "SNAPCHAT" ? "ALL" : "SNAPCHAT")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "SNAPCHAT" ? "on" : ""
+              }`}
+            >
+              Snapchat
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "LINKEDIN" ? "ALL" : "LINKEDIN")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "LINKEDIN" ? "on" : ""
+              }`}
+            >
+              LinkedIn
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPlatformFilter(platformFilter === "X" ? "ALL" : "X")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                platformFilter === "X" ? "on" : ""
+              }`}
+            >
+              X
+            </button>
+          </div>
+        </div>
 
-        {/* Filtres par Réseau */}
-        <button
-          type="button"
-          onClick={() =>
-            setPlatformFilter(platformFilter === "TIKTOK" ? "ALL" : "TIKTOK")
-          }
-          className={`addme-chip ${platformFilter === "TIKTOK" ? "on" : ""}`}
-        >
-          TikTok
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setPlatformFilter(
-              platformFilter === "INSTAGRAM" ? "ALL" : "INSTAGRAM"
-            )
-          }
-          className={`addme-chip ${platformFilter === "INSTAGRAM" ? "on" : ""}`}
-        >
-          Instagram
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setPlatformFilter(platformFilter === "YOUTUBE" ? "ALL" : "YOUTUBE")
-          }
-          className={`addme-chip ${platformFilter === "YOUTUBE" ? "on" : ""}`}
-        >
-          YouTube
-        </button>
-
-        <span className="h-5 w-[1px] bg-[#E3E3EE] dark:bg-[#383556] mx-1 hidden sm:inline-block" />
-
-        {/* Filtres par Action */}
-        <button
-          type="button"
-          onClick={() =>
-            setActionFilter(actionFilter === "LIKE" ? "ALL" : "LIKE")
-          }
-          className={`addme-chip ${actionFilter === "LIKE" ? "on" : ""}`}
-        >
-          Like
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setActionFilter(actionFilter === "COMMENT" ? "ALL" : "COMMENT")
-          }
-          className={`addme-chip ${actionFilter === "COMMENT" ? "on" : ""}`}
-        >
-          Commentaire
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setActionFilter(actionFilter === "SUBSCRIBE" ? "ALL" : "SUBSCRIBE")
-          }
-          className={`addme-chip ${actionFilter === "SUBSCRIBE" ? "on" : ""}`}
-        >
-          Abonnement
-        </button>
+        {/* Rangée 2 : Type d'action */}
+        <div className="space-y-1.5">
+          <div className="text-xs font-bold uppercase tracking-wider text-[#5A5A70] dark:text-[#A3A1BD]">
+            2. Action demandée ({actionFilter === "ALL" ? "Toutes" : formatAction(actionFilter)})
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none -mx-1 px-1">
+            <button
+              type="button"
+              onClick={() => setActionFilter("ALL")}
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                actionFilter === "ALL" ? "on" : ""
+              }`}
+            >
+              Toutes les actions
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setActionFilter(actionFilter === "LIKE" ? "ALL" : "LIKE")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                actionFilter === "LIKE" ? "on" : ""
+              }`}
+            >
+              Like / J’aime
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setActionFilter(actionFilter === "COMMENT" ? "ALL" : "COMMENT")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                actionFilter === "COMMENT" ? "on" : ""
+              }`}
+            >
+              Commentaire
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setActionFilter(actionFilter === "SUBSCRIBE" ? "ALL" : "SUBSCRIBE")
+              }
+              className={`addme-chip min-h-[44px] shrink-0 text-xs sm:text-sm ${
+                actionFilter === "SUBSCRIBE" ? "on" : ""
+              }`}
+            >
+              Abonnement / Follow
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Bandeau d'instruction Lavande (#EEEAFF / #D9D2FF) */}
@@ -835,8 +947,7 @@ export default function TasksPage() {
                   <>
                     <ShieldCheck className="h-4 w-4" />
                     <span>
-                      Vérifier mon action & Recevoir +{activeSession.rewardPoints} pt
-                      {activeSession.rewardPoints > 1 ? "s" : ""}
+                      Vérifier mon action & Recevoir +{formatPoints(activeSession.rewardPoints)}
                     </span>
                   </>
                 )}
@@ -846,115 +957,116 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* LISTE DES TÂCHES DISPONIBLES */}
-      <div className="addme-card-static">
-        {loading ? (
-          <div className="py-12 text-center text-[#5A5A70] space-y-3">
-            <div className="h-8 w-8 border-3 border-[#5B3DF5] border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm">Chargement des publications disponibles...</p>
-          </div>
-        ) : tasks.length === 0 && !activeSession ? (
-          <div className="py-12 text-center space-y-2">
-            <b className="text-base font-bold text-[#12122A] block">
-              Aucune nouvelle publication à afficher
-            </b>
-            <p className="text-sm text-[#5A5A70] max-w-md mx-auto">
-              Vous avez déjà accompli toutes les publications disponibles pour ce
-              filtre, ou aucune mission n’est en attente. Revenez dans quelques
-              instants !
-            </p>
-          </div>
-        ) : (
-          <div>
-            {tasks.map((task) => {
-              const shortCode =
-                task.platform === "TIKTOK"
-                  ? "TT"
-                  : task.platform === "INSTAGRAM"
-                  ? "IG"
-                  : "YT";
-              const isStarting = startingTaskId === task.taskId;
-              const isCurrentlyActive =
-                activeSession?.taskId === task.taskId ||
-                (activeSession?.campaignId &&
-                  activeSession.campaignId === task.campaignId);
+      {/* LISTE DES TÂCHES DISPONIBLES (Une seule carte par tâche, sans imbrication superflue) */}
+      {loading ? (
+        <div className="addme-card-static py-12 text-center text-[#5A5A70] space-y-3">
+          <div className="h-8 w-8 border-3 border-[#5B3DF5] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm">Chargement des publications disponibles...</p>
+        </div>
+      ) : tasks.length === 0 && !activeSession ? (
+        <div className="addme-card-static py-12 text-center space-y-2">
+          <b className="text-base font-bold text-[#12122A] block">
+            Aucune nouvelle publication à afficher
+          </b>
+          <p className="text-sm text-[#5A5A70] max-w-md mx-auto">
+            Vous avez déjà accompli toutes les publications disponibles pour ce
+            filtre, ou aucune mission n’est en attente. Revenez dans quelques
+            instants !
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {tasks.map((task) => {
+            const platformShorts: Record<string, string> = {
+              TIKTOK: "TT",
+              INSTAGRAM: "IG",
+              YOUTUBE: "YT",
+              FACEBOOK: "FB",
+              THREADS: "TH",
+              SNAPCHAT: "SC",
+              LINKEDIN: "IN",
+              X: "X",
+            };
+            const shortCode = platformShorts[task.platform] || "PUB";
+            const isStarting = startingTaskId === task.taskId;
+            const isCurrentlyActive =
+              activeSession?.taskId === task.taskId ||
+              (activeSession?.campaignId &&
+                activeSession.campaignId === task.campaignId);
 
-              return (
-                <div
-                  key={task.taskId}
-                  className="p-4 sm:p-5 rounded-2xl border border-[#E3E3EE] dark:border-[#26243A] bg-white/70 dark:bg-[#151426] backdrop-blur-md transition-all mb-3 last:mb-0 hover:border-[#5B3DF5] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xs"
-                >
-                  {/* Partie Haute sur Mobile / Gauche sur Desktop */}
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="addme-thumb shrink-0 !w-11 !h-11 !rounded-xl !text-xs font-black">
-                      {shortCode}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <b className="block text-sm sm:text-base font-bold text-[#12122A] dark:text-white truncate">
-                        Publication de @{task.targetHandle || `créateur`}
-                      </b>
-                      <div className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A3A1BD] flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
-                        <span className="font-semibold text-[#5B3DF5] dark:text-[#A38EFF]">
-                          {formatPlatform(task.platform)} · {formatAction(task.actionType)}
-                        </span>
-                        {task.remainingSlots !== undefined && (
-                          <>
-                            <span className="opacity-50">•</span>
-                            <span className="text-[11px] sm:text-xs">
-                              {task.remainingSlots} place
-                              {task.remainingSlots > 1 ? "s" : ""} restante
-                              {task.remainingSlots > 1 ? "s" : ""}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+            return (
+              <div
+                key={task.taskId}
+                className="p-4 sm:p-5 rounded-2xl border border-[#E3E3EE] dark:border-[#26243A] bg-white dark:bg-[#151426] backdrop-blur-md transition-all hover:border-[#5B3DF5] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xs"
+              >
+                {/* Partie Haute sur Mobile / Gauche sur Desktop */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="addme-thumb shrink-0 !w-11 !h-11 !rounded-xl !text-xs font-black">
+                    {shortCode}
                   </div>
 
-                  {/* Partie Basse sur Mobile / Droite sur Desktop */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-[#E3E3EE]/60 sm:border-0 dark:border-[#26243A]">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] sm:hidden font-medium">
-                        Récompense :
+                  <div className="flex-1 min-w-0">
+                    <b className="block text-sm sm:text-base font-bold text-[#12122A] dark:text-white truncate">
+                      Publication de @{task.targetHandle || `créateur`}
+                    </b>
+                    <div className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A3A1BD] flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+                      <span className="font-semibold text-[#5B3DF5] dark:text-[#A38EFF]">
+                        {formatPlatform(task.platform)} · {formatAction(task.actionType)}
                       </span>
-                      <span className="text-[#5B3DF5] font-extrabold text-base sm:text-lg whitespace-nowrap">
-                        +{task.rewardPoints} pt{task.rewardPoints > 1 ? "s" : ""}
-                      </span>
+                      {task.remainingSlots !== undefined && (
+                        <>
+                          <span className="opacity-50">•</span>
+                          <span className="text-xs">
+                            {task.remainingSlots} place
+                            {task.remainingSlots > 1 ? "s" : ""} restante
+                            {task.remainingSlots > 1 ? "s" : ""}
+                          </span>
+                        </>
+                      )}
                     </div>
-
-                    {isCurrentlyActive ? (
-                      <button
-                        type="button"
-                        disabled={secondsRemaining > 0 || submitting}
-                        onClick={() => handleSubmitTask()}
-                        className="addme-btn addme-btn-primary !py-2 !px-4 !text-xs sm:!text-sm disabled:opacity-60 shrink-0"
-                      >
-                        {submitting
-                          ? "🤖 Vérification..."
-                          : secondsRemaining > 0
-                          ? `Chrono : ${secondsRemaining}s...`
-                          : `Vérifier (+${task.rewardPoints} pt${
-                              task.rewardPoints > 1 ? "s" : ""
-                            })`}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={isStarting}
-                        onClick={() => handleStartTask(task)}
-                        className="addme-btn addme-btn-primary !py-2 !px-4 !text-xs sm:!text-sm disabled:opacity-50 shrink-0"
-                      >
-                        {isStarting ? "Inspection..." : "Faire la tâche"}
-                      </button>
-                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
+                {/* Partie Basse sur Mobile / Droite sur Desktop */}
+                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-[#E3E3EE]/60 sm:border-0 dark:border-[#26243A]">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xs text-[#5A5A70] dark:text-[#A3A1BD] sm:hidden font-medium">
+                      Récompense :
+                    </span>
+                    <span className="text-[#5B3DF5] font-extrabold text-base sm:text-lg whitespace-nowrap">
+                      +{formatPoints(task.rewardPoints)}
+                    </span>
+                  </div>
+
+                  {isCurrentlyActive ? (
+                    <button
+                      type="button"
+                      disabled={secondsRemaining > 0 || submitting}
+                      onClick={() => handleSubmitTask()}
+                      className="addme-btn addme-btn-primary min-h-[44px] !py-2.5 !px-4 text-xs sm:text-sm disabled:opacity-60 shrink-0"
+                    >
+                      {submitting
+                        ? "🤖 Vérification..."
+                        : secondsRemaining > 0
+                        ? `Chrono : ${secondsRemaining}s...`
+                        : `Vérifier (+${formatPoints(task.rewardPoints)})`}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isStarting}
+                      onClick={() => handleStartTask(task)}
+                      className="addme-btn addme-btn-primary min-h-[44px] !py-2.5 !px-4 text-xs sm:text-sm disabled:opacity-50 shrink-0"
+                    >
+                      {isStarting ? "Inspection..." : "Faire la tâche"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

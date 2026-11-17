@@ -45,7 +45,15 @@ export async function createCampaign(input: CreateCampaignInput) {
     );
   }
 
-  const platform = socialAccount.platform as "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  const platform = socialAccount.platform as
+    | "TIKTOK"
+    | "YOUTUBE"
+    | "INSTAGRAM"
+    | "FACEBOOK"
+    | "THREADS"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X";
 
   // 3. Validation stricte de l'URL de PUBLICATION (interdiction formelle des liens de profils)
   const urlValidation = validateVideoPublicationUrl(platform, videoUrl, socialAccount.identifier);

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { validateVideoPublicationUrl } from "@/lib/video-url-validator";
 import NumberStepper from "@/components/NumberStepper";
+import { formatPoints, formatNumber } from "@/lib/format";
 
 interface SocialAccount {
   id: string;
@@ -163,11 +164,11 @@ export default function NewCampaignPage() {
   }
 
   return (
-    <div className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-8 space-y-6">
+    <div className="flex-1 max-w-[1100px] w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28 space-y-6">
       {/* En-tête */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
+          <h1 className="text-[28px] sm:text-[32px] font-extrabold text-[#12122A] m-0 tracking-tight">
             Nouvelle campagne
           </h1>
           <p className="text-sm text-[#5A5A70] mt-0.5">
@@ -176,10 +177,10 @@ export default function NewCampaignPage() {
           </p>
         </div>
 
-        <span className="addme-card-static py-2.5 px-5 inline-flex items-center gap-2">
+        <span className="hidden sm:inline-flex addme-card-static py-2.5 px-5 items-center gap-2">
           <span className="text-xs text-[#5A5A70] font-medium">Solde :</span>
           <b className="text-[#5B3DF5] font-extrabold text-lg">
-            {balance.toFixed(1)} pts
+            {formatPoints(balance)}
           </b>
         </span>
       </div>
@@ -264,20 +265,22 @@ export default function NewCampaignPage() {
                     selectedPlatform === "TIKTOK"
                       ? "https://www.tiktok.com/@pseudo/video/1234567890"
                       : selectedPlatform === "INSTAGRAM"
-                        ? "https://www.instagram.com/reel/Cxyz123/"
+                        ? "https://www.instagram.com/reel/Cxyz123/ ou /p/..."
                         : selectedPlatform === "YOUTUBE"
                           ? "https://www.youtube.com/watch?v=... ou /shorts/..."
-                          : selectedPlatform === "SPOTIFY"
-                            ? "https://open.spotify.com/track/... ou /artist/..."
-                            : selectedPlatform === "SOUNDCLOUD"
-                              ? "https://soundcloud.com/artiste/titre"
-                              : selectedPlatform === "REDDIT"
-                                ? "https://www.reddit.com/r/.../comments/..."
-                                : selectedPlatform === "WEBSITE"
-                                  ? "https://votre-site.com/page"
-                                  : "https://..."
+                          : selectedPlatform === "FACEBOOK"
+                            ? "https://www.facebook.com/.../posts/... ou /reel/..."
+                            : selectedPlatform === "SNAPCHAT"
+                              ? "https://www.snapchat.com/spotlight/... ou /s/..."
+                              : selectedPlatform === "LINKEDIN"
+                                ? "https://www.linkedin.com/posts/..."
+                                : selectedPlatform === "X"
+                                  ? "https://x.com/pseudo/status/1234567890"
+                                  : selectedPlatform === "THREADS"
+                                    ? "https://www.threads.net/@pseudo/post/Cxyz123"
+                                    : "https://..."
                   }
-                  className="w-full px-4 py-3 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5] focus:bg-white"
+                  className="w-full px-4 py-3 rounded-xl bg-[#F7F7FB] border border-[#CFCFE0] text-base sm:text-sm text-[#12122A] focus:outline-none focus:border-[#5B3DF5] focus:bg-white"
                 />
                 {urlValidation && (
                   <p
@@ -319,7 +322,7 @@ export default function NewCampaignPage() {
                       }`}
                     >
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-                      <span className="font-bold text-[11px] sm:text-xs tracking-tight leading-tight text-center block px-0.5">
+                      <span className="font-bold text-xs tracking-tight leading-tight text-center block px-0.5">
                         {item.label}
                       </span>
                     </button>

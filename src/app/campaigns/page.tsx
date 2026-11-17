@@ -34,7 +34,16 @@ interface CompletionDetail {
 
 interface CampaignItem {
   id: string;
-  platform: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  platform:
+    | "TIKTOK"
+    | "YOUTUBE"
+    | "INSTAGRAM"
+    | "FACEBOOK"
+    | "THREADS"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X"
+    | string;
   actionType: "LIKE" | "COMMENT" | "SUBSCRIBE";
   videoUrl: string;
   commentTemplate: string | null;
@@ -359,12 +368,17 @@ export default function CampaignsPage() {
                     100
                 )
               );
-              const shortCode =
-                camp.platform === "TIKTOK"
-                  ? "TT"
-                  : camp.platform === "INSTAGRAM"
-                  ? "IG"
-                  : "YT";
+              const platformShorts: Record<string, string> = {
+                TIKTOK: "TT",
+                INSTAGRAM: "IG",
+                YOUTUBE: "YT",
+                FACEBOOK: "FB",
+                THREADS: "TH",
+                SNAPCHAT: "SC",
+                LINKEDIN: "IN",
+                X: "X",
+              };
+              const shortCode = platformShorts[camp.platform] || "PUB";
               const isBusy = actionLoadingId === camp.id;
 
               return (
@@ -444,15 +458,16 @@ export default function CampaignsPage() {
                       <ExternalLink className="h-3 w-3" />
                     </a>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleInspect(camp.id)}
-                        className="addme-btn addme-btn-ghost !py-1.5 !px-3 !text-xs !min-h-[34px]"
-                        title="Voir les exécutions"
+                        className="addme-btn addme-btn-ghost !p-2 sm:!py-1.5 sm:!px-3 !text-xs !min-h-[36px] !min-w-[36px] sm:!min-w-0 flex items-center justify-center gap-1.5"
+                        title="Voir les détails et exécutions"
+                        aria-label="Voir les détails"
                       >
                         <Eye className="h-3.5 w-3.5 text-[#5B3DF5] dark:text-[#A38EFF]" />
-                        <span>Détails</span>
+                        <span className="hidden sm:inline">Détails</span>
                       </button>
 
                       {(camp.status === "ACTIVE" || camp.status === "PAUSED") && (
@@ -461,19 +476,25 @@ export default function CampaignsPage() {
                             type="button"
                             disabled={isBusy}
                             onClick={() => handleOpenEdit(camp)}
-                            className="addme-btn addme-btn-ghost !py-1.5 !px-3 !text-xs !min-h-[34px] text-[#5B3DF5] dark:text-[#A38EFF] hover:border-[#5B3DF5]"
+                            className="addme-btn addme-btn-ghost !p-2 sm:!py-1.5 sm:!px-3 !text-xs !min-h-[36px] !min-w-[36px] sm:!min-w-0 flex items-center justify-center gap-1.5 text-[#5B3DF5] dark:text-[#A38EFF] hover:border-[#5B3DF5]"
                             title="Modifier la campagne"
+                            aria-label="Modifier la campagne"
                           >
                             <Pencil className="h-3.5 w-3.5" />
-                            <span>Modifier</span>
+                            <span className="hidden sm:inline">Modifier</span>
                           </button>
 
                           <button
                             type="button"
                             disabled={isBusy}
                             onClick={() => handleToggleStatus(camp)}
-                            className="addme-btn addme-btn-ghost !py-1.5 !px-2.5 !text-xs !min-h-[34px]"
+                            className="addme-btn addme-btn-ghost !p-2 sm:!py-1.5 sm:!px-2.5 !text-xs !min-h-[36px] !min-w-[36px] flex items-center justify-center"
                             title={
+                              camp.status === "ACTIVE"
+                                ? "Mettre en pause"
+                                : "Reprendre"
+                            }
+                            aria-label={
                               camp.status === "ACTIVE"
                                 ? "Mettre en pause"
                                 : "Reprendre"
@@ -490,8 +511,9 @@ export default function CampaignsPage() {
                             type="button"
                             disabled={isBusy}
                             onClick={() => handleCancelCampaign(camp.id)}
-                            className="addme-btn addme-btn-ghost !py-1.5 !px-2.5 !text-xs !min-h-[34px] text-rose-600 dark:text-rose-400 hover:border-rose-300"
+                            className="addme-btn addme-btn-ghost !p-2 sm:!py-1.5 sm:!px-2.5 !text-xs !min-h-[36px] !min-w-[36px] flex items-center justify-center text-rose-600 dark:text-rose-400 hover:border-rose-300"
                             title="Annuler et rembourser le solde restant"
+                            aria-label="Annuler la campagne"
                           >
                             <XCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                           </button>

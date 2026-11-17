@@ -264,10 +264,38 @@ export function validateVideoPublicationUrl(
         error: "L'URL doit provenir du domaine facebook.com ou fb.watch.",
       };
     }
+
+    const pathname = urlObj.pathname;
+    const isBareProfile =
+      hostname !== "fb.watch" &&
+      (pathname === "/" ||
+        (/^\/[a-zA-Z0-9_.-]+\/?$/.test(pathname) &&
+          !pathname.includes("/posts") &&
+          !pathname.includes("/reel") &&
+          !pathname.includes("/videos") &&
+          !pathname.includes("/watch") &&
+          !pathname.includes("/photo") &&
+          !pathname.includes("/story")));
+
+    if (isBareProfile && !urlObj.searchParams.has("story_fbid") && !urlObj.searchParams.has("fbid")) {
+      return {
+        valid: false,
+        error:
+          "L'engagement est réservé aux PUBLICATIONS spécifiques. Vous avez fourni un lien de profil ou de page Facebook ; veuillez fournir l'URL directe d'une publication, d'un Reel ou d'une vidéo.",
+      };
+    }
+
+    const extractedId =
+      urlObj.searchParams.get("story_fbid") ||
+      urlObj.searchParams.get("fbid") ||
+      urlObj.searchParams.get("v") ||
+      pathname.split("/").filter(Boolean).pop() ||
+      "fb-post";
+
     return {
       valid: true,
       normalizedUrl: urlObj.href,
-      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "fb-post",
+      extractedId,
     };
   }
 
@@ -282,10 +310,20 @@ export function validateVideoPublicationUrl(
         error: "L'URL doit provenir du domaine snapchat.com ou spotlight.",
       };
     }
+
+    const pathname = urlObj.pathname;
+    if (pathname.startsWith("/add/") || pathname === "/") {
+      return {
+        valid: false,
+        error:
+          "L'engagement est réservé aux contenus Spotlight ou Stories spécifiques. Vous avez fourni un simple lien d'ajout Snapchat.",
+      };
+    }
+
     return {
       valid: true,
       normalizedUrl: urlObj.href,
-      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "snap-spotlight",
+      extractedId: pathname.split("/").filter(Boolean).pop() || "snap-spotlight",
     };
   }
 
@@ -299,10 +337,24 @@ export function validateVideoPublicationUrl(
         error: "L'URL doit provenir du domaine linkedin.com (ex: https://www.linkedin.com/posts/...)",
       };
     }
+
+    const pathname = urlObj.pathname;
+    const isBareProfile =
+      (pathname.startsWith("/in/") && !pathname.includes("/recent-activity/")) ||
+      (pathname.startsWith("/company/") && !pathname.includes("/posts/"));
+
+    if (isBareProfile) {
+      return {
+        valid: false,
+        error:
+          "L'engagement est réservé aux PUBLICATIONS spécifiques. Vous avez fourni un lien de profil ou de page entreprise LinkedIn ; veuillez fournir l'URL directe d'un post (ex: https://www.linkedin.com/posts/...).",
+      };
+    }
+
     return {
       valid: true,
       normalizedUrl: urlObj.href,
-      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "linkedin-post",
+      extractedId: pathname.split("/").filter(Boolean).pop() || "linkedin-post",
     };
   }
 
@@ -317,11 +369,23 @@ export function validateVideoPublicationUrl(
         error: "L'URL doit provenir de x.com ou twitter.com (ex: https://x.com/pseudo/status/123456789).",
       };
     }
-    const statusMatch = urlObj.pathname.match(/\/status\/([0-9]+)/);
+
+    const pathname = urlObj.pathname;
+    const statusMatch = pathname.match(/\/status\/([0-9]+)/);
+
+    // Si aucun /status/ n'est présent, c'est un simple profil (ex: https://x.com/elonmusk)
+    if (!statusMatch) {
+      return {
+        valid: false,
+        error:
+          "L'engagement est réservé aux TWEETS / POSTS spécifiques. Vous avez fourni un lien de profil ; veuillez fournir l'URL directe d'un post (ex: https://x.com/pseudo/status/123456789).",
+      };
+    }
+
     return {
       valid: true,
-      normalizedUrl: urlObj.href,
-      extractedId: statusMatch?.[1] || urlObj.pathname.split("/").filter(Boolean).pop() || "x-post",
+      normalizedUrl: `https://x.com${pathname}`,
+      extractedId: statusMatch[1],
     };
   }
 
@@ -335,10 +399,22 @@ export function validateVideoPublicationUrl(
         error: "L'URL doit provenir du domaine threads.net (ex: https://www.threads.net/@pseudo/post/...)",
       };
     }
+
+    const pathname = urlObj.pathname;
+    const postMatch = pathname.match(/\/post\/([a-zA-Z0-9_-]+)/);
+
+    if (!postMatch) {
+      return {
+        valid: false,
+        error:
+          "L'engagement est réservé aux POSTS Threads spécifiques. Vous avez fourni un lien de profil ; veuillez fournir l'URL directe d'un post (ex: https://www.threads.net/@pseudo/post/Cxyz...).",
+      };
+    }
+
     return {
       valid: true,
       normalizedUrl: urlObj.href,
-      extractedId: urlObj.pathname.split("/").filter(Boolean).pop() || "threads-post",
+      extractedId: postMatch[1],
     };
   }
 

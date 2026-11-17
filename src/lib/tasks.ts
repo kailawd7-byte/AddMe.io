@@ -10,7 +10,15 @@ import {
 } from "./action-verifier.ts";
 
 export interface GetTasksFilter {
-  platform?: "TIKTOK" | "YOUTUBE" | "INSTAGRAM";
+  platform?:
+    | "TIKTOK"
+    | "YOUTUBE"
+    | "INSTAGRAM"
+    | "FACEBOOK"
+    | "THREADS"
+    | "SNAPCHAT"
+    | "LINKEDIN"
+    | "X";
   actionType?: "LIKE" | "COMMENT" | "SUBSCRIBE";
 }
 

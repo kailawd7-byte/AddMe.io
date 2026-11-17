@@ -346,6 +346,7 @@ html.dark .landing-page .manifesto-card:hover {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
+  min-height: 44px;
   border-radius: 99px;
   background: #FFFFFF;
   border: 1px solid #CFCFE0;
@@ -550,12 +551,19 @@ html.dark .app-workspace {
   color: #F4F3FA !important;
 }
 
-html.dark .app-workspace aside,
+html.dark .app-workspace aside:not([aria-label="Support client"]),
 html.dark .mobile-topbar,
 html.dark .mobile-drawer {
   background: #111020 !important;
   border-color: #26243A !important;
   color: #F4F3FA !important;
+}
+
+/* Le widget support flottant ne doit jamais avoir de fond carré */
+[aria-label="Support client"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Liens de navigation Sidebar & Mobile Drawer */
@@ -720,6 +728,27 @@ html.dark ::-webkit-scrollbar-track {
 
 html.dark ::-webkit-scrollbar-thumb {
   background: #383556;
+}
+
+/* =====================================================================
+   ERGONOMIE MOBILE TACTILE & PRÉVENTION DU ZOOM IOS (<= 640px)
+   - Cibles tactiles d'au moins 44px
+   - Police minimale de 16px sur inputs pour empêcher le zoom forcé iOS Safari
+   ===================================================================== */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .addme-btn {
+    min-height: 44px !important;
+  }
+
+  .addme-chip {
+    min-height: 44px !important;
+  }
 }
 
 /* =====================================================================

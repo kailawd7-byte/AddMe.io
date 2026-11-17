@@ -23,6 +23,8 @@ import {
 import ThemeToggle from "./ThemeToggle";
 import SupportWidget from "./SupportWidget";
 import DiscordIcon from "./DiscordIcon";
+import SocialCommunityIcons from "./SocialCommunityIcons";
+import { formatPoints, formatNumber } from "@/lib/format";
 
 interface UserData {
   id: string;
@@ -194,7 +196,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
             </nav>
 
             {/* Action droite : Si connecté = profil + bouton Dashboard (AUCUN bouton connexion/commencer) */}
-            <div className="flex items-center gap-2.5 md:gap-3 shrink-0 ml-2 md:ml-0">
+            <div className="flex items-center gap-2 md:gap-3 shrink-0 ml-auto md:ml-0">
               {loading ? (
                 <div className="h-9 md:h-10 w-24 md:w-28 rounded-xl bg-white/10 animate-pulse" />
               ) : user ? (
@@ -203,21 +205,22 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                     <User className="h-3.5 w-3.5 text-[#5B3DF5]" />
                     <span className="truncate max-w-[120px]">{userDisplayName}</span>
                     <span className="text-[#FFB84D] font-extrabold border-l border-[#2E2C40] pl-2">
-                      {user.balance.toFixed(0)} pts
+                      {formatPoints(user.balance)}
                     </span>
                   </div>
 
                   <Link
                     href="/dashboard"
-                    className="addme-btn addme-btn-primary !py-2 !px-3.5 !min-h-[36px] !text-xs md:!py-2 md:!px-5 md:!min-h-[44px] md:!text-sm whitespace-nowrap"
+                    className="addme-btn addme-btn-primary !py-2 !px-3 sm:!px-5 !min-h-[40px] sm:!min-h-[44px] !text-xs sm:!text-sm whitespace-nowrap"
                   >
-                    <span>Mon Dashboard</span>
+                    <span className="hidden sm:inline">Mon Dashboard</span>
+                    <span className="sm:hidden">Dashboard</span>
                     <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Link>
                 </div>
               ) : (
                 /* Non connecté */
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                   <Link
                     href="/login"
                     className="text-xs md:text-sm font-semibold text-white/90 hover:text-[#FFB84D] transition-colors px-1.5 py-1 md:p-0 whitespace-nowrap"
@@ -226,15 +229,105 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   </Link>
                   <Link
                     href="/register"
-                    className="addme-btn addme-btn-primary !py-2 !px-3.5 !min-h-[36px] !text-xs md:!py-2.5 md:!px-4 md:!min-h-[44px] md:!text-sm whitespace-nowrap"
+                    className="addme-btn addme-btn-primary !py-2 !px-3 sm:!px-4 !min-h-[40px] sm:!min-h-[44px] !text-xs sm:!text-sm whitespace-nowrap"
                   >
                     Commencer
                   </Link>
                 </div>
               )}
+
+              {/* Bouton burger mobile pour ouvrir la navigation Landing */}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden flex items-center justify-center min-h-[44px] min-w-[44px] p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors"
+                aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu de navigation"}
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
             </div>
           </div>
         </header>
+
+        {/* Menu Déroulant Mobile Plein Écran Landing Page */}
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-40 bg-[#0E0D14]/95 backdrop-blur-2xl flex flex-col pt-24 px-6 pb-8 overflow-y-auto animate-in fade-in duration-200">
+            <div className="flex flex-col space-y-2 text-base font-semibold text-white/90">
+              <a
+                href="#how"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-white/10 transition-colors border-b border-white/10 min-h-[44px]"
+              >
+                <span>Fonctionnement</span>
+                <ArrowRight className="h-4 w-4 text-[#FFB84D]" />
+              </a>
+              <a
+                href="#ecosystem"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-white/10 transition-colors border-b border-white/10 min-h-[44px]"
+              >
+                <span>Réseaux compatibles</span>
+                <ArrowRight className="h-4 w-4 text-[#FFB84D]" />
+              </a>
+              <a
+                href="#simulateur"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-white/10 transition-colors border-b border-white/10 min-h-[44px]"
+              >
+                <span>Simulateur</span>
+                <ArrowRight className="h-4 w-4 text-[#FFB84D]" />
+              </a>
+              <a
+                href="#prix"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-white/10 transition-colors border-b border-white/10 min-h-[44px]"
+              >
+                <span>Tarifs</span>
+                <ArrowRight className="h-4 w-4 text-[#FFB84D]" />
+              </a>
+              <a
+                href="#faq"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-white/10 transition-colors border-b border-white/10 min-h-[44px]"
+              >
+                <span>FAQ</span>
+                <ArrowRight className="h-4 w-4 text-[#FFB84D]" />
+              </a>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-white/15 flex flex-col gap-3">
+              {/* Icônes cliquables de la communauté AddMe.io (Discord, Telegram, Instagram, TikTok, Facebook) */}
+              <div className="flex flex-col items-center gap-2 py-1">
+                <span className="text-xs text-[#A5A2BA] font-semibold">Rejoignez notre communauté</span>
+                <SocialCommunityIcons
+                  className="justify-center"
+                  itemClassName="!min-h-[44px] !min-w-[44px]"
+                  iconClassName="h-5 w-5"
+                />
+              </div>
+
+              {!user && (
+                <>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="addme-btn addme-btn-primary w-full !py-3.5 !min-h-[44px] !text-sm flex items-center justify-center gap-2"
+                  >
+                    <span>Commencer (+50 pts offerts)</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-3 text-center rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-sm transition-colors border border-white/15 min-h-[44px] flex items-center justify-center"
+                  >
+                    Connexion
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         <main className="flex-1 flex flex-col landing-page">{children}</main>
       </div>
     );
@@ -308,7 +401,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                 href="/shop"
                 className="px-3 py-1.5 rounded-xl bg-[#EEEAFF] dark:bg-[#5B3DF5]/20 text-[#5B3DF5] dark:text-[#A38EFF] font-extrabold text-xs transition-colors"
               >
-                {user.balance.toFixed(1)} pts
+                {formatPoints(user.balance)}
               </Link>
             )}
             <button
@@ -373,22 +466,20 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   })}
                 </nav>
 
-                {/* Lien Communauté Discord Mobile */}
-                <a
-                  href={DISCORD_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="mt-3 flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all bg-[#5865F2]/10 hover:bg-[#5865F2]/20 text-[#5865F2] dark:text-[#8EA1FF] border border-[#5865F2]/30"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <DiscordIcon className="h-4 w-4 shrink-0 text-[#5865F2]" />
-                    <span className="truncate">Communauté Discord</span>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#5865F2] text-white font-extrabold shrink-0">
-                    Rejoindre
-                  </span>
-                </a>
+                {/* Icône Discord Mobile compacte */}
+                <div className="mt-3 flex items-center">
+                  <a
+                    href={DISCORD_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2.5 rounded-xl bg-[#5865F2]/10 hover:bg-[#5865F2]/20 text-[#5865F2] dark:text-[#8EA1FF] border border-[#5865F2]/30 transition-colors flex items-center justify-center min-h-[44px] min-w-[44px]"
+                    title="Serveur Discord officiel"
+                    aria-label="Serveur Discord officiel"
+                  >
+                    <DiscordIcon className="h-5 w-5 text-[#5865F2] dark:text-[#8EA1FF]" />
+                  </a>
+                </div>
               </div>
 
               {user && (
@@ -399,8 +490,8 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                       {user.email}
                     </div>
                     <div className="text-[11px] text-[#5A5A70] dark:text-[#A3A1BD] mt-0.5 flex items-center justify-between">
-                      <span>Réputation : {user.reputationScore.toFixed(0)}/100</span>
-                      <span className="font-bold text-[#5B3DF5] dark:text-[#A38EFF]">{user.balance.toFixed(1)} pts</span>
+                      <span>Réputation : {formatNumber(user.reputationScore)}/100</span>
+                      <span className="font-bold text-[#5B3DF5] dark:text-[#A38EFF]">{formatPoints(user.balance)}</span>
                     </div>
                   </div>
                   <button
@@ -444,7 +535,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   <Coins className="h-3.5 w-3.5 text-[#FFB84D]" />
                 </div>
                 <div className="text-2xl font-extrabold tracking-tight mt-0.5">
-                  {user.balance.toFixed(1)} pts
+                  {formatPoints(user.balance)}
                 </div>
                 <Link
                   href="/shop"
@@ -528,7 +619,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   <div className="mt-2 pt-2 border-t border-[#E3E3EE] dark:border-[#26243A] flex items-center justify-between text-[11px]">
                     <span className="text-[#5A5A70] dark:text-[#A3A1BD]">Réputation</span>
                     <span className="font-bold text-[#12122A] dark:text-white">
-                      {user.reputationScore.toFixed(0)}/100
+                      {formatNumber(user.reputationScore)}/100
                     </span>
                   </div>
                 </div>
@@ -554,8 +645,8 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Contenu Principal */}
-        <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+        {/* Contenu Principal avec padding-bottom minimum 88px sur mobile pour dégager le chat flottant */}
+        <main className="flex-1 min-w-0 flex flex-col pb-24 lg:pb-0">{children}</main>
 
         {/* Widget Support Client Flottant (Accessible exclusivement dans l'espace connecté Dashboard) */}
         <SupportWidget />
@@ -638,17 +729,8 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               AddMe<span className="text-[#FFB84D]">.io</span>
             </b>
           </Link>
+          <SocialCommunityIcons />
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-[#C9C6DB]">
-            <a
-              href={DISCORD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white flex items-center gap-1.5 text-[#8EA1FF] hover:underline"
-            >
-              <DiscordIcon className="h-3.5 w-3.5 text-[#5865F2]" />
-              <span>Discord</span>
-            </a>
-            <span>·</span>
             <Link href="/legal/terms" className="hover:text-white">
               CGU
             </Link>
