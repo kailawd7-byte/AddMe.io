@@ -1,6 +1,5 @@
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
+import prisma from "./prisma.ts";
 
 export interface SupportMessage {
   id: string;
@@ -27,43 +26,89 @@ export interface SupportTicket {
   updatedAt: string;
 }
 
-const STORAGE_FILE = path.join(process.cwd(), "prisma", "support_tickets.json");
+/**
+ * Génère une réponse d'assistance et de diagnostic intelligente de la Secrétaire IA.
+ * Si le signalement est vague ou court, l'IA pose des questions de cadrage pour centraliser le bug.
+ */
+function generateAISupportDiagnosis({
+  displayName,
+  subject,
+  message,
+}: {
+  displayName: string;
+  subject: string;
+  message: string;
+}): string {
+  const text = `${subject} ${message}`.toLowerCase();
 
-// Cache mémoire synchrone
-let ticketsCache: SupportTicket[] | null = null;
+  // Analyse si le message manque de précisions techniques
+  const isVague =
+    message.trim().length < 80 ||
+    (!text.includes("tiktok") &&
+      !text.includes("instagram") &&
+      !text.includes("youtube") &&
+      !text.includes("saspay") &&
+      !text.includes("mobile money") &&
+      !text.includes("point") &&
+      !text.includes("code") &&
+      !text.includes("chrono") &&
+      !text.includes("tâche") &&
+      !text.includes("campagne"));
 
-function loadTickets(): SupportTicket[] {
-  if (ticketsCache) return ticketsCache;
+  if (isVague) {
+    return `🤖 Bonjour ${displayName},
 
-  try {
-    if (fs.existsSync(STORAGE_FILE)) {
-      const raw = fs.readFileSync(STORAGE_FILE, "utf-8");
-      ticketsCache = JSON.parse(raw);
-      return ticketsCache || [];
-    }
-  } catch (err) {
-    console.error("[SupportStorage] Erreur lecture fichier support :", err);
+J'ai bien pris note de votre signalement technique concernant « ${subject.trim()} ».
+
+Afin que l'équipe technique puisse identifier précisément l'origine du problème et le résoudre rapidement, pourriez-vous m'apporter quelques précisions en répondant simplement à ce message :
+
+1. 📱 **Fonctionnalité concernée** : S'agit-il du lancement d'une campagne, de la réalisation d'une tâche P2P, de la liaison d'un compte réseau social (TikTok, Instagram, YouTube), d'un achat de points SasPay ou d'un code cadeau ?
+2. 🔗 **Identifiant ou lien** : Avez-vous le lien de la publication ou l'ID de la tâche/campagne concernée ?
+3. ⚠️ **Comportement constaté** : Que se passe-t-il exactement ? (Ex : chrono 20s bloqué, bouton grisé ou inactif, solde non mis à jour, message d'erreur affiché...)
+4. 💻 **Appareil & navigateur** : Utilisez-vous un smartphone, une tablette ou un ordinateur (avec Chrome, Safari, etc.) ?
+
+Dès réception de vos détails (ou d'une capture d'écran), votre dossier sera transmis avec tous ces éléments pour investigation. Merci de votre retour !`;
   }
 
-  ticketsCache = [];
-  return ticketsCache;
-}
+  return `🤖 Bonjour ${displayName},
 
-function saveTickets(tickets: SupportTicket[]) {
-  ticketsCache = tickets;
-  try {
-    const dir = path.dirname(STORAGE_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(STORAGE_FILE, JSON.stringify(tickets, null, 2), "utf-8");
-  } catch (err) {
-    console.error("[SupportStorage] Erreur écriture fichier support :", err);
-  }
+Merci d'avoir pris le temps de nous transmettre ces informations détaillées concernant « ${subject.trim()} ».
+
+Votre signalement technique a été enregistré avec tous ces éléments de contexte et classé en priorité d'assistance pour l'administrateur et l'équipe technique d'AddMe.io.
+
+Vous recevrez une notification ainsi qu'une réponse directement ici dès que la vérification aura été effectuée. Merci de votre confiance !`;
 }
 
 /**
- * Créer un nouveau ticket / message de support
+ * Transforme un enregistrement Prisma en SupportTicket sérialisable
+ */
+function formatPrismaTicket(ticket: any): SupportTicket {
+  return {
+    id: ticket.id,
+    userId: ticket.userId,
+    userEmail: ticket.userEmail,
+    userName: ticket.userName,
+    subject: ticket.subject,
+    category: ticket.category as SupportTicket["category"],
+    status: ticket.status as SupportTicket["status"],
+    priority: ticket.priority as SupportTicket["priority"],
+    isTechnicalBug: Boolean(ticket.isTechnicalBug),
+    createdAt: ticket.createdAt instanceof Date ? ticket.createdAt.toISOString() : String(ticket.createdAt),
+    updatedAt: ticket.updatedAt instanceof Date ? ticket.updatedAt.toISOString() : String(ticket.updatedAt),
+    messages: (ticket.messages || []).map((m: any) => ({
+      id: m.id,
+      senderRole: m.senderRole as "USER" | "ADMIN",
+      senderId: m.senderId,
+      senderName: m.senderName,
+      senderEmail: m.senderEmail,
+      content: m.content,
+      createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
+    })),
+  };
+}
+
+/**
+ * Créer un nouveau ticket / message de support (Enregistré dans PostgreSQL)
  */
 export async function createSupportTicket(params: {
   userId: string;
@@ -73,11 +118,8 @@ export async function createSupportTicket(params: {
   category?: SupportTicket["category"];
   message: string;
 }): Promise<SupportTicket> {
-  const tickets = loadTickets();
-  const now = new Date().toISOString();
   const ticketId = `ticket_${crypto.randomBytes(6).toString("hex")}`;
   const messageId = `msg_${crypto.randomBytes(6).toString("hex")}`;
-
   const displayName = params.userName || params.userEmail.split("@")[0] || "Utilisateur";
 
   const bugKeywords = [
@@ -103,7 +145,7 @@ export async function createSupportTicket(params: {
     params.category === "BUG" ||
     bugKeywords.some((kw) => combinedText.includes(kw));
 
-  const initialMessages: SupportMessage[] = [
+  const messagesToCreate = [
     {
       id: messageId,
       senderRole: "USER",
@@ -111,51 +153,67 @@ export async function createSupportTicket(params: {
       senderName: displayName,
       senderEmail: params.userEmail,
       content: params.message.trim(),
-      createdAt: now,
     },
   ];
 
   if (isBug) {
     const aiMessageId = `msg_ai_${crypto.randomBytes(6).toString("hex")}`;
-    initialMessages.push({
+    const aiContent = generateAISupportDiagnosis({
+      displayName,
+      subject: params.subject,
+      message: params.message,
+    });
+
+    messagesToCreate.push({
       id: aiMessageId,
       senderRole: "ADMIN",
       senderId: "system_ai_secretary",
       senderName: "Secrétaire IA AddMe.io",
       senderEmail: "support@addme.io",
-      content: `🤖 Bonjour ${displayName},\n\nNotre Secrétaire IA a bien enregistré votre signalement technique concernant « ${params.subject.trim()} ».\n\nVotre requête a été classée en PRIORITÉ HAUTE et transmise directement sur la console d'administration pour investigation. L'administrateur et l'équipe technique procèdent actuellement aux vérifications pour tester et reproduire ce bug.\n\nNous vous prions de bien vouloir patienter ; vous recevrez une mise à jour dès que l'incident aura été résolu. Merci de votre patience !`,
-      createdAt: new Date(Date.now() + 1000).toISOString(),
+      content: aiContent,
     });
   }
 
-  const newTicket: SupportTicket = {
-    id: ticketId,
-    userId: params.userId,
-    userEmail: params.userEmail,
-    userName: displayName,
-    subject: params.subject.trim(),
-    category: isBug ? "BUG" : params.category || "GENERAL",
-    status: isBug ? "ANSWERED" : "OPEN",
-    priority: isBug ? "HIGH" : "NORMAL",
-    isTechnicalBug: isBug,
-    createdAt: now,
-    updatedAt: now,
-    messages: initialMessages,
-  };
+  const created = await prisma.supportTicket.create({
+    data: {
+      id: ticketId,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      userName: displayName,
+      subject: params.subject.trim(),
+      category: isBug ? "BUG" : params.category || "GENERAL",
+      status: isBug ? "ANSWERED" : "OPEN",
+      priority: isBug ? "HIGH" : "NORMAL",
+      isTechnicalBug: isBug,
+      messages: {
+        create: messagesToCreate,
+      },
+    },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
 
-  tickets.unshift(newTicket);
-  saveTickets(tickets);
-  return newTicket;
+  return formatPrismaTicket(created);
 }
 
 /**
- * Récupère les tickets d'un utilisateur spécifique
+ * Récupère les tickets d'un utilisateur spécifique (depuis PostgreSQL)
  */
 export async function getUserSupportTickets(userId: string): Promise<SupportTicket[]> {
-  const tickets = loadTickets();
-  return tickets
-    .filter((t) => t.userId === userId)
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const tickets = await prisma.supportTicket.findMany({
+    where: { userId },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return tickets.map(formatPrismaTicket);
 }
 
 /**
@@ -166,38 +224,53 @@ export async function getAllSupportTickets(options?: {
   category?: string;
   search?: string;
 }): Promise<SupportTicket[]> {
-  let tickets = loadTickets();
+  const where: any = {};
 
   if (options?.status && options.status !== "ALL") {
-    tickets = tickets.filter((t) => t.status === options.status);
+    where.status = options.status;
   }
 
   if (options?.category && options.category !== "ALL") {
-    tickets = tickets.filter((t) => t.category === options.category);
+    where.category = options.category;
   }
 
   if (options?.search) {
-    const q = options.search.toLowerCase();
-    tickets = tickets.filter(
-      (t) =>
-        t.userName.toLowerCase().includes(q) ||
-        t.userEmail.toLowerCase().includes(q) ||
-        t.subject.toLowerCase().includes(q) ||
-        t.id.toLowerCase().includes(q) ||
-        t.messages.some((m) => m.content.toLowerCase().includes(q))
-    );
+    const q = options.search.trim();
+    where.OR = [
+      { userName: { contains: q, mode: "insensitive" } },
+      { userEmail: { contains: q, mode: "insensitive" } },
+      { subject: { contains: q, mode: "insensitive" } },
+      { id: { contains: q, mode: "insensitive" } },
+    ];
   }
 
-  return tickets.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const tickets = await prisma.supportTicket.findMany({
+    where,
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return tickets.map(formatPrismaTicket);
 }
 
 /**
  * Récupère un ticket par son ID
  */
 export async function getSupportTicketById(ticketId: string): Promise<SupportTicket | null> {
-  const tickets = loadTickets();
-  const found = tickets.find((t) => t.id === ticketId);
-  return found || null;
+  const ticket = await prisma.supportTicket.findUnique({
+    where: { id: ticketId },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  return ticket ? formatPrismaTicket(ticket) : null;
 }
 
 /**
@@ -212,41 +285,39 @@ export async function replyToSupportTicket(params: {
   content: string;
   newStatus?: SupportTicket["status"];
 }): Promise<SupportTicket> {
-  const tickets = loadTickets();
-  const ticketIndex = tickets.findIndex((t) => t.id === params.ticketId);
-
-  if (ticketIndex === -1) {
-    throw new Error("Ticket introuvable.");
-  }
-
-  const now = new Date().toISOString();
   const messageId = `msg_${crypto.randomBytes(6).toString("hex")}`;
-
-  const message: SupportMessage = {
-    id: messageId,
-    senderRole: params.senderRole,
-    senderId: params.senderId,
-    senderName: params.senderName,
-    senderEmail: params.senderEmail,
-    content: params.content.trim(),
-    createdAt: now,
-  };
-
-  const current = tickets[ticketIndex];
   const nextStatus =
     params.newStatus ||
     (params.senderRole === "ADMIN" ? "ANSWERED" : "OPEN");
 
-  const updated: SupportTicket = {
-    ...current,
-    status: nextStatus,
-    updatedAt: now,
-    messages: [...current.messages, message],
-  };
+  // Ajouter le message
+  await prisma.supportMessage.create({
+    data: {
+      id: messageId,
+      ticketId: params.ticketId,
+      senderRole: params.senderRole,
+      senderId: params.senderId,
+      senderName: params.senderName,
+      senderEmail: params.senderEmail,
+      content: params.content.trim(),
+    },
+  });
 
-  tickets[ticketIndex] = updated;
-  saveTickets(tickets);
-  return updated;
+  // Mettre à jour le statut et la date du ticket
+  const updated = await prisma.supportTicket.update({
+    where: { id: params.ticketId },
+    data: {
+      status: nextStatus,
+      updatedAt: new Date(),
+    },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  return formatPrismaTicket(updated);
 }
 
 /**
@@ -256,23 +327,20 @@ export async function updateSupportTicketStatus(
   ticketId: string,
   status: SupportTicket["status"]
 ): Promise<SupportTicket> {
-  const tickets = loadTickets();
-  const ticketIndex = tickets.findIndex((t) => t.id === ticketId);
+  const updated = await prisma.supportTicket.update({
+    where: { id: ticketId },
+    data: {
+      status,
+      updatedAt: new Date(),
+    },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
 
-  if (ticketIndex === -1) {
-    throw new Error("Ticket introuvable.");
-  }
-
-  const now = new Date().toISOString();
-  const updated: SupportTicket = {
-    ...tickets[ticketIndex],
-    status,
-    updatedAt: now,
-  };
-
-  tickets[ticketIndex] = updated;
-  saveTickets(tickets);
-  return updated;
+  return formatPrismaTicket(updated);
 }
 
 /**
@@ -285,14 +353,19 @@ export async function getSupportStats(): Promise<{
   resolvedTickets: number;
   openBugsCount: number;
 }> {
-  const tickets = loadTickets();
-  const totalTickets = tickets.length;
-  const pendingTickets = tickets.filter((t) => t.status === "OPEN").length;
-  const answeredTickets = tickets.filter((t) => t.status === "ANSWERED").length;
-  const resolvedTickets = tickets.filter((t) => t.status === "RESOLVED").length;
-  const openBugsCount = tickets.filter(
-    (t) => (t.isTechnicalBug || t.category === "BUG") && t.status !== "RESOLVED"
-  ).length;
+  const [totalTickets, pendingTickets, answeredTickets, resolvedTickets, openBugsCount] =
+    await Promise.all([
+      prisma.supportTicket.count(),
+      prisma.supportTicket.count({ where: { status: "OPEN" } }),
+      prisma.supportTicket.count({ where: { status: "ANSWERED" } }),
+      prisma.supportTicket.count({ where: { status: "RESOLVED" } }),
+      prisma.supportTicket.count({
+        where: {
+          OR: [{ isTechnicalBug: true }, { category: "BUG" }],
+          NOT: { status: "RESOLVED" },
+        },
+      }),
+    ]);
 
   return {
     totalTickets,
@@ -307,13 +380,18 @@ export async function getSupportStats(): Promise<{
  * Récupère les tickets de bugs techniques en attente d'investigation ou de test
  */
 export async function getOpenBugTickets(): Promise<SupportTicket[]> {
-  const tickets = loadTickets();
-  return tickets
-    .filter(
-      (t) => (t.isTechnicalBug || t.category === "BUG") && t.status !== "RESOLVED"
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+  const tickets = await prisma.supportTicket.findMany({
+    where: {
+      OR: [{ isTechnicalBug: true }, { category: "BUG" }],
+      NOT: { status: "RESOLVED" },
+    },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return tickets.map(formatPrismaTicket);
 }

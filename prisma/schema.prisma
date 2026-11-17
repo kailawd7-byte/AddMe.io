@@ -240,3 +240,36 @@ model GiftCodeUsage {
   updatedAt          DateTime  @updatedAt
 }
 
+model SupportTicket {
+  id             String           @id @default(uuid())
+  userId         String
+  userEmail      String
+  userName       String
+  subject        String
+  category       String           @default("GENERAL") // GENERAL, POINTS, CAMPAIGN, TASK, ACCOUNT, BUG
+  status         String           @default("OPEN") // OPEN, ANSWERED, RESOLVED
+  priority       String           @default("NORMAL") // LOW, NORMAL, HIGH
+  isTechnicalBug Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  messages       SupportMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+}
+
+model SupportMessage {
+  id          String        @id @default(uuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderRole  String        // USER, ADMIN
+  senderId    String
+  senderName  String
+  senderEmail String
+  content     String
+  createdAt   DateTime      @default(now())
+
+  @@index([ticketId])
+}
+

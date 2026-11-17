@@ -159,10 +159,42 @@ Donne à l'administrateur un récapitulatif exécutif :
 2. Alertes prioritaires exigeant une action immédiate.
 3. Recommandations proactives pour optimiser la plateforme.`;
   } else {
-    promptContent = `Message ou question de l'administrateur :
+    const bugs = platformStats?.bugTickets || [];
+    let bugsContext = "";
+    if (bugs.length > 0) {
+      bugsContext = `\n\n🚨 LISTE DES INCIDENTS ET BUGS RÉELLEMENT SIGNALÉS PAR LES UTILISATEURS (À ANALYSER EN PRIORITÉ) :\n` +
+        bugs
+          .map((b: any, idx: number) => {
+            const lastMsg =
+              b.messages?.[b.messages.length - 1]?.content ||
+              b.messages?.[0]?.content ||
+              "Aucun message";
+            return `Incident #${idx + 1} (Ticket ID: ${b.id}) :
+- Utilisateur : ${b.userName || "N/A"} (${b.userEmail || "N/A"})
+- Date : ${b.createdAt}
+- Statut : ${b.status} | Priorité : ${b.priority}
+- Objet du signalement : "${b.subject}"
+- Détail du problème : "${lastMsg}"`;
+          })
+          .join("\n\n");
+    } else {
+      bugsContext = `\n\n🚨 ÉTAT DES BUGS TECHNIQUES : Aucun bug ou incident n'est actuellement en attente dans la base de support.`;
+    }
+
+    promptContent = `Question ou instruction de l'administrateur :
 "${userMessage || "Bonjour, quel est le statut général ?"}"
 
-Donne une réponse précise et détaillée en te basant sur la documentation AddMe.io.`;
+Données et métriques actuelles de la plateforme :
+- Membres enregistrés : ${platformStats?.totalUsers ?? "N/A"}
+- Campagnes en diffusion : ${platformStats?.activeCampaigns ?? 0}
+- Tickets de support ouverts : ${platformStats?.openTickets ?? 0}
+- Incidents / bugs en attente : ${platformStats?.openBugsCount ?? bugs.length}
+- Points gérés dans le Grand Livre : ${platformStats?.circulatingPoints ?? "N/A"} pts
+${bugsContext}
+
+Consignes pour la réponse :
+1. Si l'administrateur te demande la synthèse des bugs ou s'il y a des incidents, analyse chaque incident réel listé ci-dessus, explique ce qui s'est passé, et donne les actions concrètes à mener.
+2. Reste toujours précise, professionnelle et structurée en Markdown.`;
   }
 
   // 1. Cascade Gemini officielle (Modèles actifs ultra-rapides sans délai de réflexion)
@@ -328,6 +360,76 @@ L'équipe Support AddMe.io`;
 
   // Mode Chat : Analyse sémantique précise de la question de l'administrateur
   const q = (userMessage || "").toLowerCase().trim();
+
+  // 1. Synthèse des Bugs & Incidents Techniques Signalés par les Utilisateurs
+  if (
+    q.includes("bug") ||
+    q.includes("incident") ||
+    q.includes("technique") ||
+    q.includes("panne") ||
+    q.includes("erreur") ||
+    q.includes("dysfonction") ||
+    q.includes("problème")
+  ) {
+    const bugs = platformStats?.bugTickets || [];
+    if (bugs.length > 0) {
+      let replyText = `### 🚨 Synthèse des Incidents & Bugs Techniques Signalés (${bugs.length} en attente)\n\n`;
+      replyText += `Voici le rapport détaillé des signalements transmis par les utilisateurs sur la plateforme :\n\n`;
+
+      bugs.forEach((b: any, idx: number) => {
+        const lastMsg =
+          b.messages?.[b.messages.length - 1]?.content ||
+          b.messages?.[0]?.content ||
+          "Aucune description fournie";
+        const dateStr = b.createdAt ? new Date(b.createdAt).toLocaleString("fr-FR") : "Récent";
+
+        replyText += `#### ${idx + 1}. Ticket \`${b.id}\` — « ${b.subject} »\n`;
+        replyText += `* **Auteur** : **${b.userName || b.userEmail}** (\`${b.userEmail}\`)\n`;
+        replyText += `* **Date du signalement** : ${dateStr}\n`;
+        replyText += `* **Statut** : \`${b.status}\` | Priorité : **${b.priority}**\n`;
+        replyText += `* **Message de l'utilisateur** : *« ${lastMsg} »*\n`;
+        replyText += `* **Diagnostic & Protocole recommandé** :\n`;
+
+        const combinedMsg = `${b.subject} ${lastMsg}`.toLowerCase();
+        if (combinedMsg.includes("campagne") || combinedMsg.includes("video") || combinedMsg.includes("lien") || combinedMsg.includes("vue")) {
+          replyText += `  1. Vérifier si l'URL de la publication est valide et publique sur le réseau social concerné.\n`;
+          replyText += `  2. Vérifier que la campagne possède encore des points sous séquestre pour rémunérer les tâches.\n`;
+          replyText += `  3. Contacter l'utilisateur via l'onglet **Support** pour lui demander le lien direct ou l'identifiant de la campagne.\n\n`;
+        } else if (combinedMsg.includes("point") || combinedMsg.includes("solde") || combinedMsg.includes("débit")) {
+          replyText += `  1. Consulter les entrées immuables \`LedgerEntry\` de l'utilisateur pour vérifier ses mouvements récents.\n`;
+          replyText += `  2. Vérifier si les points d'une tâche accomplie sont en période de rétention anti-fraude (24h).\n\n`;
+        } else if (combinedMsg.includes("bloqu") || combinedMsg.includes("chrono") || combinedMsg.includes("20")) {
+          replyText += `  1. Rappeler la règle du chronomètre : l'onglet de la publication doit rester actif et visible pendant 20 secondes.\n`;
+          replyText += `  2. Si le réseau social met en cache ses compteurs, inviter l'usager à soumettre une capture d'écran pour validation IA Vision.\n\n`;
+        } else {
+          replyText += `  1. L'utilisateur n'a pas fourni tous les détails techniques nécessaires (navigateur, écran ou ID exact).\n`;
+          replyText += `  2. Notre Secrétaire IA lui a déjà posé les 4 questions de cadrage dans son ticket pour centraliser les données.\n`;
+          replyText += `  3. Consulter sa réponse dans la section **Support** dès qu'il aura apporté ses précisions.\n\n`;
+        }
+      });
+
+      replyText += `💡 **Action Administrateur** : Vous pouvez répondre directement à chacun de ces utilisateurs ou changer le statut de leurs tickets dans la section **Support Client** du panneau d'administration.`;
+
+      return {
+        success: true,
+        reply: replyText,
+        source: "knowledge-base",
+      };
+    } else {
+      return {
+        success: true,
+        reply: `### 🚨 État des Incidents & Bugs Techniques
+
+Excellente nouvelle : **aucun incident ni bug technique n'est actuellement en attente** sur la plateforme !
+
+* **Tickets de bugs ouverts** : 0
+* **Stabilité opérationnelle** : 100 % opérationnelle (APIs, Grand Livre Ledger, Chronomètre 20s, Paiements SasPay)
+
+Dès qu'un créateur signalera un problème via le widget de support client, je le centraliserai immédiatement ici pour vous avec son diagnostic et les actions de test recommandées.`,
+        source: "knowledge-base",
+      };
+    }
+  }
 
   if (q.includes("ledger") || q.includes("immuab") || q.includes("double") || q.includes("comptab")) {
     return {
